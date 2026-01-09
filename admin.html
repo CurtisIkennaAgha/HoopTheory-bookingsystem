@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Booking System</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+  <img src="logo.png" alt="Logo" style="display:block;margin:0 auto 10px;width:120px;">
+  <h1>Admin - Manage Slots & Bookings</h1>
+
+  <label>Select Date</label>
+  <input type="date" id="adminDate">
+
+  <label>Available Slots (08:00-20:00)</label>
+  <div class="admin-slots" id="adminSlots"></div>
+
+  <label>Bookings</label>
+  <div id="adminBookings"></div>
+
+  <button id="saveSlots">Save Slots</button>
+</div>
+
+<script>
+let adminDateSelected = null;
+
+async function getAvailableSlots(){ 
+  const res = await fetch('php/getSlots.php'); return await res.json();
+}
+async function getBookings(){ 
+  const res = await fetch('php/getBookings.php'); return await res.json();
+}
+async function saveAvailableSlots(slots){
+  await fetch('php/saveSlots.php',{
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(slots)
+  });
+}
+
+// generate 08:00-20:00 slots
+function createAdminSlots(){
+  const container = document.getElementById('adminSlots');
+  container.innerHTML='';
+  for(let h=8;h<=20;h++){
+    const div = document.createElement('div');
+    div.className='admin-slot';
+    const t = `${String(h).padStart(2,'0')}:00`;
+    div.textContent=t;
+    div.onclick = ()=> div.classList.toggle('selected');
+    container.appendChild(div);
+  }
+}
+
+// render slots & bookings for selected date
+document.getElementById('adminDate').onchange = async ()=>{
+  adminDateSelected = document.getElementById('adminDate').value;
+  createAdminSlots();
+
+  const slots = await getAvailableSlots();
+  const bookings = await getBookings();
+  document.querySelectorAll('.admin-slot').forEach(d=>{
+    if(slots[adminDateSelected] && slots[adminDateSelected].includes(d.textContent)){
+      d.classList.add('selected');
+    }
+  });
+
+  const bookingsDiv = document.getElementById('adminBookings');
+  bookingsDiv.innerHTML='';
+  if(bookings[adminDateSelected] && bookings[adminDateSelected].length>0){
+    bookings[adminDateSelected].forEach(b=>{
+      const div = document.createElement('div');
+      div.textContent=b;
+      bookingsDiv.appendChild(div);
+    });
+  } else bookingsDiv.innerHTML='No bookings';
+};
+
+document.getElementById('saveSlots').onclick = async ()=>{
+  if(!adminDateSelected){ alert('Select date'); return;}
+  const selectedTimes = Array.from(document.querySelectorAll('.admin-slot.selected')).map(d=>d.textContent);
+  const slots = await getAvailableSlots();
+  slots[adminDateSelected] = selectedTimes;
+  await saveAvailableSlots(slots);
+  alert('Slots saved');
+};
+</script>
+</body>
+</html>
