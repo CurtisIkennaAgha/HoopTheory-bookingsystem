@@ -31,13 +31,16 @@
 let selectedDate = null;
 let selectedSlot = null;
 
+// Clean relative paths for PHP scripts
+const PHP_PATH = 'php/'; // folder containing your PHP scripts
+
 async function getAvailableSlots() {
-  const res = await fetch('php/getSlots.php');
+  const res = await fetch(PHP_PATH + 'getSlots.php');
   return await res.json();
 }
 
 async function getBookings() {
-  const res = await fetch('php/getBookings.php');
+  const res = await fetch(PHP_PATH + 'getBookings.php');
   return await res.json();
 }
 
@@ -45,14 +48,14 @@ async function saveBooking(date, slot, name, email) {
   const bookings = await getBookings();
   bookings[date] = bookings[date] || [];
   bookings[date].push(`${slot} - ${name} (${email})`);
-  await fetch('php/saveBookings.php', {
+  await fetch(PHP_PATH + 'saveBookings.php', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(bookings)
   });
 }
 
-// Generate calendar (simple current month)
+// Generate calendar (current month)
 function renderCalendar() {
   const calendar = document.getElementById('calendar');
   calendar.innerHTML = '';
@@ -62,7 +65,16 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month+1,0).getDate();
 
-  // empty days before month
+  // Month name
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthHeader = document.createElement('div');
+  monthHeader.textContent = monthNames[month];
+  monthHeader.style.textAlign = 'center';
+  monthHeader.style.fontWeight = '600';
+  monthHeader.style.marginBottom = '10px';
+  calendar.appendChild(monthHeader);
+
+  // Empty days before month starts
   for(let i=0;i<firstDay;i++){
     const div = document.createElement('div');
     div.className='day disabled';

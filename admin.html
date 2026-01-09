@@ -18,31 +18,43 @@
   <div class="admin-slots" id="adminSlots"></div>
 
   <label>Bookings</label>
-  <div id="adminBookings"></div>
+  <div id="adminBookings" style="margin-top:10px;"></div>
 
   <button id="saveSlots">Save Slots</button>
 </div>
 
 <script>
+const PHP_PATH = 'php/'; // folder with PHP scripts
 let adminDateSelected = null;
 
+// fetch available slots from JSON via PHP
 async function getAvailableSlots(){ 
-  const res = await fetch('php/getSlots.php'); return await res.json();
-}
-async function getBookings(){ 
-  const res = await fetch('php/getBookings.php'); return await res.json();
-}
-async function saveAvailableSlots(slots){
-  await fetch('php/saveSlots.php',{
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(slots)
-  });
+  const res = await fetch(PHP_PATH + 'getSlots.php'); 
+  return await res.json();
 }
 
-// generate 08:00-20:00 slots
+// fetch bookings from JSON via PHP
+async function getBookings(){ 
+  const res = await fetch(PHP_PATH + 'getBookings.php'); 
+  return await res.json();
+}
+
+// save available slots to JSON via PHP
+async function saveAvailableSlots(slots){
+  const res = await fetch(PHP_PATH + 'saveSlots.php',{
+    method:'POST', 
+    headers:{'Content-Type':'application/json'}, 
+    body: JSON.stringify(slots)
+  });
+  const data = await res.json();
+  return data.status === 'ok';
+}
+
+// generate admin time slots 08:00-20:00
 function createAdminSlots(){
   const container = document.getElementById('adminSlots');
   container.innerHTML='';
-  for(let h=8;h<=20;h++){
+  for(let h=8; h<=20; h++){
     const div = document.createElement('div');
     div.className='admin-slot';
     const t = `${String(h).padStart(2,'0')}:00`;
@@ -52,19 +64,22 @@ function createAdminSlots(){
   }
 }
 
-// render slots & bookings for selected date
+// update available slots and bookings when a date is selected
 document.getElementById('adminDate').onchange = async ()=>{
   adminDateSelected = document.getElementById('adminDate').value;
   createAdminSlots();
 
   const slots = await getAvailableSlots();
   const bookings = await getBookings();
+
+  // highlight selected slots
   document.querySelectorAll('.admin-slot').forEach(d=>{
     if(slots[adminDateSelected] && slots[adminDateSelected].includes(d.textContent)){
       d.classList.add('selected');
     }
   });
 
+  // show bookings for that date
   const bookingsDiv = document.getElementById('adminBookings');
   bookingsDiv.innerHTML='';
   if(bookings[adminDateSelected] && bookings[adminDateSelected].length>0){
@@ -76,13 +91,27 @@ document.getElementById('adminDate').onchange = async ()=>{
   } else bookingsDiv.innerHTML='No bookings';
 };
 
+// save slots button
 document.getElementById('saveSlots').onclick = async ()=>{
-  if(!adminDateSelected){ alert('Select date'); return;}
-  const selectedTimes = Array.from(document.querySelectorAll('.admin-slot.selected')).map(d=>d.textContent);
+  if(!adminDateSelected){ 
+    alert('Select a date first'); 
+    return;
+  }
+
+  // get selected times
+  const selectedTimes = Array.from(document.querySelectorAll('.admin-slot.selected'))
+                        .map(d=>d.textContent);
+
+  // fetch current slots, update, and save
   const slots = await getAvailableSlots();
   slots[adminDateSelected] = selectedTimes;
-  await saveAvailableSlots(slots);
-  alert('Slots saved');
+
+  const ok = await saveAvailableSlots(slots);
+  if(ok) alert('Slots saved successfully!');
+  else alert('Error saving slots, check server permissions.');
+
+  // refresh bookings view
+  document.getElementById('adminDate').dispatchEvent(new Event('change'));
 };
 </script>
 </body>
