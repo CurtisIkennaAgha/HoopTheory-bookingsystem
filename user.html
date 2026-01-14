@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book a Session</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.slot.booked { 
+  background:#f1f1f1; 
+  color:#94a3b8; 
+  cursor:not-allowed; 
+  border-style:dashed; 
+  font-weight:500;
+}
+.slot.selected { 
+  background:#000; 
+  color:#fff; 
+  font-weight:600; 
+}
+</style>
+</head>
+<body>
+<div class="container" id="bookingPage">
+  <img src="logo.png" alt="Logo" style="display:block;margin:0 auto 10px;width:120px;">
+  <h1>Book a Session</h1>
+
+  <label>Choose a date</label>
+  <div class="calendar" id="calendar"></div>
+  <input type="hidden" id="date" />
+
+  <label>Available times</label>
+  <div class="slots" id="slots"></div>
+
+  <label for="name">Your Name</label>
+  <input type="text" id="name" placeholder="John Doe" />
+
+  <label for="email">Your Email</label>
+  <input type="email" id="email" placeholder="john@example.com" />
+
+  <button id="bookBtn">Confirm Booking</button>
+</div>
+
+<script>
+let selectedDate = null;
+let selectedSlot = null;
+const PHP_PATH = 'php/';
+
+// --- Fetch / Save ---
+async function getAvailableSlots(){ return await (await fetch(PHP_PATH+'getSlots.php')).json(); }
+async function getBookings(){ return await (await fetch(PHP_PATH+'getBookings.php')).json(); }
+async function saveBooking(date, slot, name, email){
+  const bookings = await getBookings();
+  bookings[date] = bookings[date] || [];
+  bookings[date].push(`${slot} - ${name} (${email})`);
+  await fetch(PHP_PATH+'saveBookings.php',{
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bookings)
+  });
+}
+
+// --- Slots starting on the hour, 40 min duration ---
+function generateSlots(startHour=8,endHour=20){
+  const slots=[];
+  for(let h=startHour; h<endHour; h++){
+    const start = `${String(h).padStart(2,'0')}:00`;
+    const end = `${String(h).padStart(2,'0')}:40`;
+    slots.push(`${start}-${end}`);
+  }
+  return slots;
+}
+
+// --- Calendar ---
+function renderCalendar(){
+  const calendar=document.getElementById('calendar');
+  calendar.innerHTML='';
+  const today=new Date();
+  const year=today.getFullYear();
+  const month=today.getMonth();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+
+  // Month header
+  const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthHeader=document.createElement('div');
+  monthHeader.textContent=monthNames[month];
+  monthHeader.style.textAlign='center';
+  monthHeader.style.fontWeight='600';
+  monthHeader.style.marginBottom='15px';
+  calendar.appendChild(monthHeader);
+
+  // Empty days before month
+  for(let i=0;i<firstDay;i++){ const div=document.createElement('div'); div.className='day disabled'; calendar.appendChild(div); }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const div=document.createElement('div');
+    div.className='day';
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    div.textContent=d;
+
+    const current=new Date(year,month,d);
+    if(current<new Date(new Date().setHours(0,0,0,0))){ div.classList.add('disabled'); div.onclick=null; }
+
+    div.onclick=async ()=>{
+      selectedDate=dateStr;
+      document.querySelectorAll('.day').forEach(s=>s.classList.remove('selected'));
+      div.classList.add('selected');
+
+      const slotsEl=document.getElementById('slots');
+      slotsEl.innerHTML=''; selectedSlot=null;
+
+      const available=await getAvailableSlots();
+      const bookings=await getBookings();
+      const allowedSlots=available[dateStr] || [];
+      const allSlots=generateSlots();
+
+      allSlots.forEach(t=>{
+        if(!allowedSlots.includes(t)) return;
+        const slotDiv=document.createElement('div');
+        slotDiv.className='slot';
+        slotDiv.textContent=t;
+
+        if(bookings[dateStr] && bookings[dateStr].some(b=>b.startsWith(t))) slotDiv.classList.add('booked');
+        else slotDiv.onclick=()=>{
+          document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
+          slotDiv.classList.add('selected');
+          selectedSlot=t;
+        };
+        slotsEl.appendChild(slotDiv);
+      });
+    };
+    calendar.appendChild(div);
+  }
+}
+
+renderCalendar();
+
+document.getElementById('bookBtn').onclick=async ()=>{
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  if(!selectedDate||!selectedSlot||!name||!email){ alert('Fill all fields'); return; }
+
+  const bookings = await getBookings();
+  if(bookings[selectedDate] && bookings[selectedDate].some(b=>b.startsWith(selectedSlot))){
+    alert('This slot is already booked'); renderCalendar(); return;
+  }
+
+  await saveBooking(selectedDate, selectedSlot, name, email);
+  alert(`Booked ${selectedSlot} on ${selectedDate}`);
+  renderCalendar();
+};
+</script>
+</body>
+</html>

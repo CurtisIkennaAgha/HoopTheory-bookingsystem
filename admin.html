@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin - Booking System</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.container { max-width:760px; margin:20px auto; padding:20px; background:#fff; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);}
+h1{text-align:center;margin-bottom:20px;}
+.admin-slots { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:5px; margin-bottom:10px;}
+.admin-slot { padding:8px; text-align:center; border:1px solid #ccc; border-radius:8px; cursor:pointer; }
+.admin-slot.selected { background:#000;color:#fff;font-weight:600;}
+.bookings { margin-top:15px; }
+.booking-card { padding:10px; border:1px solid #ccc; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+.booking-actions button { margin-left:5px; padding:4px 8px; border:none;border-radius:6px; cursor:pointer; }
+.booking-actions .confirm { background:#0f0; color:#000; }
+.booking-actions .delete { background:#f00; color:#fff; }
+</style>
 </head>
 <body>
 <div class="container">
@@ -17,102 +29,134 @@
   <label>Available Slots (08:00-20:00)</label>
   <div class="admin-slots" id="adminSlots"></div>
 
-  <label>Bookings</label>
-  <div id="adminBookings" style="margin-top:10px;"></div>
+  <label>Bookings for selected date</label>
+  <div class="bookings" id="adminBookings"></div>
+
+  <label>All Bookings</label>
+  <div class="bookings" id="allBookings"></div>
 
   <button id="saveSlots">Save Slots</button>
 </div>
 
 <script>
-const PHP_PATH = 'php/'; // folder with PHP scripts
-let adminDateSelected = null;
+const PHP_PATH='php/';
+let selectedDate=null;
 
-// fetch available slots from JSON via PHP
-async function getAvailableSlots(){ 
-  const res = await fetch(PHP_PATH + 'getSlots.php'); 
-  return await res.json();
-}
+// Fetch JSON
+async function getAvailableSlots(){ return await (await fetch(PHP_PATH+'getSlots.php')).json(); }
+async function getBookings(){ return await (await fetch(PHP_PATH+'getBookings.php')).json(); }
+async function saveAvailableSlots(slots){ await fetch(PHP_PATH+'saveSlots.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(slots)});}
+async function saveBookings(bookings){ await fetch(PHP_PATH+'saveBookings.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bookings)});}
 
-// fetch bookings from JSON via PHP
-async function getBookings(){ 
-  const res = await fetch(PHP_PATH + 'getBookings.php'); 
-  return await res.json();
-}
-
-// save available slots to JSON via PHP
-async function saveAvailableSlots(slots){
-  const res = await fetch(PHP_PATH + 'saveSlots.php',{
-    method:'POST', 
-    headers:{'Content-Type':'application/json'}, 
-    body: JSON.stringify(slots)
-  });
-  const data = await res.json();
-  return data.status === 'ok';
-}
-
-// generate admin time slots 08:00-20:00
+// --- generate 08:00-20:00 hourly slots ---
 function createAdminSlots(){
-  const container = document.getElementById('adminSlots');
+  const container=document.getElementById('adminSlots');
   container.innerHTML='';
-  for(let h=8; h<=20; h++){
-    const div = document.createElement('div');
+  for(let h=8;h<=20;h++){
+    const div=document.createElement('div');
     div.className='admin-slot';
-    const t = `${String(h).padStart(2,'0')}:00`;
+    const t=`${String(h).padStart(2,'0')}:00-${String(h).padStart(2,'0')}:40`;
     div.textContent=t;
-    div.onclick = ()=> div.classList.toggle('selected');
+    div.onclick=()=>div.classList.toggle('selected');
     container.appendChild(div);
   }
 }
 
-// update available slots and bookings when a date is selected
-document.getElementById('adminDate').onchange = async ()=>{
-  adminDateSelected = document.getElementById('adminDate').value;
-  createAdminSlots();
+// --- render bookings for selected date ---
+async function renderBookings(){
+  const bookingsDiv=document.getElementById('adminBookings');
+  bookingsDiv.innerHTML='';
+  if(!selectedDate) return;
+  const bookings=await getBookings();
+  const slotsDiv=document.getElementById('adminSlots');
+  const allBookingsDiv=document.getElementById('allBookings');
+  allBookingsDiv.innerHTML='';
 
-  const slots = await getAvailableSlots();
-  const bookings = await getBookings();
-
-  // highlight selected slots
-  document.querySelectorAll('.admin-slot').forEach(d=>{
-    if(slots[adminDateSelected] && slots[adminDateSelected].includes(d.textContent)){
-      d.classList.add('selected');
-    }
+  // Render all bookings
+  Object.keys(bookings).forEach(date=>{
+    bookings[date].forEach(b=>{
+      const div=document.createElement('div');
+      div.className='booking-card';
+      div.innerHTML=`<span>${date} - ${b}</span>`;
+      allBookingsDiv.appendChild(div);
+    });
   });
 
-  // show bookings for that date
-  const bookingsDiv = document.getElementById('adminBookings');
-  bookingsDiv.innerHTML='';
-  if(bookings[adminDateSelected] && bookings[adminDateSelected].length>0){
-    bookings[adminDateSelected].forEach(b=>{
-      const div = document.createElement('div');
-      div.textContent=b;
+  // Render selected date bookings
+  if(bookings[selectedDate] && bookings[selectedDate].length>0){
+    bookings[selectedDate].forEach((b,index)=>{
+      const div=document.createElement('div');
+      div.className='booking-card';
+      const span=document.createElement('span');
+      span.textContent=b;
+      const actions=document.createElement('div');
+      actions.className='booking-actions';
+
+      // Confirm button
+      const confirmBtn=document.createElement('button');
+      confirmBtn.className='confirm';
+      confirmBtn.textContent='Confirm';
+      confirmBtn.onclick=async ()=>{
+        const emailMatch=b.match(/\(([^)]+)\)$/);
+        if(!emailMatch){ alert('No email'); return; }
+        const email=emailMatch[1];
+        await fetch(PHP_PATH+'sendEmail.php',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email:email,slot:b,date:selectedDate})
+        });
+        alert(`Email sent to ${email}`);
+      };
+
+      // Delete button
+      const deleteBtn=document.createElement('button');
+      deleteBtn.className='delete';
+      deleteBtn.textContent='Delete';
+      deleteBtn.onclick=async ()=>{
+        let bookingsData=await getBookings();
+        bookingsData[selectedDate].splice(index,1);
+        await saveBookings(bookingsData);
+        // Also re-add slot to available slots
+        const slotsData=await getAvailableSlots();
+        const slotTime=b.split(' - ')[0];
+        slotsData[selectedDate]=slotsData[selectedDate]||[];
+        if(!slotsData[selectedDate].includes(slotTime)) slotsData[selectedDate].push(slotTime);
+        await saveAvailableSlots(slotsData);
+        renderBookings();
+      };
+
+      actions.appendChild(confirmBtn);
+      actions.appendChild(deleteBtn);
+      div.appendChild(span);
+      div.appendChild(actions);
       bookingsDiv.appendChild(div);
     });
-  } else bookingsDiv.innerHTML='No bookings';
+  } else bookingsDiv.innerHTML='No bookings for this date';
+}
+
+// --- on date change ---
+document.getElementById('adminDate').onchange=async ()=>{
+  selectedDate=document.getElementById('adminDate').value;
+  createAdminSlots();
+  const slotsData=await getAvailableSlots();
+  document.querySelectorAll('.admin-slot').forEach(d=>{
+    if(slotsData[selectedDate] && slotsData[selectedDate].includes(d.textContent)) d.classList.add('selected');
+  });
+  renderBookings();
 };
 
-// save slots button
-document.getElementById('saveSlots').onclick = async ()=>{
-  if(!adminDateSelected){ 
-    alert('Select a date first'); 
-    return;
-  }
-
-  // get selected times
-  const selectedTimes = Array.from(document.querySelectorAll('.admin-slot.selected'))
-                        .map(d=>d.textContent);
-
-  // fetch current slots, update, and save
-  const slots = await getAvailableSlots();
-  slots[adminDateSelected] = selectedTimes;
-
-  const ok = await saveAvailableSlots(slots);
-  if(ok) alert('Slots saved successfully!');
-  else alert('Error saving slots, check server permissions.');
-
-  // refresh bookings view
-  document.getElementById('adminDate').dispatchEvent(new Event('change'));
+// --- save slots ---
+document.getElementById('saveSlots').onclick=async ()=>{
+  if(!selectedDate){ alert('Select date'); return; }
+  const selectedTimes=Array.from(document.querySelectorAll('.admin-slot.selected')).map(d=>d.textContent);
+  const slotsData=await getAvailableSlots();
+  slotsData[selectedDate]=selectedTimes;
+  await saveAvailableSlots(slotsData);
+  renderBookings();
+  alert('Slots saved');
 };
+
+renderBookings();
 </script>
 </body>
 </html>

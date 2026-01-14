@@ -1,143 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book a Session</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<div class="container" id="bookingPage">
-  <img src="logo.png" alt="Logo" style="display:block;margin:0 auto 10px;width:120px;">
-  <h1>Book a Session</h1>
-
-  <label>Choose a date</label>
-  <div class="calendar" id="calendar"></div>
-  <input type="hidden" id="date" />
-
-  <label>Available times</label>
-  <div class="slots" id="slots"></div>
-
-  <label for="name">Your Name</label>
-  <input type="text" id="name" placeholder="John Doe" />
-
-  <label for="email">Your Email</label>
-  <input type="email" id="email" placeholder="john@example.com" />
-
-  <button id="bookBtn">Confirm Booking</button>
-</div>
-
-<script>
-let selectedDate = null;
-let selectedSlot = null;
-
-// Clean relative paths for PHP scripts
-const PHP_PATH = 'php/'; // folder containing your PHP scripts
-
-async function getAvailableSlots() {
-  const res = await fetch(PHP_PATH + 'getSlots.php');
-  return await res.json();
-}
-
-async function getBookings() {
-  const res = await fetch(PHP_PATH + 'getBookings.php');
-  return await res.json();
-}
-
-async function saveBooking(date, slot, name, email) {
-  const bookings = await getBookings();
-  bookings[date] = bookings[date] || [];
-  bookings[date].push(`${slot} - ${name} (${email})`);
-  await fetch(PHP_PATH + 'saveBookings.php', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(bookings)
-  });
-}
-
-// Generate calendar (current month)
-function renderCalendar() {
-  const calendar = document.getElementById('calendar');
-  calendar.innerHTML = '';
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month+1,0).getDate();
-
-  // Month name
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const monthHeader = document.createElement('div');
-  monthHeader.textContent = monthNames[month];
-  monthHeader.style.textAlign = 'center';
-  monthHeader.style.fontWeight = '600';
-  monthHeader.style.marginBottom = '10px';
-  calendar.appendChild(monthHeader);
-
-  // Empty days before month starts
-  for(let i=0;i<firstDay;i++){
-    const div = document.createElement('div');
-    div.className='day disabled';
-    calendar.appendChild(div);
-  }
-
-  for(let d=1; d<=daysInMonth; d++){
-    const div = document.createElement('div');
-    div.className='day';
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    div.textContent=d;
-    div.onclick = async ()=>{
-      const slotsEl = document.getElementById('slots');
-      selectedDate = dateStr;
-      document.querySelectorAll('.day').forEach(s=>s.classList.remove('selected'));
-      div.classList.add('selected');
-
-      const available = await getAvailableSlots();
-      const bookings = await getBookings();
-      const times = available[dateStr] || [];
-      slotsEl.innerHTML = '';
-      selectedSlot = null;
-
-      if(times.length===0){ slotsEl.innerHTML='No slots'; return; }
-
-      times.forEach(t=>{
-        const slotDiv = document.createElement('div');
-        slotDiv.className='slot';
-        slotDiv.textContent=t;
-        if(bookings[dateStr] && bookings[dateStr].some(b=>b.startsWith(t))){
-          slotDiv.classList.add('booked');
-        } else {
-          slotDiv.onclick = ()=>{ 
-            document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
-            slotDiv.classList.add('selected');
-            selectedSlot=t;
-          };
-        }
-        slotsEl.appendChild(slotDiv);
-      });
-    };
-
-    // disable past dates
-    const current = new Date(year, month, d);
-    if(current < new Date(new Date().setHours(0,0,0,0))){
-      div.classList.add('disabled');
-      div.onclick=null;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading...</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #111111; /* nearly black */
+      font-family: 'Inter', sans-serif;
+      color: #ffffff;
     }
 
-    calendar.appendChild(div);
-  }
-}
+    img {
+      width: 120px; /* logo size */
+      margin-bottom: 25px;
+    }
 
-renderCalendar();
+    .loading-text {
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
 
-document.getElementById('bookBtn').onclick = async ()=>{
-  const name = document.getElementById('name').value.trim();
-  const email = document.getElementById('email').value.trim();
-  if(!selectedDate||!selectedSlot||!name||!email){ alert('Fill all fields'); return;}
-  await saveBooking(selectedDate, selectedSlot, name, email);
-  alert(`Booked ${selectedSlot} on ${selectedDate}`);
-  renderCalendar();
-};
-</script>
+    .dots span {
+      display: inline-block;
+      animation: blink 1.4s infinite;
+    }
+
+    .dots span:nth-child(1) { animation-delay: 0.4s; }
+    .dots span:nth-child(2) { animation-delay: 0.8s; }
+    .dots span:nth-child(3) { animation-delay: 1.2s; }
+
+    @keyframes blink {
+      0%, 20% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <img src="logo.png" alt="Logo">
+  <div class="loading-text">
+    Theorising<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+  </div>
 </body>
 </html>
