@@ -91,7 +91,7 @@ try {
             <h2 style='color:#000;'>Thank You for Booking!</h2>
             <p>Your session is <strong>confirmed</strong>.</p>
             <p><strong>Date & Time:</strong> $slot on $date</p>
-            <p>We’re excited to see you!</p>
+            <p>We are excited to see you!</p>
             <p style='margin-top:30px;color:#888;font-size:0.85rem;'>Your Company Name</p>
         </div>
     </body>
