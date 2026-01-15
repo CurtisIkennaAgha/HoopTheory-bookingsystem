@@ -77,7 +77,7 @@ try {
 
     //Recipients
     $fromAddress = getenv('MAIL_FROM_ADDRESS') ?: $smtpUser;
-    $fromName = getenv('MAIL_FROM_NAME') ?: 'Your Company';
+    $fromName = getenv('MAIL_FROM_NAME') ?: 'Hoop Theory';
     $mail->setFrom($fromAddress, $fromName);
     $mail->addAddress($email);
 
