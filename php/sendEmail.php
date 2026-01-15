@@ -6,6 +6,20 @@ require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 require 'PHPMailer/src/Exception.php';
 
+// Load environment from .env file (native PHP, no Composer required)
+function loadEnv($filePath) {
+    if (!file_exists($filePath)) return;
+    $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') === false || $line[0] === '#') continue;
+        [$key, $value] = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value, ' "\'');
+        if (!getenv($key)) putenv("$key=$value");
+    }
+}
+loadEnv(__DIR__ . '/.env');
+
 // Get data from AJAX JSON
 $data = json_decode(file_get_contents('php://input'), true);
 $email = $data['email'] ?? '';
@@ -25,20 +39,46 @@ $date = htmlspecialchars($date);
 $mail = new PHPMailer(true);
 try {
     // Enable SMTP debug output
-    $mail->SMTPDebug = 2; // 0 = off, 1 = client, 2 = client + server
-    $mail->Debugoutput = 'html';
+    $mail->SMTPDebug = getenv('MAIL_DEBUG') !== false ? (int)getenv('MAIL_DEBUG') : 0;
+    $mail->Debugoutput = getenv('MAIL_DEBUG_OUTPUT') ?: 'html';
+
+    // Load SMTP config from environment (safer than hardcoding credentials)
+    $smtpHost = getenv('MAIL_HOST') ?: 'smtp.gmail.com';
+    $smtpAuth = getenv('MAIL_AUTH') !== false ? (bool)getenv('MAIL_AUTH') : true;
+    $smtpUser = getenv('MAIL_USERNAME') ?: '';
+    $smtpPass = getenv('MAIL_PASSWORD') ?: '';
+    $smtpSecure = getenv('MAIL_ENCRYPTION') ?: 'tls';
+    $smtpPort = getenv('MAIL_PORT') ?: 587;
+
+    if (empty($smtpUser) || empty($smtpPass)) {
+        echo "SMTP credentials not set. Please set MAIL_USERNAME and MAIL_PASSWORD environment variables.";
+        exit;
+    }
 
     //Server settings
     $mail->isSMTP();
-    $mail->Host = 'smtp.gmail.com'; // your SMTP host
-    $mail->SMTPAuth = true;
-    $mail->Username = 'curtisikennaagha@gmail.com'; // your email
-    $mail->Password = 'Topsy999'; // app password
-    $mail->SMTPSecure = 'tls';
-    $mail->Port = 587;
+    $mail->Host = $smtpHost;
+    $mail->SMTPAuth = $smtpAuth;
+    $mail->Username = $smtpUser;
+    $mail->Password = $smtpPass;
+    $mail->SMTPSecure = $smtpSecure;
+    $mail->Port = $smtpPort;
+
+    // Optional: allow self-signed certs for testing behind some firewalls
+    if (getenv('MAIL_ALLOW_SELF_SIGNED') === '1') {
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ];
+    }
 
     //Recipients
-    $mail->setFrom('curtisikennaagha@gmail.com','Your Company');
+    $fromAddress = getenv('MAIL_FROM_ADDRESS') ?: $smtpUser;
+    $fromName = getenv('MAIL_FROM_NAME') ?: 'Your Company';
+    $mail->setFrom($fromAddress, $fromName);
     $mail->addAddress($email);
 
     //Content
