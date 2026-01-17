@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Book a Session</title>
 <link rel="stylesheet" href="styles.css">
 <style>
@@ -18,11 +18,26 @@
   color:#fff; 
   font-weight:600; 
 }
+
+.month-header {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: clamp(12px, 3vh, 18px);
+  font-size: clamp(0.95rem, 3vw, 1.1rem);
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 480px) {
+  img {
+    width: 80px !important;
+    margin: 0 auto clamp(8px, 3vh, 12px) !important;
+  }
+}
 </style>
 </head>
 <body>
 <div class="container" id="bookingPage">
-  <img src="logo.png" alt="Logo" style="display:block;margin:0 auto 10px;width:120px;">
+  <img src="logo.png" alt="Logo" style="display:block;margin:0 auto 10px;width:clamp(80px, 25vw, 140px);">
   <h1>Book a Session</h1>
 
   <label>Choose a date</label>
@@ -33,10 +48,10 @@
   <div class="slots" id="slots"></div>
 
   <label for="name">Your Name</label>
-  <input type="text" id="name" placeholder="John Doe" />
+  <input type="text" id="name" placeholder="John Doe" inputmode="text" />
 
   <label for="email">Your Email</label>
-  <input type="email" id="email" placeholder="john@example.com" />
+  <input type="email" id="email" placeholder="john@example.com" inputmode="email" />
 
   <button id="bookBtn">Confirm Booking</button>
 </div>
@@ -82,10 +97,8 @@ function renderCalendar(){
   // Month header
   const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
   const monthHeader=document.createElement('div');
+  monthHeader.className='month-header';
   monthHeader.textContent=monthNames[month];
-  monthHeader.style.textAlign='center';
-  monthHeader.style.fontWeight='600';
-  monthHeader.style.marginBottom='15px';
   calendar.appendChild(monthHeader);
 
   // Empty days before month
