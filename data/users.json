@@ -1,1 +1,50 @@
-{}
+{
+    "aghacurtis@gmail.com": {
+        "email": "aghacurtis@gmail.com",
+        "name": "Curtis Agha",
+        "bookings": [],
+        "waitlist": [],
+        "offers": [],
+        "addedAt": "2026-02-08 03:37:18"
+    },
+    "Baojellybean@gmail.com": {
+        "email": "Baojellybean@gmail.com",
+        "name": "Bao Tran",
+        "bookings": [],
+        "waitlist": [],
+        "offers": [],
+        "addedAt": "2026-02-08 06:42:34"
+    },
+    "aghacusrtis@gmail.com": {
+        "email": "aghacusrtis@gmail.com",
+        "name": "Curtis Aghas",
+        "bookings": [],
+        "waitlist": [],
+        "offers": [],
+        "addedAt": "2026-02-10 03:48:16"
+    },
+    "aghacueqwrtis@gmail.com": {
+        "email": "aghacueqwrtis@gmail.com",
+        "name": "werth",
+        "bookings": [],
+        "waitlist": [],
+        "offers": [],
+        "addedAt": "2026-02-10 04:14:20"
+    },
+    "aghacurtssis@gmail.com": {
+        "email": "aghacurtssis@gmail.com",
+        "name": "Curtis Aghasss",
+        "bookings": [],
+        "waitlist": [],
+        "offers": [],
+        "addedAt": "2026-02-10 04:21:05"
+    },
+    "aghacsadfurtis@gmail.com": {
+        "email": "aghacsadfurtis@gmail.com",
+        "name": "Curtis Aghazs",
+        "bookings": [],
+        "waitlist": [],
+        "offers": [],
+        "addedAt": "2026-02-10 04:27:49"
+    }
+}

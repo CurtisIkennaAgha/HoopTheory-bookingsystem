@@ -58,5 +58,85 @@
         "profile_id": "6684f99d-22db-48ce-aed8-48316fd8a1ca",
         "updated_at": "2026-02-07T00:04:52+01:00",
         "created_at": "2026-02-07T00:04:52+01:00"
+    },
+    "3db7ab2f-47ba-4499-8076-58932d736b92": {
+        "name": "Curtis Aghas",
+        "email": "aghacusrtis@gmail.com",
+        "age": 12,
+        "experience": "Beginner",
+        "medical": "s",
+        "emergency": {
+            "name": "Curtis Agha",
+            "phone": "07464303036",
+            "relationship": "x"
+        },
+        "media_consent": true,
+        "media_consent_text": "I, the parent/guardian of Curtis Aghas, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
+        "waiver_acknowledged": true,
+        "waiver_text": "I, the parent/guardian of Curtis Aghas, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
+        "registration_complete": true,
+        "profile_id": "3db7ab2f-47ba-4499-8076-58932d736b92",
+        "updated_at": "2026-02-10T03:48:16+01:00",
+        "created_at": "2026-02-10T03:48:16+01:00"
+    },
+    "816ebc26-4eb1-4228-bb4b-5353a98fa7bb": {
+        "name": "werth",
+        "email": "aghacueqwrtis@gmail.com",
+        "age": 12,
+        "experience": "Regular player but no team",
+        "medical": "wre",
+        "emergency": {
+            "name": "e",
+            "phone": "07464303036",
+            "relationship": "k"
+        },
+        "media_consent": true,
+        "media_consent_text": "I, the parent/guardian of werth, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
+        "waiver_acknowledged": true,
+        "waiver_text": "I, the parent/guardian of werth, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
+        "registration_complete": true,
+        "profile_id": "816ebc26-4eb1-4228-bb4b-5353a98fa7bb",
+        "updated_at": "2026-02-10T04:14:19+01:00",
+        "created_at": "2026-02-10T04:14:19+01:00"
+    },
+    "15001932-9cf0-49aa-8e09-53524b058906": {
+        "name": "Curtis Aghasss",
+        "email": "aghacurtssis@gmail.com",
+        "age": 2,
+        "experience": "Regular player but no team",
+        "medical": "d",
+        "emergency": {
+            "name": "Curtis Agha",
+            "phone": "07464303036",
+            "relationship": "d"
+        },
+        "media_consent": true,
+        "media_consent_text": "I, the parent/guardian of Curtis Aghasss, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
+        "waiver_acknowledged": true,
+        "waiver_text": "I, the parent/guardian of Curtis Aghasss, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
+        "registration_complete": true,
+        "profile_id": "15001932-9cf0-49aa-8e09-53524b058906",
+        "updated_at": "2026-02-10T04:21:04+01:00",
+        "created_at": "2026-02-10T04:21:04+01:00"
+    },
+    "7a3e6e81-60fa-4077-a6ce-c93cb8161b59": {
+        "name": "Curtis Aghazs",
+        "email": "aghacsadfurtis@gmail.com",
+        "age": 32,
+        "experience": "Regular player but no team",
+        "medical": "s",
+        "emergency": {
+            "name": "Curtis Agha",
+            "phone": "07464303036",
+            "relationship": "s"
+        },
+        "media_consent": true,
+        "media_consent_text": "I, the parent/guardian of Curtis Aghazs, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
+        "waiver_acknowledged": true,
+        "waiver_text": "I, the parent/guardian of Curtis Aghazs, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
+        "registration_complete": true,
+        "profile_id": "7a3e6e81-60fa-4077-a6ce-c93cb8161b59",
+        "updated_at": "2026-02-10T04:27:49+01:00",
+        "created_at": "2026-02-10T04:27:49+01:00"
     }
 }

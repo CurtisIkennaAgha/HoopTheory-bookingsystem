@@ -1,1 +1,18 @@
-{}
+{
+    "2026-02-14": [
+        {
+            "time": "05:51",
+            "endTime": "06:31",
+            "duration": 40,
+            "title": "asd",
+            "numberOfSpots": 1,
+            "sessionType": "group",
+            "price": 233.99,
+            "location": "sdf",
+            "bookedUsers": [],
+            "blockId": null,
+            "blockDates": [],
+            "bridgeState": false
+        }
+    ]
+}

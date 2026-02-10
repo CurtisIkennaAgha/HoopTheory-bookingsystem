@@ -1,3 +1,146 @@
+</script>
+<script>
+// ========== ADMIN SETTINGS MODAL (BOOKING EXPIRY CONFIG) ========== 
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-run cleanupExpiredOffers.php to remove expired offers/waitlist entries
+  fetch('php/cleanupExpiredOffers.php', { method: 'GET' })
+    .then(r => r.text())
+    .then(txt => { console.log('CleanupExpiredOffers:', txt); })
+    .catch(err => { console.warn('CleanupExpiredOffers error:', err); });
+  const openSettingsModalBtn = document.getElementById('openSettingsModal');
+  const adminSettingsModal = document.getElementById('adminSettingsModal');
+  const adminSettingsModalOverlay = document.getElementById('adminSettingsModalOverlay');
+  const adminSettingsModalClose = document.getElementById('adminSettingsModalClose');
+  const saveExpiryBtn = document.getElementById('saveExpiryBtn');
+  const cancelExpiryBtn = document.getElementById('cancelExpiryBtn');
+  // Booking expiry fields
+  const expiryHoursInput = document.getElementById('expiryHours');
+  const expiryMinutesInput = document.getElementById('expiryMinutes');
+  const expirySecondsInput = document.getElementById('expirySeconds');
+  const currentExpiryDisplay = document.getElementById('currentExpiryDisplay');
+  // Offer expiry fields
+  const offerExpiryHoursInput = document.getElementById('offerExpiryHours');
+  const offerExpiryMinutesInput = document.getElementById('offerExpiryMinutes');
+  const offerExpirySecondsInput = document.getElementById('offerExpirySeconds');
+  const currentOfferExpiryDisplay = document.getElementById('currentOfferExpiryDisplay');
+  const expirySettingsFeedback = document.getElementById('expirySettingsFeedback');
+
+  function openSettingsModal() {
+    expirySettingsFeedback.textContent = '';
+    // Booking expiry
+    fetch('data/bookingExpiryConfig.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cfg => {
+        let secs = parseInt(cfg.expirySeconds || 0);
+        const h = Math.floor(secs / 3600);
+        secs -= h * 3600;
+        const m = Math.floor(secs / 60);
+        const s = secs - m * 60;
+        expiryHoursInput.value = h;
+        expiryMinutesInput.value = m;
+        expirySecondsInput.value = s;
+        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
+      })
+      .catch(() => {
+        expiryHoursInput.value = 0;
+        expiryMinutesInput.value = 0;
+        expirySecondsInput.value = 0;
+        currentExpiryDisplay.textContent = 'Current expiry: unknown';
+      });
+    // Offer expiry
+    fetch('data/offerExpiryConfig.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cfg => {
+        let secs = parseInt(cfg.expirySeconds || 0);
+        const h = Math.floor(secs / 3600);
+        secs -= h * 3600;
+        const m = Math.floor(secs / 60);
+        const s = secs - m * 60;
+        offerExpiryHoursInput.value = h;
+        offerExpiryMinutesInput.value = m;
+        offerExpirySecondsInput.value = s;
+        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${h}h ${m}m ${s}s`;
+      })
+      .catch(() => {
+        offerExpiryHoursInput.value = 0;
+        offerExpiryMinutesInput.value = 0;
+        offerExpirySecondsInput.value = 0;
+        currentOfferExpiryDisplay.textContent = 'Current offer expiry: unknown';
+      });
+    adminSettingsModal.style.display = 'flex';
+    adminSettingsModal.classList.add('open');
+    document.body.classList.add('modal-open');
+  }
+  function closeSettingsModal() {
+    adminSettingsModal.style.display = 'none';
+    adminSettingsModal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
+  if (openSettingsModalBtn) openSettingsModalBtn.onclick = openSettingsModal;
+  if (adminSettingsModalOverlay) adminSettingsModalOverlay.onclick = closeSettingsModal;
+  if (adminSettingsModalClose) adminSettingsModalClose.onclick = closeSettingsModal;
+  if (cancelExpiryBtn) cancelExpiryBtn.onclick = closeSettingsModal;
+  if (saveExpiryBtn) saveExpiryBtn.onclick = async function() {
+    expirySettingsFeedback.textContent = '';
+    // Booking expiry
+    const h = parseInt(expiryHoursInput.value) || 0;
+    const m = parseInt(expiryMinutesInput.value) || 0;
+    const s = parseInt(expirySecondsInput.value) || 0;
+    const totalSeconds = h * 3600 + m * 60 + s;
+    // Offer expiry
+    const oh = parseInt(offerExpiryHoursInput.value) || 0;
+    const om = parseInt(offerExpiryMinutesInput.value) || 0;
+    const os = parseInt(offerExpirySecondsInput.value) || 0;
+    const offerTotalSeconds = oh * 3600 + om * 60 + os;
+    if (totalSeconds < 10 || offerTotalSeconds < 10) {
+      expirySettingsFeedback.textContent = 'Expiry must be at least 10 seconds for both.';
+      expirySettingsFeedback.style.color = '#ef4444';
+      return;
+    }
+    saveExpiryBtn.disabled = true;
+    saveExpiryBtn.textContent = 'Saving...';
+    try {
+      // Update booking expiry
+      const res = await fetch('php/saveBookingExpiry.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expirySeconds: totalSeconds })
+      });
+      // Update offer expiry
+      const offerRes = await fetch('php/saveOfferExpiry.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expirySeconds: offerTotalSeconds })
+      });
+      // Run cleanup after expiry update
+      await fetch('php/cleanupExpiredOffers.php', { method: 'GET' });
+      const data = await res.json();
+      const offerData = await offerRes.json();
+      if (data.success && offerData.success) {
+        expirySettingsFeedback.textContent = 'Expiry updated for bookings and waitlist offers.';
+        expirySettingsFeedback.style.color = '#22c55e';
+        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
+        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${oh}h ${om} ${os}s`;
+        setTimeout(() => { closeSettingsModal(); }, 1200);
+        if (typeof renderAllBookings === 'function') await renderAllBookings();
+      } else {
+        let msg = 'Failed to update:';
+        if (!data.success) msg += ' bookings (' + (data.error || 'Unknown error') + ')';
+        if (!offerData.success) msg += ' offers (' + (offerData.error || 'Unknown error') + ')';
+        expirySettingsFeedback.textContent = msg;
+        expirySettingsFeedback.style.color = '#ef4444';
+      }
+    } catch (err) {
+      expirySettingsFeedback.textContent = 'Error: ' + err.message;
+      expirySettingsFeedback.style.color = '#ef4444';
+    } finally {
+      saveExpiryBtn.disabled = false;
+      saveExpiryBtn.textContent = 'Save';
+    }
+  };
+});
+</script>
+<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1078,6 +1221,46 @@ input:focus, select:focus, textarea:focus {
   <h1>Admin - Manage Slots & Bookings</h1>
 
   <!-- Summary Bar -->
+      <!-- Settings Button -->
+  <!-- Admin Settings Modal for Expiry Config -->
+  <div id="adminSettingsModal" class="pt-modal" style="display:none;z-index:13000;" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="pt-modal-overlay" id="adminSettingsModalOverlay"></div>
+    <div class="pt-modal-content" role="document" aria-labelledby="adminSettingsModalTitle" style="max-width: 420px;">
+      <button class="pt-modal-close" id="adminSettingsModalClose" aria-label="Close dialog">×</button>
+      <h3 id="adminSettingsModalTitle">Booking Expiry Settings</h3>
+      <div class="pt-modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <label for="expiryHours" style="font-weight:600;">Booking Expiry Time</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="expiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
+            <input type="number" id="expiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
+            <input type="number" id="expirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
+          </div>
+          <div id="currentExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
+        </div>
+        <div>
+          <label for="offerExpiryHours" style="font-weight:600;">Waitlist Offer Expiry Time</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="offerExpiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
+            <input type="number" id="offerExpiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
+            <input type="number" id="offerExpirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
+          </div>
+          <div id="currentOfferExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
+        </div>
+        <div class="pt-actions" style="display:flex;gap:12px;margin-top:8px;">
+          <button class="btn" id="saveExpiryBtn" style="flex:1;background:#6366f1;color:white;">Save</button>
+          <button class="btn" id="cancelExpiryBtn" style="flex:1;background:transparent;color:#666;border:1px solid #ccc;">Cancel</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button id="clearDataBtn" style="width:100%;background:#e74c3c;color:white;padding:12px 0;border:none;border-radius:8px;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fas fa-trash"></i> Clear ALL Data
+          </button>
+          <div style="margin-top:8px;font-size:0.92em;color:#b91c1c;text-align:center;">This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.</div>
+        </div>
+        <div id="expirySettingsFeedback" style="margin-top:8px;font-size:0.95em;"></div>
+      </div>
+    </div>
+  </div>
   <div id="summaryBar" style="margin: 12px 0; padding: clamp(8px, 3vw, 16px); background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 10px); width: 100%; box-sizing: border-box;">
     <!-- Summary Cards -->
     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(4px, 1vw, 8px); width: 100%; box-sizing: border-box;">
@@ -1119,14 +1302,14 @@ input:focus, select:focus, textarea:focus {
         <i class="fas fa-calendar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Sync</span>
       </button>
       
-      <!-- Clear Data Button (smaller, secondary) -->
-      <button id="clearDataBtn" style="padding: 0px 2px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
-        <i class="fas fa-trash" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Clear</span>
-      </button>
       
       <!-- Analytics Button (smaller, secondary) -->
       <button id="analyticsBtn" style="padding: 0px 2px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
         <i class="fas fa-chart-bar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Analytics</span>
+      </button>
+      <!-- Settings Button (styled like others) -->
+      <button id="openSettingsModal" style="padding: 0px 2px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; flex-shrink: 1; line-height: 0.8; height: 18px;">
+        <i class="fas fa-cog" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Settings</span>
       </button>
     </div>
   </div>
@@ -5271,8 +5454,13 @@ async function renderWaitlist(){
     expandedWaitlistCards.add(key);
   });
 
-  Promise.all([getWaitlist(), getAvailableSlots(), getBookings()])
-    .then(([waitlistData, slotsData, bookingsData]) => {
+  Promise.all([
+    getWaitlist(),
+    getAvailableSlots(),
+    getBookings(),
+    fetch('php/getOffers.php').then(r => r.json())
+  ])
+    .then(([waitlistData, slotsData, bookingsData, offersData]) => {
       try {
         // Build a map of dates with their sessions
         const sessionMap = {}; // {date: {time-title: {count, people: [], blockDates: [], sessionType, blockId}}}
@@ -5433,11 +5621,27 @@ async function renderWaitlist(){
                 const joinDate = new Date(person.joinedAt);
                 if (!isNaN(joinDate.getTime())) joinedDisplay = formatDateForDisplay(person.joinedAt.split(' ')[0]);
               }
+
+              // Find pending offer for this person/session
+              let offerExpiryHtml = '';
+              if (offersData && typeof offersData === 'object') {
+                const offer = Object.values(offersData).find(o =>
+                  o.email === person.email &&
+                  o.title === title &&
+                  o.time === time &&
+                  o.status === 'pending'
+                );
+                if (offer && offer.expiresAt) {
+                  offerExpiryHtml = `<div style="color:#b45309;font-size:0.85em;margin-top:2px;">Offer expires: <b>${escapeHtml(offer.expiresAt)}</b></div>`;
+                }
+              }
+
               infoDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                   <div>
                     <div class="waitlist-person-name">${person.name}</div>
                     <div class="waitlist-person-email">${person.email}</div>
+                    ${offerExpiryHtml}
                   </div>
                   <div style="text-align: right; font-size: 0.85rem; color: #666;">
                     <div style="font-weight: 600; font-size: 0.9rem; color: #2E7D32;">#${positionDisplay}</div>
@@ -5969,44 +6173,6 @@ if (calendarSyncRange) {
   });
 }
 
-// Clear Data button handler
-const clearDataBtn = document.getElementById('clearDataBtn');
-if(clearDataBtn) {
-  clearDataBtn.addEventListener('click', async () => {
-    if(!confirm('Are you sure? This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.')) return;
-    
-    try {
-      // Clear ALL data
-      await saveAvailableSlots({});
-      await saveBookings({});
-      await saveWaitlist({});
-      await saveBookingMappings({});
-      
-      // Clear player profiles
-      const profileRes = await fetch(PHP_PATH + 'savePlayerProfile.php', { 
-        method: 'POST', 
-        headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify({ action: 'clear_all' })
-      });
-      if (!profileRes.ok) throw new Error('Failed to clear player profiles');
-      
-      // Clear players
-      const playersRes = await fetch(PHP_PATH + 'getPlayers.php?action=clear_all', { method: 'GET' });
-      if (!playersRes.ok) throw new Error('Failed to clear players');
-      
-      showToast('All data cleared successfully');
-      
-      // Refresh the display
-      await renderAllAvailableSlots();
-      await renderAllBookings();
-      await renderWaitlist();
-      await updateSummaryBar();
-    } catch(err) {
-      console.error('Error clearing data:', err);
-      showToast('Error clearing data: ' + err.message, {error: true});
-    }
-  });
-}
 
 // Placeholder function for calendar sync selection
 // This will be implemented with actual calendar generation logic later

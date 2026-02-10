@@ -1,4 +1,6 @@
 <?php
+// Set timezone to Europe/London to ensure correct timestamps
+date_default_timezone_set('Europe/London');
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -77,6 +79,24 @@ if (file_exists($offersFile)) {
     $offers = json_decode(file_get_contents($offersFile), true) ?? [];
 }
 
+
+
+
+// Load expirySeconds from offer config (separate from booking expiry)
+$offerExpiryConfigFile = __DIR__ . '/../data/offerExpiryConfig.json';
+$expirySeconds = 86400; // default 24h
+if (file_exists($offerExpiryConfigFile)) {
+    $config = json_decode(file_get_contents($offerExpiryConfigFile), true);
+    if (isset($config['expirySeconds']) && is_numeric($config['expirySeconds'])) {
+        $expirySeconds = intval($config['expirySeconds']);
+    }
+}
+
+// Set $now as close as possible to usage
+$now = time();
+// Debug: log the exact PHP time when $now is set
+file_put_contents(__DIR__ . '/../data/debug_time.txt', date('Y-m-d H:i:s', $now) . "\n", FILE_APPEND);
+
 $offers[$token] = [
     'email' => $email,
     'name' => $name,
@@ -86,8 +106,8 @@ $offers[$token] = [
     'sessionKey' => $sessionKey,
     'blockId' => $blockId,
     'blockDates' => $blockDates,
-    'createdAt' => date('Y-m-d H:i:s'),
-    'expiresAt' => date('Y-m-d H:i:s', strtotime('+24 hours')),
+    'createdAt' => date('Y-m-d H:i:s', $now),
+    'expiresAt' => date('Y-m-d H:i:s', $now + $expirySeconds),
     'status' => 'pending'
 ];
 
