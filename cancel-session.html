@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cancel Booking - Hoop Theory</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 15px;
+    }
+    
+    h1 {
+      font-size: 28px;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c33;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .success-message {
+      background: #efe;
+      border: 1px solid #cfc;
+      color: #3c3;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .session-details {
+      background: #f9f9f9;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: #555;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .detail-value {
+      color: #1a1a1a;
+      font-size: 15px;
+      text-align: right;
+    }
+    
+    .user-info {
+      background: #f0f0f0;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+    
+    .user-name {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .user-name strong {
+      color: #1a1a1a;
+      font-size: 16px;
+    }
+    
+    .cancellation-form {
+      margin-bottom: 25px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 100px;
+      color: #333;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .char-count {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+      text-align: right;
+    }
+    
+    .confirmation-warning {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+    
+    .confirmation-warning p {
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .confirmation-warning strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    button {
+      padding: 12px 28px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-cancel {
+      background: #ef4444;
+      color: white;
+      flex: 1;
+    }
+    
+    .btn-cancel:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-cancel:active {
+      transform: translateY(0);
+    }
+    
+    .btn-back {
+      background: #e5e7eb;
+      color: #374151;
+      flex: 1;
+    }
+    
+    .btn-back:hover {
+      background: #d1d5db;
+    }
+    
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .back-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      color: #999;
+      font-size: 12px;
+    }
+    
+    @media (max-width: 520px) {
+      .container {
+        padding: 25px;
+      }
+      
+      h1 {
+        font-size: 22px;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .detail-value {
+        text-align: left;
+        margin-top: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Cancel Booking</h1>
+      <p class="subtitle">We're sorry to see you go</p>
+    </div>
+    
+    <div id="loadingState" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Loading booking details...</p>
+    </div>
+    
+    <div id="content" style="display: none;">
+      <!-- Error state -->
+      <div id="errorState">
+        <!-- Error message will be inserted here -->
+      </div>
+      
+      <!-- Already cancelled state -->
+      <div id="alreadyCancelledState" style="display: none;">
+        <div class="error-message">
+          <strong>This booking has already been cancelled.</strong>
+          <p style="margin-top: 8px;">If you need assistance, please contact us at bao@hooptheory.co.uk</p>
+        </div>
+        <div class="back-link">
+          <a href="https://hooptheory.co.uk/user.html">← Back to bookings</a>
+        </div>
+      </div>
+      
+      <!-- Cancellation form state -->
+      <div id="formState" style="display: none;">
+        <div class="session-details">
+          <div class="detail-row">
+            <span class="detail-label">Session</span>
+            <span class="detail-value" id="sessionTitle">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date</span>
+            <span class="detail-value" id="sessionDate">-</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Time</span>
+            <span class="detail-value" id="sessionTime">-</span>
+          </div>
+        </div>
+        
+        <div class="user-info">
+          <div class="user-name">Booked for: <strong id="userNameDisplay">-</strong></div>
+        </div>
+        
+        <div class="cancellation-form">
+          <div class="form-group">
+            <label for="cancellationReason">Cancellation Reason (Optional)</label>
+            <textarea id="cancellationReason" placeholder="Let us know why you're cancelling. Your feedback helps us improve!" maxlength="500"></textarea>
+            <div class="char-count"><span id="charCount">0</span>/500</div>
+          </div>
+        </div>
+        
+        <div class="confirmation-warning">
+          <strong>Important:</strong>
+          <p>
+            Cancelling this booking will remove you from the session. If you've already made a payment, please reach out to us at 
+            <a href="mailto:bao@hooptheory.co.uk" style="color: #92400e; font-weight: 600;">bao@hooptheory.co.uk</a> 
+            for a refund.
+          </p>
+          <p style="margin-top:10px; font-weight:600;">Please note that refunds will not be issued after your spot has been confirmed.</p>
+        </div>
+        
+        <div class="button-group">
+          <button class="btn-cancel" onclick="processCancellation()">Confirm Cancellation</button>
+          <button class="btn-back" onclick="goBack()">Go Back</button>
+        </div>
+      </div>
+      
+      <!-- Success state -->
+      <div id="successState" style="display: none;">
+        <div class="success-message">
+          <strong>Your booking has been cancelled.</strong>
+          <p style="margin-top: 8px;">We've sent a confirmation email to your registered email address.</p>
+        </div>
+        
+        <div class="back-link">
+          <a href="https://hooptheory.co.uk/user.html">← Back to bookings</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      © 2026 Hoop Theory · bao@hooptheory.co.uk
+    </div>
+  </div>
+
+  <script>
+    let bookingData = null;
+    const params = new URLSearchParams(window.location.search);
+    const bookingId = params.get('bookingId');
+    
+    // Character counter
+    document.addEventListener('DOMContentLoaded', () => {
+      const reasonField = document.getElementById('cancellationReason');
+      if (reasonField) {
+        reasonField.addEventListener('input', () => {
+          document.getElementById('charCount').textContent = reasonField.value.length;
+        });
+      }
+      
+      // Load booking details
+      loadBookingDetails();
+    });
+    
+    function loadBookingDetails() {
+      const content = document.getElementById('content');
+      const loading = document.getElementById('loadingState');
+      
+      loading.style.display = 'block';
+      content.style.display = 'block';
+      
+      if (!bookingId) {
+        showError('Invalid booking link. Booking ID is missing.');
+        loading.style.display = 'none';
+        return;
+      }
+      
+      // Fetch booking details from backend
+      console.log('🔵 CANCEL-SESSION: Fetching booking details for bookingId:', bookingId);
+      fetch('/php/getBookingDetails.php?bookingId=' + encodeURIComponent(bookingId))
+        .then(response => response.json())
+        .then(data => {
+          loading.style.display = 'none';
+          console.log('🟢 CANCEL-SESSION: Retrieved booking data:', JSON.stringify(data));
+          
+          if (data.status === 'error') {
+            console.error('❌ CANCEL-SESSION: Error status received:', data.message);
+            showError(data.message || 'Could not load booking details.');
+            return;
+          }
+          
+          if (data.cancelled) {
+            console.log('⚠️  CANCEL-SESSION: Booking already cancelled');
+            document.getElementById('alreadyCancelledState').style.display = 'block';
+            return;
+          }
+          
+          bookingData = data;
+          console.log('🟡 CANCEL-SESSION: Is Block Session?', data.isBlock, 'Block Dates:', data.blockDates);
+          populateSessionDetails(data);
+          document.getElementById('formState').style.display = 'block';
+        })
+        .catch(error => {
+          loading.style.display = 'none';
+          console.error('❌ CANCEL-SESSION: Fetch error:', error);
+          showError('An error occurred while loading your booking. Please try again later.');
+        });
+    }
+    
+    function populateSessionDetails(data) {
+      document.getElementById('sessionTitle').textContent = data.title || '-';
+      document.getElementById('sessionDate').textContent = data.date || '-';
+      document.getElementById('sessionTime').textContent = data.slot || '-';
+      document.getElementById('userNameDisplay').textContent = data.name || 'Unknown';
+    }
+    
+    function processCancellation() {
+      const reason = document.getElementById('cancellationReason').value.trim();
+      const btn = event.target;
+      
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+      
+      const cancellationData = {
+        bookingId: bookingId,
+        cancellationReason: reason,
+        email: bookingData.email,
+        name: bookingData.name,
+        date: bookingData.date,
+        slot: bookingData.slot,
+        title: bookingData.title,
+        isBlock: bookingData.isBlock || false,
+        blockDates: bookingData.blockDates || []
+      };
+      
+      console.log('🔵 CANCEL-SESSION: Sending cancellation request with data:', JSON.stringify(cancellationData, null, 2));
+      
+      fetch('/php/processCancellation.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cancellationData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('🟢 CANCEL-SESSION: Received response from processCancellation:', JSON.stringify(data));
+          if (data.status === 'ok') {
+            console.log('✅ CANCEL-SESSION: Cancellation successful!');
+            document.getElementById('formState').style.display = 'none';
+            document.getElementById('successState').style.display = 'block';
+          } else {
+            console.error('❌ CANCEL-SESSION: Cancellation failed with message:', data.message);
+            showError(data.message || 'An error occurred. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Confirm Cancellation';
+          }
+        })
+        .catch(error => {
+          console.error('❌ CANCEL-SESSION: Fetch error during cancellation:', error);
+          showError('An error occurred. Please try again later.');
+          btn.disabled = false;
+          btn.textContent = 'Confirm Cancellation';
+        });
+    }
+    
+    function showError(message) {
+      const errorState = document.getElementById('errorState');
+      errorState.innerHTML = '<div class="error-message"><strong>Error:</strong> ' + htmlEscape(message) + '</div>';
+      
+      if (!document.getElementById('formState').style.display === 'block') {
+        document.getElementById('alreadyCancelledState').style.display = 'none';
+      }
+    }
+    
+    function goBack() {
+      window.history.back();
+    }
+    
+    function htmlEscape(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

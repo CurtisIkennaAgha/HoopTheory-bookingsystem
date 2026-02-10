@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Email Testing — Debug</title>
+  <style>
+    body{font-family:Inter,Segoe UI,Helvetica,Arial;line-height:1.45;color:#0f172a;background:#f8fafc;padding:28px}
+    .card{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;padding:20px 22px;box-shadow:0 6px 30px rgba(2,6,23,0.06)}
+    h1{margin:0 0 6px;font-size:18px;color:#111827}
+    p.lead{margin:0 0 18px;color:#475569}
+    .row{display:flex;gap:12px;align-items:center}
+    input[type="email"]{flex:1;padding:10px 12px;border:1px solid #e6e9ee;border-radius:8px;font-size:14px;min-width:0}
+    button{background:#111827;color:#fff;border:none;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;white-space:nowrap}
+    button[disabled]{opacity:0.5;cursor:not-allowed}
+    .muted{color:#6b7280;font-size:13px}
+    .log{margin-top:18px;border-radius:8px;background:#0f172a;color:#fff;padding:12px;font-family:monospace;font-size:13px;max-height:320px;overflow:auto}
+    table{width:100%;border-collapse:collapse;margin-top:12px;table-layout:auto}
+    th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #eef2ff;font-size:13px}
+    th{background:#fbf8ff;color:#374151;font-weight:600}
+    .status-ok{color:#10b981;font-weight:700}
+    .status-fail{color:#ef4444;font-weight:700}
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+    label.checkbox{display:flex;gap:8px;align-items:center;color:#374151;font-size:13px}
+    .note{margin-top:12px;background:#fffbeb;border-left:4px solid #f59e0b;padding:12px;border-radius:6px;color:#92400e}
+    .small{font-size:13px;color:#475569}
+
+    /* preview source view */
+    .preview-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    #previewSource{background:#0b1220;color:#e6edf3;padding:16px;border-top:1px solid #eef2ff;font-family:SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;border-radius:0 0 8px 8px;font-size:12px}
+
+    /* ================= MOBILE RESPONSIVE ================= */
+    @media (max-width: 768px) {
+      body { padding: 16px; }
+      .card { padding: 16px; }
+      h1 { font-size: 16px; }
+      p.lead { font-size: 14px; margin-bottom: 14px; }
+      input[type="email"] { font-size: 16px; padding: 12px; flex: 1; min-width: 0; }
+      button { padding: 12px 14px; font-size: 14px; min-height: 44px; flex-shrink: 0; }
+      .row { flex-direction: column; gap: 10px; }
+      .row input[type="email"] { width: 100%; }
+      .row button { width: 100%; }
+      .controls { flex-direction: column; align-items: stretch; gap: 12px; }
+      label.checkbox { font-size: 14px; flex: 1; }
+      .note { font-size: 12px; padding: 10px; }
+      table { font-size: 12px; overflow-x: auto; display: block; }
+      th, td { padding: 6px 8px; }
+      tbody { display: block; overflow-x: auto; width: 100%; }
+      tr { display: table; width: 100%; table-layout: fixed; }
+      .preview-controls { flex-wrap: wrap; gap: 4px; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      .card { padding: 12px; border-radius: 8px; }
+      h1 { font-size: 15px; margin-bottom: 4px; }
+      p.lead { font-size: 13px; margin-bottom: 10px; }
+      input[type="email"] { font-size: 16px; padding: 12px; width: 100%; }
+      button { padding: 10px 12px; font-size: 13px; border-radius: 6px; min-height: 44px; }
+      .muted { font-size: 12px; }
+      .log { padding: 10px; font-size: 11px; max-height: 200px; overflow-y: auto; }
+      .controls { gap: 8px; }
+      label.checkbox { font-size: 12px; }
+      .note { font-size: 11px; padding: 8px; border-radius: 4px; }
+      table { font-size: 11px; margin-top: 8px; display: block; width: 100%; overflow-x: auto; }
+      thead { display: none; }
+      tbody { display: block; }
+      tr { display: block; border: 1px solid #eef2ff; margin-bottom: 8px; border-radius: 4px; }
+      td { display: block; padding: 6px; text-align: right; padding-left: 40%; position: relative; border: none; }
+      td:before { content: attr(data-label); position: absolute; left: 6px; font-weight: bold; color: #374151; }
+      #previewPane { margin-top: 10px; border-radius: 6px; }
+      #previewFrame { height: 300px; }
+      #previewSource { padding: 10px; font-size: 10px; max-height: 300px; }
+      .preview-controls button { padding: 4px 8px; font-size: 11px; }
+      .small { font-size: 11px; }
+    }
+
+    /* Touch devices: larger tap targets */
+    @media (hover: none) and (pointer: coarse) {
+      button { min-height: 48px; }
+      input[type="email"] { padding: 14px; font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main">
+    <h1>Email testing — Debug only</h1>
+    <p class="lead">Send all system email templates to a single test address (safe: no real users will be contacted).</p>
+
+    <div class="row" style="margin-bottom:8px">
+      <input id="testEmail" type="email" placeholder="you@your-test-address.example" aria-label="Test email address">
+      <button id="sendAllBtn" disabled aria-disabled="true">Send All Test Emails</button>
+    </div>
+
+    <div style="margin-top:8px;display:flex;gap:12px;align-items:center;">
+      <div id="sendStatus" class="muted">Enter a test email and confirm safety to enable sending.</div>
+    </div>
+
+    <div class="controls">
+      <label class="checkbox"><input id="safetyConfirm" type="checkbox"> I confirm these will only be sent to the test address</label>
+      <button id="clearLog" style="background:transparent;color:#374151;border:1px solid #e6e9ee;padding:8px 10px;border-radius:8px">Clear log</button>
+    </div>
+
+    <div class="note" role="status" aria-live="polite">
+      <strong>Safety:</strong> This page never reads or uses real user addresses. The server will only send to the test address you provide.
+    </div>
+
+    <div id="logArea" class="log" aria-live="polite">
+      <div class="small">Ready. Enter an email and confirm to enable the test button.</div>
+    </div>
+
+    <table aria-hidden="false" id="logTable" style="display:none">
+      <thead>
+        <tr><th>Template</th><th>Recipient</th><th>Status</th><th>Details</th><th>Preview</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Preview pane (rendered + raw source) -->
+    <div id="previewPane" style="display:none;margin-top:16px;border-radius:8px;overflow:hidden;border:1px solid #eef2ff">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fbf8ff;border-bottom:1px solid #eef2ff">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="font-weight:600;color:#111827">Email preview</div>
+          <div class="muted" style="font-size:13px">(rendered / source)</div>
+        </div>
+        <div class="preview-controls" role="toolbar" aria-label="Preview controls">
+          <button id="toggleSourceBtn" aria-pressed="false" title="Toggle raw HTML view" style="background:transparent;border:0;color:#374151;cursor:pointer;padding:6px">View source</button>
+          <button id="copySourceBtn" title="Copy raw HTML" style="background:transparent;border:0;color:#374151;cursor:pointer;padding:6px">Copy source</button>
+          <button id="closePreview" style="background:transparent;border:0;color:#374151;cursor:pointer;padding:6px">Close</button>
+        </div>
+      </div>
+      <iframe id="previewFrame" sandbox="allow-forms allow-same-origin" style="width:100%;height:520px;border:0;background:white;display:block"></iframe>
+      <pre id="previewSource" style="display:none;margin:0;padding:16px;"> </pre>
+    </div>
+
+    <p class="small" style="margin-top:14px">Templates tested: admin confirmation, temporary reservation (payment), waitlist confirmation (offer), cancellation, and admin message. Use <strong>Preview</strong> to inspect the exact HTML that will be sent.</p>
+  </div>
+
+  <script>
+    const sendAllBtn = document.getElementById('sendAllBtn');
+    const safety = document.getElementById('safetyConfirm');
+    const emailInput = document.getElementById('testEmail');
+    const logArea = document.getElementById('logArea');
+    const logTable = document.getElementById('logTable');
+    const tbody = logTable.querySelector('tbody');
+    const clearLog = document.getElementById('clearLog');
+
+    function appendLogLine(html){
+      logArea.insertAdjacentHTML('beforeend', html);
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function addRow({template, recipient, ok, detail, htmlPreview}){
+      logTable.style.display = '';
+      const tr = document.createElement('tr');
+
+      // Build cells
+      const tdTemplate = document.createElement('td'); tdTemplate.textContent = template;
+      const tdRecipient = document.createElement('td'); tdRecipient.innerHTML = `<code>${recipient}</code>`;
+      const tdStatus = document.createElement('td'); tdStatus.className = ok ? 'status-ok' : 'status-fail'; tdStatus.textContent = ok ? 'success' : 'failure';
+      const tdDetail = document.createElement('td'); tdDetail.innerHTML = detail ? detail : '';
+      const tdPreview = document.createElement('td');
+
+      // Create a robust preview button (keyboard + pointer friendly). We attach the heavy work via delegation below
+      const previewBtn = document.createElement('button');
+      previewBtn.type = 'button';
+      previewBtn.textContent = 'Preview';
+      previewBtn.setAttribute('data-action', 'preview');
+      previewBtn.setAttribute('aria-label', `Preview ${template} email`);
+      previewBtn.tabIndex = 0;
+      previewBtn.style.padding = '6px 10px';
+      previewBtn.style.borderRadius = '6px';
+      previewBtn.style.border = '1px solid #eef2ff';
+      previewBtn.style.background = '#fff';
+      previewBtn.style.cursor = 'pointer';
+      previewBtn.style.position = 'relative';
+      previewBtn.style.zIndex = '2';
+
+      // Store preview HTML directly on the element (safer than relying on closure in some browsers)
+      previewBtn._htmlPreview = htmlPreview || '';
+
+      // Keyboard activation for Enter/Space
+      previewBtn.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          previewBtn.click();
+        }
+      });
+
+      tdPreview.appendChild(previewBtn);
+
+      tr.appendChild(tdTemplate);
+      tr.appendChild(tdRecipient);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdDetail);
+      tr.appendChild(tdPreview);
+
+      tbody.appendChild(tr);
+    }
+
+    function resetLog(){
+      logArea.innerHTML = '<div class="small">Ready. Enter an email and confirm to enable the test button.</div>';
+      tbody.innerHTML = '';
+      logTable.style.display = 'none';
+    }
+
+    // Render HTML into the sandboxed iframe preview and prepare raw-source view
+    function showPreview(html) {
+      const pane = document.getElementById('previewPane');
+      const frame = document.getElementById('previewFrame');
+      const src = document.getElementById('previewSource');
+
+      // Populate both rendered iframe and raw source (escaped via textContent)
+      frame.srcdoc = html;
+      src.textContent = html.trim();
+
+      // Reset to rendered view
+      frame.style.display = 'block';
+      src.style.display = 'none';
+      document.getElementById('toggleSourceBtn').setAttribute('aria-pressed', 'false');
+
+      pane.style.display = '';
+      frame.focus();
+
+      // Accessibility: focus the pane so keyboard users can interact
+      pane.setAttribute('tabindex', '-1');
+      pane.focus();
+    }
+
+    // Close preview and clear iframe for safety
+    function closePreviewPane() {
+      const pane = document.getElementById('previewPane');
+      const frame = document.getElementById('previewFrame');
+      frame.srcdoc = 'about:blank';
+      pane.style.display = 'none';
+    }
+
+    // Toggle between rendered preview and raw HTML source
+    function toggleSourceView() {
+      const frame = document.getElementById('previewFrame');
+      const src = document.getElementById('previewSource');
+      const btn = document.getElementById('toggleSourceBtn');
+      const isRaw = btn.getAttribute('aria-pressed') === 'true';
+      if (isRaw) {
+        // switch back to rendered
+        src.style.display = 'none';
+        frame.style.display = 'block';
+        btn.setAttribute('aria-pressed', 'false');
+        btn.textContent = 'View source';
+      } else {
+        // show raw
+        src.style.display = 'block';
+        frame.style.display = 'none';
+        btn.setAttribute('aria-pressed', 'true');
+        btn.textContent = 'View rendered';
+      }
+    }
+
+    // Copy raw HTML to clipboard
+    async function copySourceToClipboard() {
+      const src = document.getElementById('previewSource');
+      try {
+        await navigator.clipboard.writeText(src.textContent || '');
+        appendLogLine('<div style="color:#bbf7d0;margin-top:6px">Copied preview HTML to clipboard ✅</div>');
+      } catch (err) {
+        appendLogLine(`<div style="color:#fee2e2;margin-top:6px">Copy failed: ${err.message}</div>`);
+      }
+    }
+
+    // Wire persistent preview controls
+    document.getElementById('closePreview').addEventListener('click', closePreviewPane);
+    document.getElementById('toggleSourceBtn').addEventListener('click', toggleSourceView);
+    document.getElementById('copySourceBtn').addEventListener('click', copySourceToClipboard);
+
+    // Close preview on Escape
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') closePreviewPane();
+    });
+
+    // Centralised control for the Send button state and status text
+    function updateSendState() {
+      const validEmail = emailInput.value.trim() !== '' && emailInput.checkValidity();
+      const ready = safety.checked && validEmail;
+      sendAllBtn.disabled = !ready;
+      sendAllBtn.setAttribute('aria-disabled', (!ready).toString());
+      sendAllBtn.style.pointerEvents = ready ? 'auto' : 'none';
+      sendAllBtn.style.zIndex = ready ? '3' : '';
+
+      const status = document.getElementById('sendStatus');
+      if (!safety.checked) {
+        status.textContent = 'You must confirm the safety checkbox to enable sending.';
+      } else if (emailInput.value.trim() === '') {
+        status.textContent = 'Enter a test email address.';
+      } else if (!emailInput.checkValidity()) {
+        status.textContent = 'Please enter a valid email address (e.g. you@example.com).';
+      } else {
+        status.textContent = 'Ready — click "Send All Test Emails" or press Enter.';
+      }
+    }
+
+    safety.addEventListener('change', updateSendState);
+    emailInput.addEventListener('input', updateSendState);
+
+    // Allow Enter to send when focus is on the email input and safety is checked
+    emailInput.addEventListener('keydown', (ev) => {
+      if ((ev.key === 'Enter' || ev.key === 'NumpadEnter') && !sendAllBtn.disabled) {
+        ev.preventDefault();
+        sendAllBtn.click();
+      }
+    });
+
+    clearLog.addEventListener('click', resetLog);
+
+    sendAllBtn.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+      if (!email || !emailInput.checkValidity()) return alert('Enter a valid test email address');
+
+      sendAllBtn.disabled = true;
+      appendLogLine(`<div style="margin-bottom:8px">⏳ Sending test emails to <strong>${email}</strong> — please wait...</div>`);
+
+      try {
+        const res = await fetch('php/sendAllTestEmails.php', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({email})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          appendLogLine(`<div style="color:#fca5a5;margin-top:8px">❌ Server error: ${data.message || res.statusText}</div>`);
+          sendAllBtn.disabled = false;
+          return;
+        }
+
+        appendLogLine(`<div style="color:#bbf7d0;margin-top:6px">✅ Server queued ${data.results.length} test emails — showing results below.</div>`);
+
+        for (const r of data.results) {
+          addRow({template: r.template, recipient: r.recipient, ok: r.ok, detail: r.message, htmlPreview: r.htmlPreview});
+        }
+
+        // Wire preview close button (idempotent)
+        document.getElementById('closePreview').addEventListener('click', () => {
+          const pane = document.getElementById('previewPane');
+          const frame = document.getElementById('previewFrame');
+          frame.srcdoc = 'about:blank';
+          pane.style.display = 'none';
+        });
+
+        appendLogLine('<div style="margin-top:10px;color:#d1fae5">All done (see rows above). Check your inbox or spam folder for delivered test messages.</div>');
+      } catch (err) {
+        appendLogLine(`<div style="color:#fee2e2;margin-top:8px">❌ Network error: ${err.message}</div>`);
+      } finally {
+        sendAllBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

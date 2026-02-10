@@ -11,31 +11,59 @@
     font-size: 0.5rem !important;
     font-family: inherit;
     padding: 1px 2px;
-        let emailResult = null;
-        let cascadeResult = null;
-        try {
-          if (blockDates.length) {
-            emailResult = await adminSendConfirmation(email, date, time, title, name, blockDates);
-          } else {
-            emailResult = await adminSendConfirmation(email, date, time, title, name);
-          }
-        } catch (err) {
-          console.warn('Email send failed, proceeding with cascade delete:', err);
-        }
-        // Always cascade delete booking, slot, mappings, and waitlist
-        try {
-          // Cascade delete bookings/waitlists, then remove session
-          if (blockDates.length) {
-            await removeBlockSession(blockDates[0] ? blockId : null, time, title, blockDates);
-          } else {
-            await removeSingleSession(date, time, title);
-          }
-          console.log('[CASCADE DELETE DEBUG] Cascade delete result:', cascadeResult);
-        } catch (err) {
-          console.error('[CASCADE DELETE DEBUG] Cascade delete error:', err);
-        }
-        showToast('Booking deleted (cascade) even if email failed.', {error: false});
-        await renderAllBookingsTable();
+    text-align: left;
+    vertical-align: middle;
+    /* prefer single-line cells in table mode and avoid mid-word breaks */
+    white-space: nowrap;
+    word-break: normal;
+    overflow: visible;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+  }
+  .admin-table {
+    border-collapse: collapse;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0;
+    background: #fff;
+    box-shadow: none;
+    table-layout: auto !important;
+    display: table !important;
+    font-size: 0.5rem !important;
+  }
+  .admin-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    min-width: 0;
+    max-width: none;
+    white-space: nowrap;
+    word-break: normal;
+    font-size: 0.5rem !important;
+    width: auto;
+    padding: 4px 6px !important;
+  }
+  .admin-table td {
+    font-size: 0.5rem !important;
+    width: auto;
+    padding: 4px 6px !important;
+  }
+  @media (max-width: 768px) {
+    .admin-table, .admin-table th, .admin-table td {
+      padding: 2px 4px;
+    }
+    .admin-table th, .admin-table td {
+      width: auto;
+      max-width: fit-content;
+    }
+  }
+  .admin-table tr {
+    background: #fff;
+    box-shadow: none;
+  }
+  .admin-table tr:hover { background: #f5f5f5; }
+  .admin-table button, .admin-table a {
     background: none;
     border: none;
     color: #0074d9;
@@ -1559,17 +1587,10 @@ async function getEmailsForCustomEmail() {
     // Source emails from Player Profiles (players.json) as requested
     const players = await getPlayerProfiles();
     // players is an object keyed by email -> profile
-    const out = Object.keys(players || {}).map(key => {
-      const p = players[key] || {};
-      // Use p.email as the true email, fallback to key only if missing
-      return {
-        email: p.email || key,
-        name: p.name || p.displayName || p.email || key,
-        bookings: p.bookings || [],
-        waitlist: p.waitlist || [],
-        offers: p.offers || []
-      };
-    }).filter(u => u.email && u.email.includes('@'));
+    const out = Object.keys(players || {}).map(email => {
+      const p = players[email] || {};
+      return { email, name: p.name || p.displayName || email, bookings: p.bookings || [], waitlist: p.waitlist || [], offers: p.offers || [] };
+    });
     return out;
   } catch (err) {
     console.error('Error fetching player profiles for custom email:', err);
@@ -1731,12 +1752,7 @@ function openEditProfileModal(playerId, profile) {
         <label>Age<input type="number" name="age" value="${escapeHtml(profile.age || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <label>Experience<input type="text" name="experience" value="${escapeHtml(profile.experience || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <label>Medical<input type="text" name="medical" value="${escapeHtml(profile.medical || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-        <fieldset class="emergency-contact" style="border:1px solid #eee;padding:8px 8px 4px 8px;border-radius:6px;margin-bottom:8px;">
-          <legend style="font-weight:600;color:#888;font-size:0.95rem;margin-bottom:4px;">Emergency contact</legend>
-          <label>Name<input type="text" name="emergency_name" value="${escapeHtml(profile.emergency?.name || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-          <label>Phone<input type="text" name="emergency_phone" value="${escapeHtml(profile.emergency?.phone || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-          <label>Relationship<input type="text" name="emergency_relationship" value="${escapeHtml(profile.emergency?.relationship || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-        </fieldset>
+        <label>Emergency<input type="text" name="emergency" value="${escapeHtml(profile.emergency || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <div style="display:flex;gap:12px;margin-top:8px;">
           <button type="submit" class="btn" style="background:#2563eb;color:#fff;">Save</button>
           <button type="button" class="btn" id="editProfileCancelBtn" style="background:#888;color:#fff;">Cancel</button>
@@ -1757,18 +1773,6 @@ function openEditProfileModal(playerId, profile) {
     const form = modal.querySelector('#editProfileForm');
     const formData = new FormData(form);
     formData.append('playerId', playerId);
-
-    // Combine emergency fields into a single object and stringify
-    const emergency = {
-      name: form.elements['emergency_name'].value,
-      phone: form.elements['emergency_phone'].value,
-      relationship: form.elements['emergency_relationship'].value
-    };
-    formData.delete('emergency_name');
-    formData.delete('emergency_phone');
-    formData.delete('emergency_relationship');
-    formData.append('emergency', JSON.stringify(emergency));
-
     try {
       const res = await fetch('php/editPlayerProfile.php', {
         method: 'POST',
@@ -1869,6 +1873,67 @@ function ensurePlayerProfilesSection() {
   // Add Session Creation Modal
   const sessionModalHTML = `
     <div id="sessionCreationModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <button id="openCustomEmailModalBtn" style="margin-top:16px;background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:1rem;cursor:pointer;display:block;width:100%;">Custom Email</button>
+      // --- Custom Email Modal ---
+      function openCustomEmailModal() {
+        let modal = document.getElementById('customEmailModal');
+        if (modal) modal.remove();
+        modal = document.createElement('div');
+        modal.id = 'customEmailModal';
+        modal.className = 'pt-modal';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+          <div class="pt-modal-overlay" id="customEmailModalOverlay"></div>
+          <div class="pt-modal-content" role="document" aria-labelledby="customEmailModalTitle" style="max-width: 520px;">
+            <button class="pt-modal-close" id="customEmailModalClose" aria-label="Close dialog">×</button>
+            <h3 id="customEmailModalTitle">Custom Email</h3>
+            <form id="customEmailForm" style="display:flex;flex-direction:column;gap:12px;">
+              <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Message</label>
+              <textarea id="customEmailMessage" placeholder="Write your message here..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;min-height:100px;resize:vertical;"></textarea>
+              <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Send To</label>
+              <select id="customEmailRecipient" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;">
+                <option value="">-- Select a recipient --</option>
+                <option value="all">All Users</option>
+                <option value="saved">Players (from Player Profiles)</option>
+                <option value="new">New Email Address</option>
+              </select>
+              <div id="savedEmailsContainer" style="display:none;">
+                <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Select players (multiple allowed)</label>
+                <select id="customEmailSavedList" multiple size="6" style="width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;font-family:inherit;background:#fff;color:#333;">
+                  <option value="">-- Select players --</option>
+                </select>
+                <div class="small muted" style="margin-top:8px">Tip: hold Ctrl/Cmd to select multiple players, or use Shift for range selection.</div>
+              </div>
+              <div id="newEmailContainer" style="display:none;">
+                <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Email Address</label>
+                <input type="email" id="customEmailNewAddress" placeholder="user@example.com" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;">
+              </div>
+              <div style="display:flex;gap:8px;margin-top:16px;">
+                <button type="submit" id="customEmailSendBtn" style="flex:1;background:#ca8a04;color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:background 0.3s;">Send Email</button>
+                <button type="reset" id="customEmailResetBtn" style="flex:1;background:transparent;color:#ca8a04;padding:12px;border:2px solid #ca8a04;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:all 0.3s;">Clear</button>
+              </div>
+            </form>
+          </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close modal handlers
+        modal.querySelector('#customEmailModalClose').onclick = closeCustomEmailModal;
+        modal.querySelector('#customEmailModalOverlay').onclick = closeCustomEmailModal;
+
+        // Copy all event logic from the existing custom email section
+        // (You can move the JS event handlers for recipient selection, sending, etc. into this modal)
+      }
+
+      function closeCustomEmailModal() {
+        const modal = document.getElementById('customEmailModal');
+        if (modal) modal.remove();
+      }
+      // Attach Custom Email button handler after DOM loads
+      document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('openCustomEmailModalBtn');
+        if (btn) btn.onclick = openCustomEmailModal;
+      });
       <div class="pt-modal-overlay" id="sessionModalOverlay"></div>
       <div class="pt-modal-content" role="document" aria-labelledby="sessionModalTitle" style="max-width: 600px;">
         <button class="pt-modal-close" id="sessionModalClose" aria-label="Close dialog">×</button>
@@ -1880,15 +1945,7 @@ function ensurePlayerProfilesSection() {
             <select id="modalSessionType" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
               <option value="single">Single Session</option>
               <option value="block">Block Session (4-Week Series)</option>
-              <option value="special">Special</option>
             </select>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label for="templateDropdown" style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Templates</label>
-            <select id="templateDropdown" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-              <option value="">-- Select a template --</option>
-            </select>
-            <button id="deleteTemplateBtn" style="margin-top: 6px; background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.95rem; font-weight: 600; display: none;">Delete Template</button>
           </div>
 
           <!-- Single Session Fields -->
@@ -1974,10 +2031,9 @@ function ensurePlayerProfilesSection() {
           </div>
 
         </div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
           <button class="btn" id="sessionModalCreate" style="flex: 1; background: #FF9800; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Create</button>
           <button class="btn" id="sessionModalCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
-          <button class="btn" id="saveAsTemplateBtn" style="flex: 1; background: #2563eb; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Save as Template</button>
         </div>
       </div>
     </div>
@@ -2700,53 +2756,6 @@ function formatTime(hours, minutes) {
   return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}`;
 }
 
-// Modal confirm function (replaces browser confirm for delete operations)
-async function modalConfirm(message) {
-  return new Promise((resolve) => {
-    const modal = document.createElement('div');
-    modal.className = 'pt-modal';
-    modal.id = 'confirmModal_' + Date.now();
-    modal.innerHTML = `
-      <div class="pt-modal-overlay"></div>
-      <div class="pt-modal-content" style="max-width: 400px;">
-        <h3>Confirm Action</h3>
-        <div class="pt-modal-body">${escapeHtml(message)}</div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-          <button class="btn" id="modalConfirmOK" style="flex: 1; background: #ef4444; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Delete</button>
-          <button class="btn" id="modalConfirmCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    
-    const okBtn = modal.querySelector('#modalConfirmOK');
-    const cancelBtn = modal.querySelector('#modalConfirmCancel');
-    
-    const cleanup = () => {
-      modal.classList.remove('open');
-      document.body.style.overflow = '';
-      setTimeout(() => modal.remove(), 300);
-    };
-    
-    okBtn.onclick = () => {
-      cleanup();
-      resolve(true);
-    };
-    
-    cancelBtn.onclick = () => {
-      cleanup();
-      resolve(false);
-    };
-    
-    modal.querySelector('.pt-modal-overlay').onclick = () => {
-      cleanup();
-      resolve(false);
-    };
-  });
-}
-
 // --- Helper: Format date as dd/mm/yy ---
 function formatDateDDMMYY(dateStr) {
   if (!dateStr) return '';
@@ -3068,154 +3077,6 @@ document.getElementById('createBlockSession').onclick=async ()=>{
 // --- Session Creation Modal Handlers ---
 // Wait for DOM to be ready and modal to exist
 setTimeout(() => {
-    // --- Session Templates Logic ---
-    let sessionTemplates = [];
-    let selectedTemplateId = null;
-
-    async function fetchTemplates(type) {
-      let url = 'php/getSessionTemplates.php';
-      if (type) url += '?type=' + encodeURIComponent(type);
-      const res = await fetch(url);
-      sessionTemplates = await res.json();
-      return sessionTemplates;
-    }
-
-    function updateTemplateDropdown(type) {
-      const dropdown = document.getElementById('templateDropdown');
-      dropdown.innerHTML = '<option value="">-- Select a template --</option>';
-      let filtered = sessionTemplates.filter(t => t.type === type);
-      filtered.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.templateId;
-        opt.textContent = t.name + (t.attributes && t.attributes.location ? ' (' + t.attributes.location + ')' : '');
-        dropdown.appendChild(opt);
-      });
-    }
-
-    async function refreshTemplatesUI() {
-      const type = document.getElementById('modalSessionType').value;
-      await fetchTemplates(type);
-      updateTemplateDropdown(type);
-      document.getElementById('deleteTemplateBtn').style.display = 'none';
-      selectedTemplateId = null;
-    }
-
-    document.getElementById('modalSessionType').addEventListener('change', refreshTemplatesUI);
-    document.getElementById('templateDropdown').addEventListener('change', function() {
-      const tid = this.value;
-      selectedTemplateId = tid;
-      const t = sessionTemplates.find(t => t.templateId === tid);
-      if (!t) return;
-      // Auto-fill form fields
-      const f = t.formFields || {};
-      if (t.type === 'single') {
-        document.getElementById('modalSingleFields').style.display = 'block';
-        document.getElementById('modalBlockFields').style.display = 'none';
-        document.getElementById('modalAdminDate').value = f.date || '';
-        document.getElementById('modalSlotTitle').value = f.title || '';
-        document.getElementById('modalNumberOfSpots').value = f.capacity || 1;
-        document.getElementById('modalSessionTypeDetail').value = f.sessionType || 'group';
-        document.getElementById('modalSessionStartTime').value = f.time || '';
-        document.getElementById('modalSessionDuration').value = f.duration || 40;
-        document.getElementById('modalSessionPrice').value = f.price || '';
-        document.getElementById('modalSessionLocation').value = f.location || '';
-      } else if (t.type === 'block') {
-        document.getElementById('modalSingleFields').style.display = 'none';
-        document.getElementById('modalBlockFields').style.display = 'block';
-        document.getElementById('modalBlockTitle').value = f.title || '';
-        document.getElementById('modalBlockFirstDate').value = f.firstDate || '';
-        document.getElementById('modalBlockNumberOfSessions').value = f.numberOfSessions || 4;
-        document.getElementById('modalBlockStartTime').value = f.time || '';
-        document.getElementById('modalBlockDuration').value = f.duration || 40;
-        document.getElementById('modalBlockNumberOfSpots').value = f.capacity || 1;
-        document.getElementById('modalBlockSessionTypeDetail').value = f.sessionType || 'group';
-        document.getElementById('modalBlockPrice').value = f.price || '';
-        document.getElementById('modalBlockLocation').value = f.location || '';
-      }
-      document.getElementById('deleteTemplateBtn').style.display = 'inline-block';
-    });
-
-    document.getElementById('deleteTemplateBtn').addEventListener('click', async function() {
-      if (!selectedTemplateId) return;
-      if (!confirm('Delete this template?')) return;
-      await fetch('php/deleteSessionTemplate.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templateId: selectedTemplateId })
-      });
-      await refreshTemplatesUI();
-      showToast('Template deleted');
-    });
-
-    document.getElementById('saveAsTemplateBtn').addEventListener('click', async function() {
-      const type = document.getElementById('modalSessionType').value;
-      let name = prompt('Template name:');
-      if (!name) return;
-      let attributes = {};
-      let formFields = {};
-      if (type === 'single') {
-        attributes = {
-          sessionType: document.getElementById('modalSessionTypeDetail').value,
-          location: document.getElementById('modalSessionLocation').value,
-          price: document.getElementById('modalSessionPrice').value,
-          capacity: document.getElementById('modalNumberOfSpots').value
-        };
-        formFields = {
-          title: document.getElementById('modalSlotTitle').value,
-          time: document.getElementById('modalSessionStartTime').value,
-          duration: document.getElementById('modalSessionDuration').value,
-          price: document.getElementById('modalSessionPrice').value,
-          location: document.getElementById('modalSessionLocation').value,
-          capacity: document.getElementById('modalNumberOfSpots').value,
-          sessionType: document.getElementById('modalSessionTypeDetail').value
-        };
-      } else if (type === 'block') {
-        attributes = {
-          sessionType: document.getElementById('modalBlockSessionTypeDetail').value,
-          location: document.getElementById('modalBlockLocation').value,
-          price: document.getElementById('modalBlockPrice').value,
-          capacity: document.getElementById('modalBlockNumberOfSpots').value
-        };
-        formFields = {
-          title: document.getElementById('modalBlockTitle').value,
-          firstDate: document.getElementById('modalBlockFirstDate').value,
-          numberOfSessions: document.getElementById('modalBlockNumberOfSessions').value,
-          time: document.getElementById('modalBlockStartTime').value,
-          duration: document.getElementById('modalBlockDuration').value,
-          price: document.getElementById('modalBlockPrice').value,
-          location: document.getElementById('modalBlockLocation').value,
-          capacity: document.getElementById('modalBlockNumberOfSpots').value,
-          sessionType: document.getElementById('modalBlockSessionTypeDetail').value
-        };
-      } else if (type === 'special') {
-        // For special, use single fields as base
-        attributes = {
-          sessionType: document.getElementById('modalSessionTypeDetail').value,
-          location: document.getElementById('modalSessionLocation').value,
-          price: document.getElementById('modalSessionPrice').value,
-          capacity: document.getElementById('modalNumberOfSpots').value
-        };
-        formFields = {
-          title: document.getElementById('modalSlotTitle').value,
-          time: document.getElementById('modalSessionStartTime').value,
-          duration: document.getElementById('modalSessionDuration').value,
-          price: document.getElementById('modalSessionPrice').value,
-          location: document.getElementById('modalSessionLocation').value,
-          capacity: document.getElementById('modalNumberOfSpots').value,
-          sessionType: document.getElementById('modalSessionTypeDetail').value
-        };
-      }
-      await fetch('php/saveSessionTemplate.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, type, attributes, formFields })
-      });
-      await refreshTemplatesUI();
-      showToast('Template saved');
-    });
-
-    // Initial load
-    refreshTemplatesUI();
   const openBtn = document.getElementById('openSessionModal');
   const modalClose = document.getElementById('sessionModalClose');
   const modalOverlay = document.getElementById('sessionModalOverlay');
@@ -3248,7 +3109,6 @@ setTimeout(() => {
     const isSingle = e.target.value === 'single';
     document.getElementById('modalSingleFields').style.display = isSingle ? 'block' : 'none';
     document.getElementById('modalBlockFields').style.display = isSingle ? 'none' : 'block';
-    refreshTemplatesUI();
   };
 
   modalCreate.onclick = async () => {
@@ -3550,42 +3410,24 @@ async function renderAllAvailableSlots(){
     if(dateCompare !== 0) return dateCompare;
     return a.slot.time.localeCompare(b.slot.time);
   });
-
-  // Remove duplicate slot cards by slotKey (prevents duplicate event handlers and emails)
-  const seenSlotKeys = new Set();
-  const uniqueSlotArray = [];
-  slotArray.forEach(({date, slot, isBlock}) => {
-    const slotKey = isBlock
-      ? `BLOCK|${slot.blockId}|${slot.time}|${slot.title}`
-      : `${date}|${slot.time}|${slot.title}`;
-    if (!seenSlotKeys.has(slotKey)) {
-      seenSlotKeys.add(slotKey);
-      uniqueSlotArray.push({date, slot, isBlock});
-    }
-  });
-
-
-  uniqueSlotArray.forEach(({date, slot, isBlock})=>{
+  slotArray.forEach(({date, slot, isBlock})=>{
     // ...existing card rendering code...
     const card=document.createElement('div');
     card.className='available-slot-card';
-
+    
     // Create unique slot key for tracking expanded state
     const slotKey = isBlock 
       ? `BLOCK|${slot.blockId}|${slot.time}|${slot.title}`
       : `${date}|${slot.time}|${slot.title}`;
-
-    // DEBUG: Track slotKey counts
-    window.__slotKeyCounts = window.__slotKeyCounts || {};
-    window.__slotKeyCounts[slotKey] = (window.__slotKeyCounts[slotKey] || 0) + 1;
-    console.log(`[SLOT RENDER] Creating slot: ${slotKey}, count: ${window.__slotKeyCounts[slotKey]}, expandedSlotCards.has(${slotKey}) = ${expandedSlotCards.has(slotKey)}`);
-
+    
     // Add data attributes for state tracking
     if (isBlock) {
       card.setAttribute('data-block-id', slot.blockId);
     }
     card.setAttribute('data-slot-key', slotKey);
-
+    
+    console.log(`[SLOT RENDER] Creating slot: ${slotKey}, expandedSlotCards.has(${slotKey}) = ${expandedSlotCards.has(slotKey)}`);
+    
     // Restore expanded state if this card was previously expanded
     const shouldBeExpanded = expandedSlotCards.has(slotKey);
     if (shouldBeExpanded) {
@@ -3646,95 +3488,39 @@ async function renderAllAvailableSlots(){
         </button>
       `;
       const removeBtn=card.querySelector('.available-slot-remove-btn');
-      console.log('[DELETE BTN] Block session button found:', !!removeBtn);
       if (!removeBtn) return;
-      // DEBUG: Track handler attachment
-      window.__removeBtnCounts = window.__removeBtnCounts || {};
-      window.__removeBtnCounts[slotKey] = (window.__removeBtnCounts[slotKey] || 0) + 1;
-      console.log(`[REMOVE BTN] Attaching handler for slotKey: ${slotKey}, count: ${window.__removeBtnCounts[slotKey]}`);
       removeBtn.addEventListener('click', async (e)=>{
-        console.log('[DELETE BTN] Block session delete clicked!');
         e.stopPropagation();
-        // Fetch emails from bookings.json for this slot
-        let emailsToNotify = [];
-        const bookingsData = await getBookings();
-        let sessionBookings = [];
-        if (Array.isArray(bookingsData[date])) {
-          sessionBookings = bookingsData[date].filter(b => {
-            const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-            if (!match) return false;
-            const bookingTime = match[1].trim();
-            const bookingTitle = match[2].trim();
-            return bookingTime === slot.time && bookingTitle === slot.title;
-          });
-        }
-        // Extract emails from sessionBookings
-        emailsToNotify = sessionBookings.map(b => {
-          const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-          return match ? match[4].trim() : null;
-        }).filter(e => !!e);
-        // Deduplicate emails
-        emailsToNotify = Array.from(new Set(emailsToNotify));
-        if (emailsToNotify.length > 0) {
-          console.log('[DELETE BTN] Emails of booked users (from bookings.json):', emailsToNotify);
-        } else {
-          console.log('[DELETE BTN] No booked users for this session (from bookings.json).');
-        }
-        // Send email to each booked user
-        for (const email of emailsToNotify) {
-          try {
-            // Always use slot.time for slot, and robustly determine date
-            let slotTime = slot.time || '';
-            let dateToSend = '';
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              dateToSend = slot.blockDates[0];
-            } else if (slot.date) {
-              dateToSend = slot.date;
-            } else if (typeof date !== 'undefined' && date) {
-              dateToSend = date;
+        const blockDates = slot.blockDates || [];
+        if(!confirm(`Remove entire 4-week block "${slot.title}" (${blockDates.join(', ')})?`)) return;
+        try {
+          let slotsDataCopy=await getAvailableSlots();
+          const blockId = slot.blockId;
+          let deleted = 0;
+          for(const blockDate of blockDates) {
+            const dateSlots = slotsDataCopy[blockDate];
+            if(dateSlots) {
+              const idx = dateSlots.findIndex(s => s.blockId === blockId && s.time === slot.time);
+              if(idx >= 0) {
+                dateSlots.splice(idx, 1);
+                deleted++;
+                if(dateSlots.length === 0) {
+                  delete slotsDataCopy[blockDate];
+                }
+              }
             }
-            const payload = {
-              email,
-              type: 'session_deleted',
-              title: slot.title,
-              slot: slotTime,
-              location: slot.location || '',
-              date: dateToSend
-            };
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              payload.blockDates = slot.blockDates;
-            }
-            if (!payload.slot || !payload.date) {
-              console.warn(`[DELETE BTN] Skipping email to ${email}: missing slot or date`, payload);
-              continue;
-            }
-            console.log('[DELETE BTN][DEBUG] Payload for', email, payload);
-            const resp = await fetch('php/sendEmail.php', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
-            });
-            let result = null;
-            try {
-              result = await resp.json();
-            } catch (parseErr) {
-              console.warn(`[DELETE BTN] Could not parse response for ${email}:`, parseErr);
-            }
-            if (result && result.success) {
-              console.log(`[DELETE BTN] Email sent to ${email}`);
-            } else {
-              console.warn(`[DELETE BTN] Email FAILED for ${email}:`, result && result.error ? result.error : 'Unknown error');
-            }
-          } catch (err) {
-            console.warn(`[DELETE BTN] Failed to send email to ${email}:`, err);
           }
+          await saveAvailableSlots(slotsDataCopy);
+          
+          // Delete related bookings and waitlist entries
+          await deleteSessionBookingsAndWaitlist(blockDates, slot.time, slot.title, blockId);
+          
+          await renderAllAvailableSlots();
+          showToast(`Block deleted successfully (${deleted} sessions removed)`);
+        } catch(err) {
+          showToast('Error deleting block: ' + err.message, {error: true});
         }
-        // Cascade delete directly, no modal or cancelSession.php
-        if (!await modalConfirm('Remove entire block session? This will delete all bookings and waitlist entries for this block.')) return;
-        await deleteSessionBookingsAndWaitlist(slot.blockDates, slot.time, slot.title, slot.blockId);
-        showToast('Block session deleted (cascade)');
-        await renderAllAvailableSlots();
-      }, { once: true });
+      });
     } else {
       const priceDisplay = slot.price ? `£${typeof slot.price === 'number' ? slot.price.toFixed(2) : slot.price}` : '';
       const locationDisplay = slot.location ? slot.location : '';
@@ -3768,97 +3554,36 @@ async function renderAllAvailableSlots(){
       `;
       const removeBtn=card.querySelector('.available-slot-remove-btn');
       if (!removeBtn) return;
-      // Replace removeBtn with a clone to remove any existing event listeners
-      const newRemoveBtn = removeBtn.cloneNode(true);
-      removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
-      newRemoveBtn.addEventListener('click', async (e)=>{
+      removeBtn.addEventListener('click', async (e)=>{
         e.stopPropagation();
-        // Fetch emails from bookings.json for this slot
-        let emailsToNotify = [];
-        const bookingsData = await getBookings();
-        let sessionBookings = [];
-        if (Array.isArray(bookingsData[date])) {
-          sessionBookings = bookingsData[date].filter(b => {
-            const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-            if (!match) return false;
-            const bookingTime = match[1].trim();
-            const bookingTitle = match[2].trim();
-            return bookingTime === slot.time && bookingTitle === slot.title;
-          });
-        }
-        // Extract emails from sessionBookings
-        emailsToNotify = sessionBookings.map(b => {
-          const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-          return match ? match[4].trim() : null;
-        }).filter(e => !!e);
-        // Deduplicate emails
-        emailsToNotify = Array.from(new Set(emailsToNotify));
-        if (emailsToNotify.length > 0) {
-          console.log('[DELETE BTN] Emails of booked users (from bookings.json):', emailsToNotify);
-        } else {
-          console.log('[DELETE BTN] No booked users for this session (from bookings.json).');
-        }
-        // Send email to each booked user
-        for (const email of emailsToNotify) {
-          try {
-            // Build payload matching backend expectations
-            let slotTime = slot.time || '';
-            let dateToSend = '';
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              dateToSend = slot.blockDates[0];
-            } else if (slot.date) {
-              dateToSend = slot.date;
-            } else if (typeof date !== 'undefined' && date) {
-              dateToSend = date;
-            }
-            const payload = {
-              email,
-              type: 'session_deleted',
-              title: slot.title,
-              slot: slotTime,
-              location: slot.location || '',
-              date: dateToSend
-            };
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              payload.blockDates = slot.blockDates;
-            }
-            if (!payload.slot || !payload.date) {
-              console.warn(`[DELETE BTN] Skipping email to ${email}: missing slot or date`, payload);
-              continue;
-            }
-            console.log('[DELETE BTN][DEBUG] Payload for', email, payload);
-            const resp = await fetch('php/sendEmail.php', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
-            });
-            let result = null;
-            try {
-              result = await resp.json();
-            } catch (parseErr) {
-              console.warn(`[DELETE BTN] Could not parse response for ${email}:`, parseErr);
-            }
-            if (result && result.success) {
-              console.log(`[DELETE BTN] Email sent to ${email}`);
+        if(!confirm(`Remove ${slot.title} at ${slot.time} on ${date}?`)) return;
+        try {
+          let slotsDataCopy=await getAvailableSlots();
+          const dateSlots = slotsDataCopy[date];
+          if(dateSlots) {
+            const idx = dateSlots.findIndex(s => s.time === slot.time && s.title === slot.title && !s.blockId);
+            if(idx >= 0) {
+              dateSlots.splice(idx, 1);
+              if(dateSlots.length === 0) {
+                delete slotsDataCopy[date];
+              }
+              await saveAvailableSlots(slotsDataCopy);
+              
+              // Delete related bookings and waitlist entries
+              await deleteSessionBookingsAndWaitlist([date], slot.time, slot.title, null);
+              
+              await renderAllAvailableSlots();
+              showToast('Slot deleted successfully');
             } else {
-              console.warn(`[DELETE BTN] Email FAILED for ${email}:`, result && result.error ? result.error : 'Unknown error');
+              showToast('Slot not found - unable to delete', {error: true});
             }
-          } catch (err) {
-            console.warn(`[DELETE BTN] Failed to send email to ${email}:`, err);
+          } else {
+            showToast('No slots found for this date', {error: true});
           }
+        } catch(err) {
+          showToast('Error deleting slot: ' + err.message, {error: true});
         }
-        // Cascade delete directly, no modal or cancelSession.php
-        if (slot.blockId) {
-          if (!await modalConfirm('Remove entire block session? This will delete all bookings and waitlist entries for this block.')) return;
-          await deleteSessionBookingsAndWaitlist(slot.blockDates, slot.time, slot.title, slot.blockId);
-          showToast('Block session deleted (cascade)');
-        } else {
-          if (!await modalConfirm('Remove this session? This will delete all bookings and waitlist entries for this session.')) return;
-          await deleteSessionBookingsAndWaitlist([date], slot.time, slot.title, null);
-          showToast('Session deleted (cascade)');
-        }
-        await renderAllAvailableSlots();
-      }, { once: true });
+      });
     }
     
     // CRITICAL FIX: Apply display styles AFTER HTML is set
@@ -3919,142 +3644,142 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
     let bookingsData = await getBookings();
     log('Current bookings data:', bookingsData);
     const deletedBookings = [];
-    const bookingEmails = [];
-
+    const bookingEmails = []; // Track emails for mapping deletion
+    
     for(const date of dates) {
       if(bookingsData[date]) {
         log(`Processing date ${date}, bookings:`, bookingsData[date]);
         const originalLength = bookingsData[date].length;
+        
         bookingsData[date] = bookingsData[date].filter(b => {
+          // Parse the booking string to extract time, title, and email
+          // Format: "time - title (name) (email)"
           const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
           if(!match) {
             log('Could not parse booking:', b);
-            return true;
+            return true; // Keep if can't parse
           }
           const bookingTime = match[1].trim();
           const bookingTitle = match[2].trim();
           const bookingEmail = match[4].trim();
+          
+          // Check if this booking matches the session we're deleting
           const timeMatch = bookingTime === time;
           const titleMatch = bookingTitle === title;
+          
           log(`Checking booking "${b}"`, {bookingTime, bookingTitle, bookingEmail, timeMatch, titleMatch});
+          
           if(timeMatch && titleMatch) {
             log('🔴 DELETING booking:', b);
             deletedBookings.push(b);
             bookingEmails.push(bookingEmail);
-            return false;
+            return false; // Delete it
           }
-          return true;
+          return true; // Keep it
         });
+        
         const removed = originalLength - bookingsData[date].length;
         log(`Date ${date}: removed ${removed} bookings`);
+        
         if(bookingsData[date].length === 0) {
           delete bookingsData[date];
         }
       }
     }
-
+    
     log('💾 Saving updated bookings...');
     await saveBookings(bookingsData);
     log('✅ Bookings saved. Deleted bookings:', deletedBookings.length);
-
-    // Delete session from availableSlots.json
-    let slotsData = await getAvailableSlots();
-    log('Current slots data:', slotsData);
-    let deletedSessions = 0;
-    for(const date of dates) {
-      if(slotsData[date]) {
-        const originalLength = slotsData[date].length;
-        slotsData[date] = slotsData[date].filter(slot => {
-          // For block sessions, match blockId; for single, match time/title
-          if (blockId) {
-            const match = slot.blockId === blockId && slot.time === time && slot.title === title;
-            if (match) log('🔴 DELETING session (block):', slot);
-            return !match;
-          } else {
-            const match = slot.time === time && slot.title === title;
-            if (match) log('🔴 DELETING session (single):', slot);
-            return !match;
-          }
-        });
-        deletedSessions += originalLength - slotsData[date].length;
-        if(slotsData[date].length === 0) delete slotsData[date];
-      }
-    }
-    log('💾 Saving updated slots...');
-    await saveAvailableSlots(slotsData);
-    log('✅ Slots saved. Deleted sessions:', deletedSessions);
-
+    
     // Delete related bookingMappings entries for deleted bookings
     let mappingsData = await getBookingMappings();
     log('Current booking mappings count:', Object.keys(mappingsData).length);
     const deletedMappings = [];
+    
+    // Delete mappings by matching time, title, email, and date(s)
     for(const [bookingId, mapping] of Object.entries(mappingsData)) {
       const mappingTime = mapping.slot || mapping.time;
       const mappingTitle = mapping.title;
       const mappingEmail = mapping.email;
       const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [];
       const dateMatch = dates.some(d => mapping.date === d || mappingDates.includes(d));
+      
+      // Match if time, title, email, and date all match a deleted booking
       const timeMatch = mappingTime === time;
       const titleMatch = mappingTitle === title;
       const emailMatch = bookingEmails.includes(mappingEmail);
+      
       if(timeMatch && titleMatch && emailMatch && dateMatch) {
         log('🔴 DELETING mapping:', bookingId, mapping);
         deletedMappings.push(bookingId);
         delete mappingsData[bookingId];
       }
     }
+    
     log('💾 Saving updated mappings...');
     await saveBookingMappings(mappingsData);
     log('✅ Mappings saved. Deleted mappings:', deletedMappings.length);
-
+    
     // Delete waitlist entries
     let waitlistData = await getWaitlist();
     log('Current waitlist data:', waitlistData);
     const deletedWaitlist = [];
+    
     for(const date of dates) {
       if(waitlistData[date]) {
         log(`Processing waitlist for date ${date}:`, waitlistData[date]);
         const originalLength = waitlistData[date].length;
+        
         waitlistData[date] = waitlistData[date].filter(w => {
           const timeMatch = w.time === time;
           const titleMatch = w.title === title;
+          
+          // For block sessions, also match blockId
+          // For single sessions (blockId is null), match entries with no blockId or null blockId
           let blockMatch;
           if (blockId) {
+            // Deleting a block session - match on blockId
             blockMatch = (w.blockId === blockId);
           } else {
+            // Deleting a single session - match entries without a blockId
             blockMatch = (!w.blockId || w.blockId === null);
           }
+          
           const shouldDelete = timeMatch && titleMatch && blockMatch;
+          
           if(shouldDelete) {
             log('🔴 DELETING waitlist entry:', w);
             deletedWaitlist.push({email: w.email, date, time, title});
           }
+          
           return !shouldDelete;
         });
+        
         const removed = originalLength - waitlistData[date].length;
         log(`Date ${date}: removed ${removed} waitlist entries`);
+        
         if(waitlistData[date].length === 0) {
           delete waitlistData[date];
         }
       }
     }
+    
     log('💾 Saving updated waitlist...');
     await saveWaitlist(waitlistData);
     log('✅ Waitlist saved. Deleted waitlist entries:', deletedWaitlist.length);
-
+    
     log('=== CASCADE DELETE COMPLETE ===');
     log('✅ Summary:', {
       deletedBookings: deletedBookings.length,
       deletedMappings: deletedMappings.length,
       deletedWaitlist: deletedWaitlist.length,
-      deletedSessions,
       dates, time, title, blockId
     });
+    
     return {
       deletedBookings: deletedBookings.length,
       deletedMappings: deletedMappings.length,
-      deletedWaitlist: deletedWaitlist.length,
-      deletedSessions
+      deletedWaitlist: deletedWaitlist.length
     };
   } catch(err) {
     console.log(`%c[CASCADE DELETE ERROR]`, 'background: #f44336; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold;', err);
@@ -4557,11 +4282,8 @@ async function renderAllBookings(){
           }
         }
 
-        console.log('[CASCADE DELETE DEBUG] Cascade delete starting:', {bookingsData, slotsCopy, blockDates, date, time, title, email, name});
         await saveBookings(bookingsData);
-        try { await saveAvailableSlots(slotsCopy); } catch(e) { console.log('[CASCADE DELETE DEBUG] saveAvailableSlots error:', e); }
-        console.log('[CASCADE DELETE DEBUG] Cascade delete finished.');
-        showToast('Booking deleted (cascade) even if email failed.', {error: false});
+        try { await saveAvailableSlots(slotsCopy); } catch(e) { /* non-fatal */ }
         await renderAllBookingsTable();
       };
     });
@@ -4591,57 +4313,11 @@ async function renderAllBookings(){
         const blockDatesStr = btn.getAttribute('data-block-dates') || '';
         const blockDates = blockDatesStr ? blockDatesStr.split(',') : [];
         console.log('renderAllBookingsTable: confirm clicked', { email, date, time, title, name, blockDates });
-        let emailResult = null;
-        try {
-          if (blockDates.length) {
-            emailResult = await adminSendConfirmation(email, date, time, title, name, blockDates);
-          } else {
-            emailResult = await adminSendConfirmation(email, date, time, title, name);
-          }
-        } catch (err) {
-          console.warn('Email send failed, proceeding with cascade delete:', err);
-        }
-        // Always cascade delete booking and slot, even if email send fails
-        let bookingsData = await getBookings();
-        let slotsCopy = await getAvailableSlots();
         if (blockDates.length) {
-          for (const d of blockDates) {
-            if (bookingsData[d]) {
-              bookingsData[d] = bookingsData[d].filter(b => {
-                const parts = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-                const bt = parts ? parts[1] : '';
-                const bt_title = parts ? parts[2] : '';
-                const bt_email = parts ? parts[4] : '';
-                return !(bt === time && bt_title === title && bt_email === email);
-              });
-              if (bookingsData[d].length === 0) delete bookingsData[d];
-            }
-            if (slotsCopy[d]) {
-              slotsCopy[d].forEach(s => {
-                if (s.time === time && s.title === title && Array.isArray(s.bookedUsers)) {
-                  s.bookedUsers = s.bookedUsers.filter(u => u.email !== email);
-                }
-              });
-            }
-          }
+          await adminSendConfirmation(email, date, time, title, name, blockDates);
         } else {
-          if (bookingsData[date]) {
-            bookingsData[date] = bookingsData[date].filter(b => {
-              return !(b.includes(time) && b.includes(title) && b.includes(`(${name})`) && b.includes(`(${email})`));
-            });
-            if (bookingsData[date].length === 0) delete bookingsData[date];
-          }
-          if (slotsCopy[date]) {
-            slotsCopy[date].forEach(s => {
-              if (s.time === time && s.title === title && Array.isArray(s.bookedUsers)) {
-                s.bookedUsers = s.bookedUsers.filter(u => u.email !== email);
-              }
-            });
-          }
+          await adminSendConfirmation(email, date, time, title, name);
         }
-        await saveBookings(bookingsData);
-        try { await saveAvailableSlots(slotsCopy); } catch(e) { /* non-fatal */ }
-        await renderAllBookingsTable();
       };
     });
   }
@@ -4899,18 +4575,7 @@ async function renderAllBookings(){
       const {name, email} = bookingGroup;
       const status = getBookingStatus(email, isBlockSession ? blockDates[0] : date, time, title);
       const isConfirmed = status === 'Confirmed';
-
-      // Get expiryTimestamp from booking mapping
-      let expiryDisplay = '';
-      const mapping = findBookingMapping(email, isBlockSession ? blockDates[0] : date, time, title)?.mapping;
-      if (!isConfirmed && mapping && mapping.expiryTimestamp) {
-        const expiryDate = new Date(mapping.expiryTimestamp * 1000);
-        // Format as YYYY-MM-DD HH:mm
-        const pad = n => n.toString().padStart(2, '0');
-        const formatted = `${expiryDate.getFullYear()}-${pad(expiryDate.getMonth()+1)}-${pad(expiryDate.getDate())} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
-        expiryDisplay = `<span style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:inline-block;vertical-align:middle;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</span>`;
-      }
-
+      
       const bookingCard = document.createElement('div');
       bookingCard.style.cssText = `
         padding: 12px 16px;
@@ -4930,11 +4595,8 @@ async function renderAllBookings(){
               <i class="fas fa-envelope"></i>
               ${email}
             </div>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0; flex-wrap:nowrap;">
-              <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
-                ${status}
-              </div>
-              ${expiryDisplay}
+            <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
+              ${status}
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
@@ -4943,7 +4605,7 @@ async function renderAllBookings(){
           </div>
         </div>
       `;
-
+      
       bookingsContainer.appendChild(bookingCard);
     });
     

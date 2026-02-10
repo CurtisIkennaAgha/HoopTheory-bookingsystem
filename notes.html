@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Player notes — Read only</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Minimal, admin-matching read-only notes view */
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#0f172a;background:#f8fafc;margin:0;padding:24px;}
+    .container{max-width:880px;margin:20px auto;background:#fff;border-radius:12px;padding:20px;border:1px solid rgba(2,6,23,0.04);box-shadow:0 20px 60px rgba(2,6,23,0.06);} 
+    h1{margin:0 0 12px;font-size:1.2rem;display:flex;align-items:center;gap:12px}
+    .meta{color:#6b7280;margin-bottom:12px}
+    .notes-list{display:grid;gap:12px}
+    .note-item{padding:14px;border-radius:10px;background:#fff;border:1px solid rgba(2,6,23,0.04);box-shadow:0 6px 18px rgba(2,6,23,0.03)}
+    .note-meta{display:flex;gap:12px;align-items:center;color:#6b7280;margin-bottom:8px}
+    .note-author{font-weight:700;color:#111827}
+    .note-date{color:#6b7280;font-size:0.9rem}
+    .note-content{color:#111827;white-space:pre-wrap;line-height:1.45}
+    .controls{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+    .btn{background:#111827;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;border:none;cursor:pointer}
+    .muted{color:#6b7280}
+    @media (max-width:640px){ .container{margin:12px;padding:16px} .controls{justify-content:stretch} }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <h1><i class="fas fa-file-alt"></i> Player notes (read-only)</h1>
+    <div class="meta" id="viewerMeta">Loading…</div>
+
+    <div id="notesHolder">
+      <div class="notes-list" id="notesList"></div>
+      <div class="muted" id="notesEmpty" style="padding:12px 0;text-align:center;">&nbsp;</div>
+    </div>
+
+    <div class="controls"><div class="muted">Read-only view — no export or sharing controls available here.</div></div>
+  </div>
+
+  <script>
+  (function(){
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const notesList = document.getElementById('notesList');
+    const notesEmpty = document.getElementById('notesEmpty');
+    const viewerMeta = document.getElementById('viewerMeta');
+    const openJson = document.getElementById('openJson');
+    const copyLink = document.getElementById('copyLink');
+
+    if (!token) {
+      viewerMeta.textContent = 'No token provided. Create a shareable link from the admin panel.';
+      notesEmpty.textContent = '';
+      openJson.disabled = true;
+      copyLink.disabled = true;
+      return;
+    }
+
+    const fetchUrl = 'php/getPlayerNotes.php?token=' + encodeURIComponent(token);
+    openJson.onclick = () => window.open(fetchUrl, '_blank');
+    copyLink.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        copyLink.textContent = 'Copied';
+        setTimeout(()=> copyLink.textContent = 'Copy link', 1800);
+      } catch (e) {
+        alert('Copy failed');
+      }
+    };
+
+    async function load() {
+      notesEmpty.textContent = 'Loading notes…';
+      try {
+        const res = await fetch(fetchUrl);
+        if (!res.ok) throw new Error('Invalid or expired token');
+        const j = await res.json();
+        const notes = j.notes || [];
+        const player = j.player || {};
+        viewerMeta.textContent = `Read-only notes for ${player.name || player.email || ''}`;
+        notesList.innerHTML = '';
+        if (!notes.length) {
+          notesEmpty.textContent = 'No notes available.';
+          return;
+        }
+        notesEmpty.textContent = '';
+        for (const n of notes) {
+          const d = n.date ? new Date(n.date).toLocaleString() : '';
+          const item = document.createElement('div'); item.className = 'note-item';
+          item.innerHTML = `<div class="note-meta"><div class="note-author">${escapeHtml(n.author||'')}</div><div class="note-date">${escapeHtml(d)}</div></div><div class="note-content">${escapeHtml(n.content||'')}</div>`;
+          notesList.appendChild(item);
+        }
+      } catch (err) {
+        notesList.innerHTML = '';
+        notesEmpty.textContent = 'Unable to load notes — token may be invalid or expired.';
+        viewerMeta.textContent = '';
+      }
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
+    load();
+  })();
+  </script>
+  <script src="https://kit.fontawesome.com/yourfontawesomekit.js" crossorigin="anonymous"></script>
+</body>
+</html>
