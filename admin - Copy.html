@@ -1,3 +1,176 @@
+
+
+<!-- (JS code block removed from top of file; should be inside <script> at the end) -->
+<!-- Edit Booking Modal -->
+<div id="editBookingModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:10px; max-width:420px; width:95vw; padding:28px 24px 18px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative;">
+    <button id="closeEditBookingModal" style="position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.5rem; color:#888; cursor:pointer;">&times;</button>
+    <h2 style="margin-top:0; font-size:1.25rem; margin-bottom:18px; text-align:center;">Edit Booking</h2>
+    <form id="editBookingForm" autocomplete="off">
+      <div style="margin-bottom:12px;">
+        <label>Name<br><input type="text" id="editBookingName" name="name" style="width:100%;padding:6px 8px;"></label>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>Email<br><input type="email" id="editBookingEmail" name="email" style="width:100%;padding:6px 8px;"></label>
+      </div>
+      <!-- Only Name, Email, and Status fields remain -->
+      <div style="margin-bottom:12px;">
+        <label>Status<br>
+          <select id="editBookingStatus" name="status" style="width:100%;padding:6px 8px;">
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+          </select>
+        </label>
+      </div>
+      <div style="margin-bottom:18px; text-align:center;">
+        <button type="submit" style="background:#2196F3;color:#fff;padding:8px 24px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ========== ADMIN SETTINGS MODAL (BOOKING EXPIRY CONFIG) ========== 
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-run cleanupExpiredOffers.php to remove expired offers/waitlist entries
+  fetch('php/cleanupExpiredOffers.php', { method: 'GET' })
+    .then(r => r.text())
+    .then(txt => { console.log('CleanupExpiredOffers:', txt); })
+    .catch(err => { console.warn('CleanupExpiredOffers error:', err); });
+  const openSettingsModalBtn = document.getElementById('openSettingsModal');
+  const adminSettingsModal = document.getElementById('adminSettingsModal');
+  const adminSettingsModalOverlay = document.getElementById('adminSettingsModalOverlay');
+  const adminSettingsModalClose = document.getElementById('adminSettingsModalClose');
+  const saveExpiryBtn = document.getElementById('saveExpiryBtn');
+  const cancelExpiryBtn = document.getElementById('cancelExpiryBtn');
+  // Booking expiry fields
+  const expiryHoursInput = document.getElementById('expiryHours');
+  const expiryMinutesInput = document.getElementById('expiryMinutes');
+  const expirySecondsInput = document.getElementById('expirySeconds');
+  const currentExpiryDisplay = document.getElementById('currentExpiryDisplay');
+  // Offer expiry fields
+  const offerExpiryHoursInput = document.getElementById('offerExpiryHours');
+  const offerExpiryMinutesInput = document.getElementById('offerExpiryMinutes');
+  const offerExpirySecondsInput = document.getElementById('offerExpirySeconds');
+  const currentOfferExpiryDisplay = document.getElementById('currentOfferExpiryDisplay');
+  const expirySettingsFeedback = document.getElementById('expirySettingsFeedback');
+
+  function openSettingsModal() {
+    expirySettingsFeedback.textContent = '';
+    // Booking expiry
+    fetch('data/bookingExpiryConfig.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cfg => {
+        let secs = parseInt(cfg.expirySeconds || 0);
+        const h = Math.floor(secs / 3600);
+        secs -= h * 3600;
+        const m = Math.floor(secs / 60);
+        const s = secs - m * 60;
+        expiryHoursInput.value = h;
+        expiryMinutesInput.value = m;
+        expirySecondsInput.value = s;
+        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
+      })
+      .catch(() => {
+        expiryHoursInput.value = 0;
+        expiryMinutesInput.value = 0;
+        expirySecondsInput.value = 0;
+        currentExpiryDisplay.textContent = 'Current expiry: unknown';
+      });
+    // Offer expiry
+    fetch('data/offerExpiryConfig.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cfg => {
+        let secs = parseInt(cfg.expirySeconds || 0);
+        const h = Math.floor(secs / 3600);
+        secs -= h * 3600;
+        const m = Math.floor(secs / 60);
+        const s = secs - m * 60;
+        offerExpiryHoursInput.value = h;
+        offerExpiryMinutesInput.value = m;
+        offerExpirySecondsInput.value = s;
+        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${h}h ${m}m ${s}s`;
+      })
+      .catch(() => {
+        offerExpiryHoursInput.value = 0;
+        offerExpiryMinutesInput.value = 0;
+        offerExpirySecondsInput.value = 0;
+        currentOfferExpiryDisplay.textContent = 'Current offer expiry: unknown';
+      });
+    adminSettingsModal.style.display = 'flex';
+    adminSettingsModal.classList.add('open');
+    document.body.classList.add('modal-open');
+  }
+  function closeSettingsModal() {
+    adminSettingsModal.style.display = 'none';
+    adminSettingsModal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
+  if (openSettingsModalBtn) openSettingsModalBtn.onclick = openSettingsModal;
+  if (adminSettingsModalOverlay) adminSettingsModalOverlay.onclick = closeSettingsModal;
+  if (adminSettingsModalClose) adminSettingsModalClose.onclick = closeSettingsModal;
+  if (cancelExpiryBtn) cancelExpiryBtn.onclick = closeSettingsModal;
+  if (saveExpiryBtn) saveExpiryBtn.onclick = async function() {
+    expirySettingsFeedback.textContent = '';
+    // Booking expiry
+    const h = parseInt(expiryHoursInput.value) || 0;
+    const m = parseInt(expiryMinutesInput.value) || 0;
+    const s = parseInt(expirySecondsInput.value) || 0;
+    const totalSeconds = h * 3600 + m * 60 + s;
+    // Offer expiry
+    const oh = parseInt(offerExpiryHoursInput.value) || 0;
+    const om = parseInt(offerExpiryMinutesInput.value) || 0;
+    const os = parseInt(offerExpirySecondsInput.value) || 0;
+    const offerTotalSeconds = oh * 3600 + om * 60 + os;
+    if (totalSeconds < 10 || offerTotalSeconds < 10) {
+      expirySettingsFeedback.textContent = 'Expiry must be at least 10 seconds for both.';
+      expirySettingsFeedback.style.color = '#ef4444';
+      return;
+    }
+    saveExpiryBtn.disabled = true;
+    saveExpiryBtn.textContent = 'Saving...';
+    try {
+      // Update booking expiry
+      const res = await fetch('php/saveBookingExpiry.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expirySeconds: totalSeconds })
+      });
+      // Update offer expiry
+      const offerRes = await fetch('php/saveOfferExpiry.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expirySeconds: offerTotalSeconds })
+      });
+      // Run cleanup after expiry update
+      await fetch('php/cleanupExpiredOffers.php', { method: 'GET' });
+      const data = await res.json();
+      const offerData = await offerRes.json();
+      if (data.success && offerData.success) {
+        expirySettingsFeedback.textContent = 'Expiry updated for bookings and waitlist offers.';
+        expirySettingsFeedback.style.color = '#22c55e';
+        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
+        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${oh}h ${om} ${os}s`;
+        setTimeout(() => { closeSettingsModal(); }, 1200);
+        if (typeof renderAllBookings === 'function') await renderAllBookings();
+      } else {
+        let msg = 'Failed to update:';
+        if (!data.success) msg += ' bookings (' + (data.error || 'Unknown error') + ')';
+        if (!offerData.success) msg += ' offers (' + (offerData.error || 'Unknown error') + ')';
+        expirySettingsFeedback.textContent = msg;
+        expirySettingsFeedback.style.color = '#ef4444';
+      }
+    } catch (err) {
+      expirySettingsFeedback.textContent = 'Error: ' + err.message;
+      expirySettingsFeedback.style.color = '#ef4444';
+    } finally {
+      saveExpiryBtn.disabled = false;
+      saveExpiryBtn.textContent = 'Save';
+    }
+  };
+});
+</script>
+<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1078,6 +1251,46 @@ input:focus, select:focus, textarea:focus {
   <h1>Admin - Manage Slots & Bookings</h1>
 
   <!-- Summary Bar -->
+      <!-- Settings Button -->
+  <!-- Admin Settings Modal for Expiry Config -->
+  <div id="adminSettingsModal" class="pt-modal" style="display:none;z-index:13000;" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="pt-modal-overlay" id="adminSettingsModalOverlay"></div>
+    <div class="pt-modal-content" role="document" aria-labelledby="adminSettingsModalTitle" style="max-width: 420px;">
+      <button class="pt-modal-close" id="adminSettingsModalClose" aria-label="Close dialog">×</button>
+      <h3 id="adminSettingsModalTitle">Booking Expiry Settings</h3>
+      <div class="pt-modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <label for="expiryHours" style="font-weight:600;">Booking Expiry Time</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="expiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
+            <input type="number" id="expiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
+            <input type="number" id="expirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
+          </div>
+          <div id="currentExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
+        </div>
+        <div>
+          <label for="offerExpiryHours" style="font-weight:600;">Waitlist Offer Expiry Time</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="offerExpiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
+            <input type="number" id="offerExpiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
+            <input type="number" id="offerExpirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
+          </div>
+          <div id="currentOfferExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
+        </div>
+        <div class="pt-actions" style="display:flex;gap:12px;margin-top:8px;">
+          <button class="btn" id="saveExpiryBtn" style="flex:1;background:#6366f1;color:white;">Save</button>
+          <button class="btn" id="cancelExpiryBtn" style="flex:1;background:transparent;color:#666;border:1px solid #ccc;">Cancel</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button id="clearDataBtn" style="width:100%;background:#e74c3c;color:white;padding:12px 0;border:none;border-radius:8px;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fas fa-trash"></i> Clear ALL Data
+          </button>
+          <div style="margin-top:8px;font-size:0.92em;color:#b91c1c;text-align:center;">This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.</div>
+        </div>
+        <div id="expirySettingsFeedback" style="margin-top:8px;font-size:0.95em;"></div>
+      </div>
+    </div>
+  </div>
   <div id="summaryBar" style="margin: 12px 0; padding: clamp(8px, 3vw, 16px); background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 10px); width: 100%; box-sizing: border-box;">
     <!-- Summary Cards -->
     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(4px, 1vw, 8px); width: 100%; box-sizing: border-box;">
@@ -1119,14 +1332,14 @@ input:focus, select:focus, textarea:focus {
         <i class="fas fa-calendar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Sync</span>
       </button>
       
-      <!-- Clear Data Button (smaller, secondary) -->
-      <button id="clearDataBtn" style="padding: 0px 2px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
-        <i class="fas fa-trash" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Clear</span>
-      </button>
       
       <!-- Analytics Button (smaller, secondary) -->
       <button id="analyticsBtn" style="padding: 0px 2px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
         <i class="fas fa-chart-bar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Analytics</span>
+      </button>
+      <!-- Settings Button (styled like others) -->
+      <button id="openSettingsModal" style="padding: 0px 2px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; flex-shrink: 1; line-height: 0.8; height: 18px;">
+        <i class="fas fa-cog" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Settings</span>
       </button>
     </div>
   </div>
@@ -2048,7 +2261,7 @@ async function showPlayerModal(email) {
     rows.push(_buildRow('Playing experience', p.experience || p.playing_experience || '', !p.experience));
     rows.push(_buildRow('Medical information', p.medical || p.medical_information || '', !p.medical));
 
-    const emergency = (p.emergency && (p.emergency.name || p.emergency.phone)) ? `${p.emergency.name || ''}${p.emergency.phone ? ' • ' + p.emergency.phone : ''}` : '';
+    const emergency = (p.emergency && (p.emergency.name || p.emergency.phone)) ? `${p.emergency.name || ''}${p.emergency.phone ? ' &bull; ' + p.emergency.phone : ''}` : '';
     rows.push(_buildRow('Emergency contact', emergency, !(p.emergency && p.emergency.name && p.emergency.phone)));
 
     rows.push(_buildRow('Media consent', p.media_consent ? 'Given' : 'Not given', !p.media_consent));
@@ -2089,7 +2302,7 @@ async function showPlayerModal(email) {
         }
         const latest = notes[0];
         const d = new Date(latest.date || Date.now()).toLocaleString();
-        summaryEl.innerHTML = `${notes.length} note${notes.length>1?'s':''} — <span class="note-author">${escapeHtml(latest.author||'')}</span> • <span class="note-date">${escapeHtml(d)}</span> <button id="playerModalNotesBtnInline3" class="btn" style="margin-left:10px;">View / Add Notes</button>`;
+        summaryEl.innerHTML = `${notes.length} note${notes.length>1?'s':''} &mdash; <span class="note-author">${escapeHtml(latest.author||'')}</span> &bull; <span class="note-date">${escapeHtml(d)}</span> <button id="playerModalNotesBtnInline3" class="btn" style="margin-left:10px;">View / Add Notes</button>`;
         const btn3 = document.getElementById('playerModalNotesBtnInline3');
         btn3?.addEventListener('click', (ev) => { ev.preventDefault(); closePlayerModal(); showPlayerNotesModal(playerEmail, playerName); });
       } catch (err) {
@@ -2779,7 +2992,8 @@ function formatDateForDisplay(dateStr) {
 // Helper: Safely format price (handles both string and number)
 function formatPrice(price) {
   if (!price) return '';
-  return typeof price === 'number' ? `£${price.toFixed(2)}` : `£${price}`;
+  // Use HTML entity for pound sign
+  return typeof price === 'number' ? `&pound;${price.toFixed(2)}` : `&pound;${price}`;
 }
 
 // --- Helper: Send confirmation email and mark booking confirmed (reused by table and card views) ---
@@ -3614,7 +3828,7 @@ async function renderAllAvailableSlots(){
       const blockDates = slot.blockDates || [];
       const priceDisplay = formatPrice(slot.price);
       const locationDisplay = slot.location ? slot.location : '';
-      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' • ' : ''}${locationDisplay}</div>` : '';
+      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
       card.innerHTML=`
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -3625,7 +3839,7 @@ async function renderAllAvailableSlots(){
             <span class="block-session-badge">Block Session</span>
           </div>
           <div class="available-slot-times compact">
-            <div style="font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> • ${slot.time} • <span style="color: #666;">(${booked}/${spots})</span></div>
+            <div style="font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span></div>
           </div>
           <div class="available-slot-times" style="display: none;">
             <div style="font-weight: 600; margin-bottom: 4px;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong></div>
@@ -3641,11 +3855,25 @@ async function renderAllAvailableSlots(){
             </div>
           </div>
         </div>
-        <button class="available-slot-remove-btn" data-block-id="${slot.blockId}" style="background: #FF9800;">
-          <i class="fas fa-times"></i>
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+          <button class="available-slot-edit-btn" style="background: #2196F3; color: #fff; border: none; border-radius: 6px; width: 32px; height: 32px; min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; margin: 0; padding: 0; display: none;">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="available-slot-remove-btn" data-block-id="${slot.blockId}" style="background: #FF9800; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       `;
-      const removeBtn=card.querySelector('.available-slot-remove-btn');
+      const editBtn = card.querySelector('.available-slot-edit-btn');
+      const removeBtn = card.querySelector('.available-slot-remove-btn');
+      // Show/hide edit button based on expanded state, just like delete
+      if (editBtn) {
+        if (card.classList.contains('expanded')) {
+          editBtn.style.display = 'inline-flex';
+        } else {
+          editBtn.style.display = 'none';
+        }
+      }
       console.log('[DELETE BTN] Block session button found:', !!removeBtn);
       if (!removeBtn) return;
       // DEBUG: Track handler attachment
@@ -3736,9 +3964,9 @@ async function renderAllAvailableSlots(){
         await renderAllAvailableSlots();
       }, { once: true });
     } else {
-      const priceDisplay = slot.price ? `£${typeof slot.price === 'number' ? slot.price.toFixed(2) : slot.price}` : '';
+      const priceDisplay = slot.price ? `&pound;${typeof slot.price === 'number' ? slot.price.toFixed(2) : slot.price}` : '';
       const locationDisplay = slot.location ? slot.location : '';
-      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666;">${priceDisplay}${priceDisplay && locationDisplay ? ' • ' : ''}${locationDisplay}</div>` : '';
+      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
       card.innerHTML=`
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -3749,7 +3977,7 @@ async function renderAllAvailableSlots(){
             <span style="display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; background: #E3F2FD; color: #1565C0; white-space: nowrap;">Single</span>
           </div>
           <div class="available-slot-times compact">
-            <strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> • ${slot.time} • <span style="color: #666;">(${booked}/${spots})</span>
+            <strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span>
           </div>
           <div class="available-slot-times" style="display: none;">
             <div style="font-weight: 600; margin-bottom: 4px;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong></div>
@@ -3762,9 +3990,14 @@ async function renderAllAvailableSlots(){
             </div>
           </div>
         </div>
-        <button class="available-slot-remove-btn" data-date="${date}" data-time="${slot.time}">
-          <i class="fas fa-times"></i>
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+          <button class="available-slot-edit-btn" style="background: #2196F3; color: #fff; border: none; border-radius: 6px; width: 32px; height: 32px; min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px; display: ${shouldBeExpanded ? 'inline-flex' : 'none'}; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; margin: 0; padding: 0;">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="available-slot-remove-btn" data-date="${date}" data-time="${slot.time}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       `;
       const removeBtn=card.querySelector('.available-slot-remove-btn');
       if (!removeBtn) return;
@@ -3861,39 +4094,34 @@ async function renderAllAvailableSlots(){
       }, { once: true });
     }
     
-    // CRITICAL FIX: Apply display styles AFTER HTML is set
-    // Wait for next tick to ensure HTML is fully rendered
-    setTimeout(() => {
-      const compactDiv = card.querySelector('.available-slot-times.compact');
-      const expandedDiv = Array.from(card.querySelectorAll('.available-slot-times')).find(d => !d.classList.contains('compact'));
-      const isExpanded = card.classList.contains('expanded');
-      
-      console.log(`[SLOT RENDER] Post-HTML: ${slotKey}, isExpanded=${isExpanded}, compact=${compactDiv?'exists':'missing'}, expanded=${expandedDiv?'exists':'missing'}`);
-      
-      if (compactDiv && expandedDiv) {
-        if (isExpanded) {
-          compactDiv.style.display = 'none';
-          expandedDiv.style.display = '';
-          console.log(`[SLOT RENDER]   -> Set displays for EXPANDED state`);
-        } else {
-          compactDiv.style.display = '';
-          expandedDiv.style.display = 'none';
-          console.log(`[SLOT RENDER]   -> Set displays for COLLAPSED state`);
-        }
+    // Apply display styles for compact/expanded and edit button immediately
+    const compactDiv = card.querySelector('.available-slot-times.compact');
+    const expandedDiv = Array.from(card.querySelectorAll('.available-slot-times')).find(d => !d.classList.contains('compact'));
+    const isExpanded = card.classList.contains('expanded');
+    const editBtn = card.querySelector('.available-slot-edit-btn');
+    if (compactDiv && expandedDiv) {
+      if (isExpanded) {
+        compactDiv.style.display = 'none';
+        expandedDiv.style.display = '';
+        if (editBtn) editBtn.style.display = 'inline-flex';
+      } else {
+        compactDiv.style.display = '';
+        expandedDiv.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'none';
       }
-    }, 0);
+    }
     
     // Add toggle functionality on card click
     card.addEventListener('click', (e) => {
-      // Don't toggle if clicking the delete button
-      if (e.target.closest('.available-slot-remove-btn')) return;
-      
+      // Don't toggle if clicking the delete or edit button
+      if (e.target.closest('.available-slot-remove-btn') || e.target.closest('.available-slot-edit-btn')) return;
       card.classList.toggle('expanded');
       const compactDiv = card.querySelector('.available-slot-times.compact');
       const expandedDiv = Array.from(card.querySelectorAll('.available-slot-times')).find(d => !d.classList.contains('compact'));
+      const editBtn = card.querySelector('.available-slot-edit-btn');
       if (compactDiv) compactDiv.style.display = card.classList.contains('expanded') ? 'none' : '';
       if (expandedDiv) expandedDiv.style.display = card.classList.contains('expanded') ? '' : 'none';
-      
+      if (editBtn) editBtn.style.display = card.classList.contains('expanded') ? 'inline-flex' : 'none';
       // Update tracked state
       if (card.classList.contains('expanded')) {
         expandedSlotCards.add(slotKey);
@@ -4851,7 +5079,7 @@ async function renderAllBookings(){
     const sessionType = slotInfo?.sessionType || 'group';
     const priceDisplay = formatPrice(slotInfo?.price);
     const locationDisplay = slotInfo?.location ? slotInfo.location : '';
-    const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.85rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' • ' : ''}${locationDisplay}</div>` : '';
+    const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.85rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
     const sessionBadge = `<span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-left: 8px; background: ${sessionType==='group'?'#dbeafe':'#fce7f3'}; color: ${sessionType==='group'?'#1e40af':'#be185d'};\">${sessionType}</span>`;
     const blockBadge = slotInfo?.blockId ? '<span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-left: 8px; background: #FFE0B2; color: #E65100;">4-Week Block</span>' : '';
     
@@ -4879,7 +5107,7 @@ async function renderAllBookings(){
             <strong>${title}</strong> ${sessionBadge} ${blockBadge}
           </div>
           <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
-            ${isBlockSession ? `<strong>Dates:</strong> ${blockDates.map(d => formatDateForDisplay(d)).join(', ')}` : `${formatDateForDisplay(date)} • ${time}`}
+            ${isBlockSession ? `<strong>Dates:</strong> ${blockDates.map(d => formatDateForDisplay(d)).join(', ')}` : `${formatDateForDisplay(date)} &bull; ${time}`}
           </div>
           ${priceLocationInfo}
         </div>
@@ -4899,7 +5127,18 @@ async function renderAllBookings(){
       const {name, email} = bookingGroup;
       const status = getBookingStatus(email, isBlockSession ? blockDates[0] : date, time, title);
       const isConfirmed = status === 'Confirmed';
-      
+
+      // Get expiryTimestamp from booking mapping
+      let expiryDisplay = '';
+      const mapping = findBookingMapping(email, isBlockSession ? blockDates[0] : date, time, title)?.mapping;
+      if (!isConfirmed && mapping && mapping.expiryTimestamp) {
+        const expiryDate = new Date(mapping.expiryTimestamp * 1000);
+        // Format as YYYY-MM-DD HH:mm
+        const pad = n => n.toString().padStart(2, '0');
+        const formatted = `${expiryDate.getFullYear()}-${pad(expiryDate.getMonth()+1)}-${pad(expiryDate.getDate())} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
+        expiryDisplay = `<span style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:inline-block;vertical-align:middle;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</span>`;
+      }
+
       const bookingCard = document.createElement('div');
       bookingCard.style.cssText = `
         padding: 12px 16px;
@@ -4919,17 +5158,21 @@ async function renderAllBookings(){
               <i class="fas fa-envelope"></i>
               ${email}
             </div>
-            <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
-              ${status}
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0; flex-wrap:nowrap;">
+              <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
+                ${status}
+              </div>
+              ${expiryDisplay}
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
             <button class="confirm-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 6px 12px; border: none; border-radius: 4px; background: #4CAF50; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Confirm</button>
+            <button class="edit-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 6px 12px; border: none; border-radius: 4px; background: #2196F3; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Edit</button>
             <button class="delete-booking-btn" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 6px 12px; border: none; border-radius: 4px; background: #f44336; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Delete</button>
           </div>
         </div>
       `;
-      
+
       bookingsContainer.appendChild(bookingCard);
     });
     
@@ -4952,6 +5195,33 @@ async function renderAllBookings(){
 
   // Add event listeners for confirm and delete buttons
   allBookingsDiv.querySelectorAll('.confirm-booking-btn').forEach(btn => {
+      // Add event listeners for edit buttons
+      allBookingsDiv.querySelectorAll('.edit-booking-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          // Show the edit modal
+          const modal = document.getElementById('editBookingModal');
+          modal.style.display = 'flex';
+          document.body.classList.add('modal-open');
+
+          // Autofill fields
+          document.getElementById('editBookingName').value = btn.getAttribute('data-name') || '';
+          document.getElementById('editBookingEmail').value = btn.getAttribute('data-email') || '';
+          // Date, Time, and Title fields removed from modal
+          // Set status dropdown to 'confirmed' or 'pending' (lowercase)
+          const statusText = btn.closest('.all-booking-card')?.querySelector('.booking-status-badge')?.textContent?.trim().toLowerCase() || '';
+          if (statusText === 'confirmed' || statusText === 'pending') {
+            document.getElementById('editBookingStatus').value = statusText;
+          } else {
+            document.getElementById('editBookingStatus').value = '';
+          }
+        });
+        // Close modal logic
+        document.getElementById('closeEditBookingModal').onclick = function() {
+          document.getElementById('editBookingModal').style.display = 'none';
+          document.body.classList.remove('modal-open');
+        };
+      });
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const name = btn.getAttribute('data-name');
@@ -4971,7 +5241,8 @@ async function renderAllBookings(){
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (!confirm('Are you sure you want to delete this booking?')) return;
-      
+
+      const name = btn.getAttribute('data-name') || '';
       const email = btn.getAttribute('data-email');
       const date = btn.getAttribute('data-date');
       const time = btn.getAttribute('data-time');
@@ -4979,40 +5250,50 @@ async function renderAllBookings(){
       const isBlock = btn.getAttribute('data-is-block') === 'true';
       const blockDatesStr = btn.getAttribute('data-block-dates') || '';
       const blockDates = blockDatesStr ? blockDatesStr.split(',') : [];
-      
+
+      console.log('[CANCEL BOOKING] Attempting to delete booking:', {
+        name, email, date, time, title, isBlock, blockDatesStr, blockDates
+      });
       try {
         await refreshBookingMappings();
         const mappingFound = findBookingMapping(email, date, time, title);
         const bookingId = mappingFound ? mappingFound.bookingId : '';
-        
+        console.log('[CANCEL BOOKING] Booking mapping found:', mappingFound);
+        console.log('[CANCEL BOOKING] BookingId:', bookingId);
+
         // Use the backend API to delete the booking (handles block sessions properly)
+        const payload = {
+          name,
+          email,
+          date,
+          time,
+          title,
+          isBlock,
+          blockDates,
+          bookingId
+        };
+        console.log('[CANCEL BOOKING] Sending payload to cancelBooking.php:', payload);
         const res = await fetch(PHP_PATH + 'cancelBooking.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: btn.getAttribute('data-name') || '',
-            email: email,
-            date: date,
-            time: time,
-            title: title,
-            isBlock: isBlock,
-            blockDates: blockDates,
-            bookingId: bookingId
-          })
+          body: JSON.stringify(payload)
         });
-        
+
         if (!res.ok) {
-          const errData = await res.json();
+          let errData = null;
+          try { errData = await res.json(); } catch (err) { errData = {}; }
+          console.error('[CANCEL BOOKING] Backend error response:', errData);
           throw new Error(errData.message || 'Failed to delete booking');
         }
-        
-        await res.json();
+
+        const result = await res.json();
+        console.log('[CANCEL BOOKING] Backend success response:', result);
         await refreshBookingMappings();
         await renderAllBookings();
         await updateSummaryBar();
         showToast('Booking deleted successfully');
       } catch (e) {
-        console.error('Delete error:', e);
+        console.error('[CANCEL BOOKING] Delete error:', e);
         showToast('Error deleting booking: ' + e.message, {error: true});
       }
     });
@@ -5257,8 +5538,13 @@ async function renderWaitlist(){
     expandedWaitlistCards.add(key);
   });
 
-  Promise.all([getWaitlist(), getAvailableSlots(), getBookings()])
-    .then(([waitlistData, slotsData, bookingsData]) => {
+  Promise.all([
+    getWaitlist(),
+    getAvailableSlots(),
+    getBookings(),
+    fetch('php/getOffers.php').then(r => r.json())
+  ])
+    .then(([waitlistData, slotsData, bookingsData, offersData]) => {
       try {
         // Build a map of dates with their sessions
         const sessionMap = {}; // {date: {time-title: {count, people: [], blockDates: [], sessionType, blockId}}}
@@ -5419,11 +5705,27 @@ async function renderWaitlist(){
                 const joinDate = new Date(person.joinedAt);
                 if (!isNaN(joinDate.getTime())) joinedDisplay = formatDateForDisplay(person.joinedAt.split(' ')[0]);
               }
+
+              // Find pending offer for this person/session
+              let offerExpiryHtml = '';
+              if (offersData && typeof offersData === 'object') {
+                const offer = Object.values(offersData).find(o =>
+                  o.email === person.email &&
+                  o.title === title &&
+                  o.time === time &&
+                  o.status === 'pending'
+                );
+                if (offer && offer.expiresAt) {
+                  offerExpiryHtml = `<div style="color:#b45309;font-size:0.85em;margin-top:2px;">Offer expires: <b>${escapeHtml(offer.expiresAt)}</b></div>`;
+                }
+              }
+
               infoDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                   <div>
                     <div class="waitlist-person-name">${person.name}</div>
                     <div class="waitlist-person-email">${person.email}</div>
+                    ${offerExpiryHtml}
                   </div>
                   <div style="text-align: right; font-size: 0.85rem; color: #666;">
                     <div style="font-weight: 600; font-size: 0.9rem; color: #2E7D32;">#${positionDisplay}</div>
@@ -5955,44 +6257,6 @@ if (calendarSyncRange) {
   });
 }
 
-// Clear Data button handler
-const clearDataBtn = document.getElementById('clearDataBtn');
-if(clearDataBtn) {
-  clearDataBtn.addEventListener('click', async () => {
-    if(!confirm('Are you sure? This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.')) return;
-    
-    try {
-      // Clear ALL data
-      await saveAvailableSlots({});
-      await saveBookings({});
-      await saveWaitlist({});
-      await saveBookingMappings({});
-      
-      // Clear player profiles
-      const profileRes = await fetch(PHP_PATH + 'savePlayerProfile.php', { 
-        method: 'POST', 
-        headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify({ action: 'clear_all' })
-      });
-      if (!profileRes.ok) throw new Error('Failed to clear player profiles');
-      
-      // Clear players
-      const playersRes = await fetch(PHP_PATH + 'getPlayers.php?action=clear_all', { method: 'GET' });
-      if (!playersRes.ok) throw new Error('Failed to clear players');
-      
-      showToast('All data cleared successfully');
-      
-      // Refresh the display
-      await renderAllAvailableSlots();
-      await renderAllBookings();
-      await renderWaitlist();
-      await updateSummaryBar();
-    } catch(err) {
-      console.error('Error clearing data:', err);
-      showToast('Error clearing data: ' + err.message, {error: true});
-    }
-  });
-}
 
 // Placeholder function for calendar sync selection
 // This will be implemented with actual calendar generation logic later

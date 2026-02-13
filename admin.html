@@ -1,146 +1,3 @@
-</script>
-<script>
-// ========== ADMIN SETTINGS MODAL (BOOKING EXPIRY CONFIG) ========== 
-document.addEventListener('DOMContentLoaded', function() {
-  // Auto-run cleanupExpiredOffers.php to remove expired offers/waitlist entries
-  fetch('php/cleanupExpiredOffers.php', { method: 'GET' })
-    .then(r => r.text())
-    .then(txt => { console.log('CleanupExpiredOffers:', txt); })
-    .catch(err => { console.warn('CleanupExpiredOffers error:', err); });
-  const openSettingsModalBtn = document.getElementById('openSettingsModal');
-  const adminSettingsModal = document.getElementById('adminSettingsModal');
-  const adminSettingsModalOverlay = document.getElementById('adminSettingsModalOverlay');
-  const adminSettingsModalClose = document.getElementById('adminSettingsModalClose');
-  const saveExpiryBtn = document.getElementById('saveExpiryBtn');
-  const cancelExpiryBtn = document.getElementById('cancelExpiryBtn');
-  // Booking expiry fields
-  const expiryHoursInput = document.getElementById('expiryHours');
-  const expiryMinutesInput = document.getElementById('expiryMinutes');
-  const expirySecondsInput = document.getElementById('expirySeconds');
-  const currentExpiryDisplay = document.getElementById('currentExpiryDisplay');
-  // Offer expiry fields
-  const offerExpiryHoursInput = document.getElementById('offerExpiryHours');
-  const offerExpiryMinutesInput = document.getElementById('offerExpiryMinutes');
-  const offerExpirySecondsInput = document.getElementById('offerExpirySeconds');
-  const currentOfferExpiryDisplay = document.getElementById('currentOfferExpiryDisplay');
-  const expirySettingsFeedback = document.getElementById('expirySettingsFeedback');
-
-  function openSettingsModal() {
-    expirySettingsFeedback.textContent = '';
-    // Booking expiry
-    fetch('data/bookingExpiryConfig.json?t=' + Date.now())
-      .then(r => r.json())
-      .then(cfg => {
-        let secs = parseInt(cfg.expirySeconds || 0);
-        const h = Math.floor(secs / 3600);
-        secs -= h * 3600;
-        const m = Math.floor(secs / 60);
-        const s = secs - m * 60;
-        expiryHoursInput.value = h;
-        expiryMinutesInput.value = m;
-        expirySecondsInput.value = s;
-        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
-      })
-      .catch(() => {
-        expiryHoursInput.value = 0;
-        expiryMinutesInput.value = 0;
-        expirySecondsInput.value = 0;
-        currentExpiryDisplay.textContent = 'Current expiry: unknown';
-      });
-    // Offer expiry
-    fetch('data/offerExpiryConfig.json?t=' + Date.now())
-      .then(r => r.json())
-      .then(cfg => {
-        let secs = parseInt(cfg.expirySeconds || 0);
-        const h = Math.floor(secs / 3600);
-        secs -= h * 3600;
-        const m = Math.floor(secs / 60);
-        const s = secs - m * 60;
-        offerExpiryHoursInput.value = h;
-        offerExpiryMinutesInput.value = m;
-        offerExpirySecondsInput.value = s;
-        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${h}h ${m}m ${s}s`;
-      })
-      .catch(() => {
-        offerExpiryHoursInput.value = 0;
-        offerExpiryMinutesInput.value = 0;
-        offerExpirySecondsInput.value = 0;
-        currentOfferExpiryDisplay.textContent = 'Current offer expiry: unknown';
-      });
-    adminSettingsModal.style.display = 'flex';
-    adminSettingsModal.classList.add('open');
-    document.body.classList.add('modal-open');
-  }
-  function closeSettingsModal() {
-    adminSettingsModal.style.display = 'none';
-    adminSettingsModal.classList.remove('open');
-    document.body.classList.remove('modal-open');
-  }
-  if (openSettingsModalBtn) openSettingsModalBtn.onclick = openSettingsModal;
-  if (adminSettingsModalOverlay) adminSettingsModalOverlay.onclick = closeSettingsModal;
-  if (adminSettingsModalClose) adminSettingsModalClose.onclick = closeSettingsModal;
-  if (cancelExpiryBtn) cancelExpiryBtn.onclick = closeSettingsModal;
-  if (saveExpiryBtn) saveExpiryBtn.onclick = async function() {
-    expirySettingsFeedback.textContent = '';
-    // Booking expiry
-    const h = parseInt(expiryHoursInput.value) || 0;
-    const m = parseInt(expiryMinutesInput.value) || 0;
-    const s = parseInt(expirySecondsInput.value) || 0;
-    const totalSeconds = h * 3600 + m * 60 + s;
-    // Offer expiry
-    const oh = parseInt(offerExpiryHoursInput.value) || 0;
-    const om = parseInt(offerExpiryMinutesInput.value) || 0;
-    const os = parseInt(offerExpirySecondsInput.value) || 0;
-    const offerTotalSeconds = oh * 3600 + om * 60 + os;
-    if (totalSeconds < 10 || offerTotalSeconds < 10) {
-      expirySettingsFeedback.textContent = 'Expiry must be at least 10 seconds for both.';
-      expirySettingsFeedback.style.color = '#ef4444';
-      return;
-    }
-    saveExpiryBtn.disabled = true;
-    saveExpiryBtn.textContent = 'Saving...';
-    try {
-      // Update booking expiry
-      const res = await fetch('php/saveBookingExpiry.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expirySeconds: totalSeconds })
-      });
-      // Update offer expiry
-      const offerRes = await fetch('php/saveOfferExpiry.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expirySeconds: offerTotalSeconds })
-      });
-      // Run cleanup after expiry update
-      await fetch('php/cleanupExpiredOffers.php', { method: 'GET' });
-      const data = await res.json();
-      const offerData = await offerRes.json();
-      if (data.success && offerData.success) {
-        expirySettingsFeedback.textContent = 'Expiry updated for bookings and waitlist offers.';
-        expirySettingsFeedback.style.color = '#22c55e';
-        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
-        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${oh}h ${om} ${os}s`;
-        setTimeout(() => { closeSettingsModal(); }, 1200);
-        if (typeof renderAllBookings === 'function') await renderAllBookings();
-      } else {
-        let msg = 'Failed to update:';
-        if (!data.success) msg += ' bookings (' + (data.error || 'Unknown error') + ')';
-        if (!offerData.success) msg += ' offers (' + (offerData.error || 'Unknown error') + ')';
-        expirySettingsFeedback.textContent = msg;
-        expirySettingsFeedback.style.color = '#ef4444';
-      }
-    } catch (err) {
-      expirySettingsFeedback.textContent = 'Error: ' + err.message;
-      expirySettingsFeedback.style.color = '#ef4444';
-    } finally {
-      saveExpiryBtn.disabled = false;
-      saveExpiryBtn.textContent = 'Save';
-    }
-  };
-});
-</script>
-<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,12 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         // Always cascade delete booking, slot, mappings, and waitlist
         try {
-          // Cascade delete bookings/waitlists, then remove session
-          if (blockDates.length) {
-            await removeBlockSession(blockDates[0] ? blockId : null, time, title, blockDates);
-          } else {
-            await removeSingleSession(date, time, title);
-          }
+          cascadeResult = await deleteSessionBookingsAndWaitlist(blockDates.length ? blockDates : [date], time, title, blockDates.length ? (blockDates[0] ? blockDates[0] : null) : null);
           console.log('[CASCADE DELETE DEBUG] Cascade delete result:', cascadeResult);
         } catch (err) {
           console.error('[CASCADE DELETE DEBUG] Cascade delete error:', err);
@@ -1221,46 +1073,6 @@ input:focus, select:focus, textarea:focus {
   <h1>Admin - Manage Slots & Bookings</h1>
 
   <!-- Summary Bar -->
-      <!-- Settings Button -->
-  <!-- Admin Settings Modal for Expiry Config -->
-  <div id="adminSettingsModal" class="pt-modal" style="display:none;z-index:13000;" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="pt-modal-overlay" id="adminSettingsModalOverlay"></div>
-    <div class="pt-modal-content" role="document" aria-labelledby="adminSettingsModalTitle" style="max-width: 420px;">
-      <button class="pt-modal-close" id="adminSettingsModalClose" aria-label="Close dialog">×</button>
-      <h3 id="adminSettingsModalTitle">Booking Expiry Settings</h3>
-      <div class="pt-modal-body" style="display:flex;flex-direction:column;gap:16px;">
-        <div>
-          <label for="expiryHours" style="font-weight:600;">Booking Expiry Time</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-            <input type="number" id="expiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
-            <input type="number" id="expiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
-            <input type="number" id="expirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
-          </div>
-          <div id="currentExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
-        </div>
-        <div>
-          <label for="offerExpiryHours" style="font-weight:600;">Waitlist Offer Expiry Time</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-            <input type="number" id="offerExpiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
-            <input type="number" id="offerExpiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
-            <input type="number" id="offerExpirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
-          </div>
-          <div id="currentOfferExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
-        </div>
-        <div class="pt-actions" style="display:flex;gap:12px;margin-top:8px;">
-          <button class="btn" id="saveExpiryBtn" style="flex:1;background:#6366f1;color:white;">Save</button>
-          <button class="btn" id="cancelExpiryBtn" style="flex:1;background:transparent;color:#666;border:1px solid #ccc;">Cancel</button>
-        </div>
-        <div style="margin-top:16px;">
-          <button id="clearDataBtn" style="width:100%;background:#e74c3c;color:white;padding:12px 0;border:none;border-radius:8px;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;">
-            <i class="fas fa-trash"></i> Clear ALL Data
-          </button>
-          <div style="margin-top:8px;font-size:0.92em;color:#b91c1c;text-align:center;">This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.</div>
-        </div>
-        <div id="expirySettingsFeedback" style="margin-top:8px;font-size:0.95em;"></div>
-      </div>
-    </div>
-  </div>
   <div id="summaryBar" style="margin: 12px 0; padding: clamp(8px, 3vw, 16px); background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 10px); width: 100%; box-sizing: border-box;">
     <!-- Summary Cards -->
     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(4px, 1vw, 8px); width: 100%; box-sizing: border-box;">
@@ -1302,14 +1114,14 @@ input:focus, select:focus, textarea:focus {
         <i class="fas fa-calendar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Sync</span>
       </button>
       
+      <!-- Clear Data Button (smaller, secondary) -->
+      <button id="clearDataBtn" style="padding: 0px 2px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
+        <i class="fas fa-trash" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Clear</span>
+      </button>
       
       <!-- Analytics Button (smaller, secondary) -->
       <button id="analyticsBtn" style="padding: 0px 2px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
         <i class="fas fa-chart-bar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Analytics</span>
-      </button>
-      <!-- Settings Button (styled like others) -->
-      <button id="openSettingsModal" style="padding: 0px 2px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; flex-shrink: 1; line-height: 0.8; height: 18px;">
-        <i class="fas fa-cog" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Settings</span>
       </button>
     </div>
   </div>
@@ -1677,189 +1489,178 @@ async function updateSummaryBar() {
 
 // --- View Mode State ---
 let adminViewMode = localStorage.getItem('adminViewMode') || 'aesthetic';
-const viewModeSwitch = document.getElementById('viewModeSwitch');
-if (adminViewMode === 'table') viewModeSwitch.checked = true;
-viewModeSwitch.addEventListener('change', () => {
-  adminViewMode = viewModeSwitch.checked ? 'table' : 'aesthetic';
-  localStorage.setItem('adminViewMode', adminViewMode);
-  updateTableModeStyle();
-  console.log('viewModeSwitch changed ->', adminViewMode);
-  // Immediately render the appropriate views for the selected mode
-  if (adminViewMode === 'table') {
-    try { if (typeof renderAllBookingsTable === 'function') renderAllBookingsTable(); } catch(e){console.error('renderAllBookingsTable error',e)}
-    try { if (typeof renderAllAvailableSlotsTable === 'function') renderAllAvailableSlotsTable(); } catch(e){console.error('renderAllAvailableSlotsTable error',e)}
-    try { if (typeof renderAllAvailableSlotsTableUltraSimple === 'function') renderAllAvailableSlotsTableUltraSimple(); } catch(e){}
-    try { if (typeof renderWaitlistTableUltraSimple === 'function') renderWaitlistTableUltraSimple(); } catch(e){}
-  } else {
-    // aesthetic mode
-    console.log('switching to aesthetic mode: rendering aesthetic views');
-    try { renderAllBookings(); } catch(e){console.error('renderAllBookings error',e)}
-    try { renderAllAvailableSlots(); } catch(e){console.error('renderAllAvailableSlots error',e)}
-    try { renderWaitlist(); } catch(e){console.error('renderWaitlist error',e)}
-  }
-});
 
-// --- Table Mode CSS Toggle ---
-const tableModeStyle = document.getElementById('tableModeStyle');
-function updateTableModeStyle() {
-  if (adminViewMode === 'table') tableModeStyle.removeAttribute('disabled');
-  else tableModeStyle.setAttribute('disabled', '');
-}
-updateTableModeStyle();
-viewModeSwitch.addEventListener('change', updateTableModeStyle);
+// --- Session Creation Modal Handlers (Refactored & Fixed) ---
+setTimeout(() => {
+  // Get modal and button references
+  const openBtn = document.getElementById('openSessionModal');
+  const modalClose = document.getElementById('sessionModalClose');
+  const modalOverlay = document.getElementById('sessionModalOverlay');
+  const modalCancel = document.getElementById('sessionModalCancel');
+  const modalCreate = document.getElementById('sessionModalCreate');
+  const sessionTypeSelect = document.getElementById('modalSessionType');
 
-console.clear();
-console.log('═══════════════════════════════════════════════════════════');
-console.log('CHECKING CUSTOM EMAIL SECTION');
-console.log('═══════════════════════════════════════════════════════════');
-
-// Check if custom email section exists in DOM
-const customEmailSection = document.getElementById('customEmailSection');
-console.log('✓ customEmailSection element found:', !!customEmailSection);
-
-if (customEmailSection) {
-  console.log('✓ Display style:', customEmailSection.style.display);
-  console.log('✓ Visibility:', customEmailSection.style.visibility);
-  console.log('✓ Is visible:', customEmailSection.offsetParent !== null);
-  console.log('✓ Computed display:', window.getComputedStyle(customEmailSection).display);
-}
-
-// Check form elements
-const customEmailForm = document.getElementById('customEmailForm');
-console.log('✓ customEmailForm found:', !!customEmailForm);
-
-const customEmailMessage = document.getElementById('customEmailMessage');
-console.log('✓ customEmailMessage found:', !!customEmailMessage);
-
-const customEmailRecipient = document.getElementById('customEmailRecipient');
-console.log('✓ customEmailRecipient found:', !!customEmailRecipient);
-
-console.log('═══════════════════════════════════════════════════════════');
-
-// ========== CUSTOM EMAIL FUNCTIONALITY ==========
-async function getEmailsForCustomEmail() {
-  try {
-    // Source emails from Player Profiles (players.json) as requested
-    const players = await getPlayerProfiles();
-    // players is an object keyed by email -> profile
-    const out = Object.keys(players || {}).map(key => {
-      const p = players[key] || {};
-      // Use p.email as the true email, fallback to key only if missing
-      return {
-        email: p.email || key,
-        name: p.name || p.displayName || p.email || key,
-        bookings: p.bookings || [],
-        waitlist: p.waitlist || [],
-        offers: p.offers || []
-      };
-    }).filter(u => u.email && u.email.includes('@'));
-    return out;
-  } catch (err) {
-    console.error('Error fetching player profiles for custom email:', err);
-    return [];
-  }
-}
-
-// ========= Player Profiles (admin) =========
-async function getPlayerProfiles() {
-  try {
-    const res = await fetch(PHP_PATH + 'getPlayers.php?t=' + Date.now());
-    if (!res.ok) throw new Error('Failed to fetch player profiles');
-    return await res.json();
-  } catch (err) {
-    console.error('getPlayerProfiles error:', err);
-    return {};
-  }
-}
-
-async function renderPlayerProfiles() {
-  const container = document.getElementById('playerProfilesContainer');
-  if (!container) return;
-
-  // Show a loading placeholder only on the very first load — do NOT clear the DOM on subsequent polls
-  const showTransientLoading = !lastPlayersSnapshot;
-  if (showTransientLoading) {
-    container.innerHTML = `<div class="empty-profiles" style="display:flex;gap:10px;align-items:center;color:#666;"><i class="fas fa-user"></i> Checking saved profiles ...</div>`;
+  // Ensure all elements exist before attaching handlers
+  if (!openBtn || !modalClose || !modalOverlay || !modalCancel || !modalCreate || !sessionTypeSelect) {
+    console.warn('Session modal elements not found yet, retrying...');
+    return;
   }
 
-  try {
-    const players = await getPlayerProfiles();
-    const keys = Object.keys(players || {});
+  // Open modal handler
+  openBtn.onclick = () => {
+    document.getElementById('sessionCreationModal').classList.add('open');
+    document.body.classList.add('modal-open');
+  };
 
-    // Create a stable, deterministic snapshot for change detection
-    keys.sort();
-    const stableSnapshot = JSON.stringify(keys.map(k => [k, players[k]]));
-    lastPlayersFetchedAt = Date.now();
+  // Close modal handler
+  const closeModal = () => {
+    document.getElementById('sessionCreationModal').classList.remove('open');
+    document.body.classList.remove('modal-open');
+  };
+  modalClose.onclick = closeModal;
+  modalOverlay.onclick = closeModal;
+  modalCancel.onclick = closeModal;
 
-    // If nothing changed since last fetch, do nothing (prevents flicker)
-    if (stableSnapshot === lastPlayersSnapshot) return;
-    lastPlayersSnapshot = stableSnapshot;
+  // Session type switch (single/block)
+  sessionTypeSelect.onchange = (e) => {
+    const isSingle = e.target.value === 'single';
+    document.getElementById('modalSingleFields').style.display = isSingle ? 'block' : 'none';
+    document.getElementById('modalBlockFields').style.display = isSingle ? 'none' : 'block';
+  };
 
-    // Render only when snapshot changed
-    if (!keys.length) {
-      container.innerHTML = `
-        <div class="empty-slots-message">
-          <i class="fas fa-inbox"></i>
-          <p>No player profiles saved</p>
-        </div>`;
-      return;
-    }
+  // Create session handler
+  modalCreate.onclick = async () => {
+    const sessionType = sessionTypeSelect.value;
 
-    const frag = document.createDocumentFragment();
+    if (sessionType === 'single') {
+      // --- Single Session Creation ---
+      const title = document.getElementById('modalSlotTitle').value.trim();
+      const date = document.getElementById('modalAdminDate').value;
+      const spots = parseInt(document.getElementById('modalNumberOfSpots').value) || 1;
+      const type = document.getElementById('modalSessionTypeDetail').value;
+      const startTime = document.getElementById('modalSessionStartTime').value;
+      const duration = parseInt(document.getElementById('modalSessionDuration').value) || 40;
+      const price = parseFloat(document.getElementById('modalSessionPrice').value) || 0;
+      const location = document.getElementById('modalSessionLocation').value.trim() || '';
 
-    // Sort by display name for UX (stable sort using name or email)
-    keys.sort((a,b)=> (players[a].name||a).localeCompare(players[b].name||b));
+      // Validate required fields
+      if (!title) { showToast('Enter slot title', {error: true}); return; }
+      if (!date) { showToast('Select date', {error: true}); return; }
+      if (!startTime) { showToast('Select start time', {error: true}); return; }
 
-    for (const email of keys) {
-      const playerId = email; // Use the key from playerProfiles.json
-      const p = players[playerId] || {};
-      const card = document.createElement('div');
-      card.className = 'profile-card';
-      const displayName = p.name || playerId || '(no name)';
+      const endTime = calculateEndTime(startTime, duration);
+      const slotsData = await getAvailableSlots();
+      slotsData[date] = slotsData[date] || [];
 
-      // Build content without transient 'checking' state to avoid animation/flicker
-      card.innerHTML = `
-        <div style="display:flex;flex-direction:row;align-items:flex-start;gap:16px;width:100%;">
-          <div style="display:flex;flex-direction:column;align-items:flex-start;min-width:0;">
-            <div style="font-size:1.05rem;font-weight:600;color:#222;margin-bottom:2px;">${escapeHtml(displayName)}</div>
-            <div style="font-size:0.92rem;color:#555;margin-bottom:2px;">${escapeHtml(p.email || email)}</div>
-            <a class="profile-json-link" href="${PHP_PATH}getPlayers.php?email=${encodeURIComponent(p.email || email)}" target="_blank" rel="noopener" style="font-size:0.82rem;color:#4b5563;text-decoration:underline;margin-bottom:4px;">View JSON</a>
-          </div>
-          <div style="flex:1;display:flex;justify-content:flex-end;align-items:flex-start;gap:8px;">
-            <button class="edit-profile-btn" style="background:#2563eb;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-weight:600;font-size:0.82rem;min-width:48px;max-width:64px;cursor:pointer;">Edit</button>
-            <button class="delete-profile-btn" style="background:#ef4444;color:#fff;border:none;padding:4px 6px;border-radius:4px;font-weight:600;font-size:0.82rem;min-width:48px;max-width:64px;cursor:pointer;">Delete</button>
-          </div>
-        </div>`;
+      // Check for slot conflict
+      if (slotsData[date].some(s => s.time === startTime)) {
+        showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
+        return;
+      }
 
-      // Open modal on card click (keep raw JSON link available)
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.profile-json-link')) return;
-        e.preventDefault();
-        showPlayerModal(p.email || email);
+      // Add new slot
+      slotsData[date].push({
+        time: startTime,
+        endTime: endTime,
+        duration: duration,
+        title: title,
+        numberOfSpots: spots,
+        sessionType: type,
+        price: price,
+        location: location,
+        bookedUsers: [],
+        blockId: null,
+        blockDates: []
       });
 
-      // Ensure the raw-JSON link does not propagate/cause modal to open
-      card.querySelectorAll('.profile-json-link').forEach(a => a.addEventListener('click', ev => ev.stopPropagation()));
+      await saveAvailableSlots(slotsData);
+      showToast(`Single slot created for ${date} at ${startTime}`);
 
-      // Wire up Delete button
-            // Wire up Edit button
-            const editBtn = card.querySelector('.edit-profile-btn');
-            editBtn.addEventListener('click', (ev) => {
-              ev.stopPropagation();
-              openEditProfileModal(playerId, p);
-            });
-      const deleteBtn = card.querySelector('.delete-profile-btn');
-      deleteBtn.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
-        deleteBtn.disabled = true;
-        deleteBtn.textContent = '...';
-        try {
-          const res = await fetch('php/deletePlayerProfile.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'playerId=' + encodeURIComponent(playerId)
-          });
-          const data = await res.json();
+      // Clear form fields
+      document.getElementById('modalSlotTitle').value = '';
+      document.getElementById('modalAdminDate').value = '';
+      document.getElementById('modalNumberOfSpots').value = '1';
+      document.getElementById('modalSessionTypeDetail').value = 'group';
+      document.getElementById('modalSessionStartTime').value = '';
+      document.getElementById('modalSessionDuration').value = '40';
+      document.getElementById('modalSessionPrice').value = '';
+      document.getElementById('modalSessionLocation').value = '';
+
+      closeModal();
+      renderAllAvailableSlots();
+    } else if (sessionType === 'block') {
+      // --- Block Session Creation ---
+      const blockTitle = document.getElementById('blockTitle').value.trim();
+      const firstDate = document.getElementById('blockFirstDate').value;
+      const numberOfSessions = parseInt(document.getElementById('blockNumberOfSessions').value) || 4;
+      const startTime = document.getElementById('blockStartTime').value;
+      const duration = parseInt(document.getElementById('blockDuration').value) || 40;
+      const numberOfSpots = parseInt(document.getElementById('blockNumberOfSpots').value) || 1;
+      const sessionType = document.getElementById('blockSessionType').value;
+
+      // Validate required fields
+      if (!blockTitle) { showToast('Enter block title', {error: true}); return; }
+      if (!firstDate) { showToast('Select first session date', {error: true}); return; }
+      if (!startTime) { showToast('Select start time', {error: true}); return; }
+      if (numberOfSessions < 1 || numberOfSessions > 12) { showToast('Number of sessions must be between 1 and 12', {error: true}); return; }
+
+      // Generate blockDates (weekly)
+      const blockDates = [];
+      let current = new Date(firstDate);
+      for (let i = 0; i < numberOfSessions; i++) {
+        blockDates.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 7);
+      }
+
+      const blockId = 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      const slotsData = await getAvailableSlots();
+      const endTime = calculateEndTime(startTime, duration);
+
+      // Check for slot conflicts for each date
+      for (const date of blockDates) {
+        slotsData[date] = slotsData[date] || [];
+        if (slotsData[date].some(s => s.time === startTime)) {
+          showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
+          return;
+        }
+      }
+
+      // Add new slots for each date
+      for (const date of blockDates) {
+        slotsData[date].push({
+          time: startTime,
+          endTime: endTime,
+          duration: duration,
+          title: blockTitle,
+          numberOfSpots: numberOfSpots,
+          sessionType: sessionType,
+          price: 0, // No price field in block form per requirements
+          location: '', // No location field in block form per requirements
+          bookedUsers: [],
+          blockId: blockId,
+          blockDates: blockDates
+        });
+      }
+
+      await saveAvailableSlots(slotsData);
+      const lastDate = blockDates[blockDates.length - 1];
+      showToast(`Block session created: ${numberOfSessions} sessions from ${blockDates[0]} to ${lastDate}`);
+
+      // Clear block form fields
+      document.getElementById('blockTitle').value = '';
+      document.getElementById('blockFirstDate').value = '';
+      document.getElementById('blockNumberOfSessions').value = '4';
+      document.getElementById('blockStartTime').value = '';
+      document.getElementById('blockDuration').value = '40';
+      document.getElementById('blockNumberOfSpots').value = '1';
+      document.getElementById('blockSessionType').value = 'group';
+
+      closeModal();
+      renderAllAvailableSlots();
+    }
+  };
+}, 100);
+// (Stray duplicate code removed by AI Copilot)
           if (data.success) {
             card.remove();
             showToast('Profile deleted');
@@ -1914,12 +1715,7 @@ function openEditProfileModal(playerId, profile) {
         <label>Age<input type="number" name="age" value="${escapeHtml(profile.age || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <label>Experience<input type="text" name="experience" value="${escapeHtml(profile.experience || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <label>Medical<input type="text" name="medical" value="${escapeHtml(profile.medical || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-        <fieldset class="emergency-contact" style="border:1px solid #eee;padding:8px 8px 4px 8px;border-radius:6px;margin-bottom:8px;">
-          <legend style="font-weight:600;color:#888;font-size:0.95rem;margin-bottom:4px;">Emergency contact</legend>
-          <label>Name<input type="text" name="emergency_name" value="${escapeHtml(profile.emergency?.name || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-          <label>Phone<input type="text" name="emergency_phone" value="${escapeHtml(profile.emergency?.phone || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-          <label>Relationship<input type="text" name="emergency_relationship" value="${escapeHtml(profile.emergency?.relationship || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-        </fieldset>
+        <label>Emergency<input type="text" name="emergency" value="${escapeHtml(profile.emergency || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <div style="display:flex;gap:12px;margin-top:8px;">
           <button type="submit" class="btn" style="background:#2563eb;color:#fff;">Save</button>
           <button type="button" class="btn" id="editProfileCancelBtn" style="background:#888;color:#fff;">Cancel</button>
@@ -1940,18 +1736,6 @@ function openEditProfileModal(playerId, profile) {
     const form = modal.querySelector('#editProfileForm');
     const formData = new FormData(form);
     formData.append('playerId', playerId);
-
-    // Combine emergency fields into a single object and stringify
-    const emergency = {
-      name: form.elements['emergency_name'].value,
-      phone: form.elements['emergency_phone'].value,
-      relationship: form.elements['emergency_relationship'].value
-    };
-    formData.delete('emergency_name');
-    formData.delete('emergency_phone');
-    formData.delete('emergency_relationship');
-    formData.append('emergency', JSON.stringify(emergency));
-
     try {
       const res = await fetch('php/editPlayerProfile.php', {
         method: 'POST',
@@ -2063,15 +1847,7 @@ function ensurePlayerProfilesSection() {
             <select id="modalSessionType" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
               <option value="single">Single Session</option>
               <option value="block">Block Session (4-Week Series)</option>
-              <option value="special">Special</option>
             </select>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <label for="templateDropdown" style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Templates</label>
-            <select id="templateDropdown" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-              <option value="">-- Select a template --</option>
-            </select>
-            <button id="deleteTemplateBtn" style="margin-top: 6px; background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.95rem; font-weight: 600; display: none;">Delete Template</button>
           </div>
 
           <!-- Single Session Fields -->
@@ -2157,10 +1933,9 @@ function ensurePlayerProfilesSection() {
           </div>
 
         </div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
           <button class="btn" id="sessionModalCreate" style="flex: 1; background: #FF9800; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Create</button>
           <button class="btn" id="sessionModalCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
-          <button class="btn" id="saveAsTemplateBtn" style="flex: 1; background: #2563eb; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Save as Template</button>
         </div>
       </div>
     </div>
@@ -2883,53 +2658,6 @@ function formatTime(hours, minutes) {
   return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}`;
 }
 
-// Modal confirm function (replaces browser confirm for delete operations)
-async function modalConfirm(message) {
-  return new Promise((resolve) => {
-    const modal = document.createElement('div');
-    modal.className = 'pt-modal';
-    modal.id = 'confirmModal_' + Date.now();
-    modal.innerHTML = `
-      <div class="pt-modal-overlay"></div>
-      <div class="pt-modal-content" style="max-width: 400px;">
-        <h3>Confirm Action</h3>
-        <div class="pt-modal-body">${escapeHtml(message)}</div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-          <button class="btn" id="modalConfirmOK" style="flex: 1; background: #ef4444; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Delete</button>
-          <button class="btn" id="modalConfirmCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    
-    const okBtn = modal.querySelector('#modalConfirmOK');
-    const cancelBtn = modal.querySelector('#modalConfirmCancel');
-    
-    const cleanup = () => {
-      modal.classList.remove('open');
-      document.body.style.overflow = '';
-      setTimeout(() => modal.remove(), 300);
-    };
-    
-    okBtn.onclick = () => {
-      cleanup();
-      resolve(true);
-    };
-    
-    cancelBtn.onclick = () => {
-      cleanup();
-      resolve(false);
-    };
-    
-    modal.querySelector('.pt-modal-overlay').onclick = () => {
-      cleanup();
-      resolve(false);
-    };
-  });
-}
-
 // --- Helper: Format date as dd/mm/yy ---
 function formatDateDDMMYY(dateStr) {
   if (!dateStr) return '';
@@ -3251,154 +2979,6 @@ document.getElementById('createBlockSession').onclick=async ()=>{
 // --- Session Creation Modal Handlers ---
 // Wait for DOM to be ready and modal to exist
 setTimeout(() => {
-    // --- Session Templates Logic ---
-    let sessionTemplates = [];
-    let selectedTemplateId = null;
-
-    async function fetchTemplates(type) {
-      let url = 'php/getSessionTemplates.php';
-      if (type) url += '?type=' + encodeURIComponent(type);
-      const res = await fetch(url);
-      sessionTemplates = await res.json();
-      return sessionTemplates;
-    }
-
-    function updateTemplateDropdown(type) {
-      const dropdown = document.getElementById('templateDropdown');
-      dropdown.innerHTML = '<option value="">-- Select a template --</option>';
-      let filtered = sessionTemplates.filter(t => t.type === type);
-      filtered.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.templateId;
-        opt.textContent = t.name + (t.attributes && t.attributes.location ? ' (' + t.attributes.location + ')' : '');
-        dropdown.appendChild(opt);
-      });
-    }
-
-    async function refreshTemplatesUI() {
-      const type = document.getElementById('modalSessionType').value;
-      await fetchTemplates(type);
-      updateTemplateDropdown(type);
-      document.getElementById('deleteTemplateBtn').style.display = 'none';
-      selectedTemplateId = null;
-    }
-
-    document.getElementById('modalSessionType').addEventListener('change', refreshTemplatesUI);
-    document.getElementById('templateDropdown').addEventListener('change', function() {
-      const tid = this.value;
-      selectedTemplateId = tid;
-      const t = sessionTemplates.find(t => t.templateId === tid);
-      if (!t) return;
-      // Auto-fill form fields
-      const f = t.formFields || {};
-      if (t.type === 'single') {
-        document.getElementById('modalSingleFields').style.display = 'block';
-        document.getElementById('modalBlockFields').style.display = 'none';
-        document.getElementById('modalAdminDate').value = f.date || '';
-        document.getElementById('modalSlotTitle').value = f.title || '';
-        document.getElementById('modalNumberOfSpots').value = f.capacity || 1;
-        document.getElementById('modalSessionTypeDetail').value = f.sessionType || 'group';
-        document.getElementById('modalSessionStartTime').value = f.time || '';
-        document.getElementById('modalSessionDuration').value = f.duration || 40;
-        document.getElementById('modalSessionPrice').value = f.price || '';
-        document.getElementById('modalSessionLocation').value = f.location || '';
-      } else if (t.type === 'block') {
-        document.getElementById('modalSingleFields').style.display = 'none';
-        document.getElementById('modalBlockFields').style.display = 'block';
-        document.getElementById('modalBlockTitle').value = f.title || '';
-        document.getElementById('modalBlockFirstDate').value = f.firstDate || '';
-        document.getElementById('modalBlockNumberOfSessions').value = f.numberOfSessions || 4;
-        document.getElementById('modalBlockStartTime').value = f.time || '';
-        document.getElementById('modalBlockDuration').value = f.duration || 40;
-        document.getElementById('modalBlockNumberOfSpots').value = f.capacity || 1;
-        document.getElementById('modalBlockSessionTypeDetail').value = f.sessionType || 'group';
-        document.getElementById('modalBlockPrice').value = f.price || '';
-        document.getElementById('modalBlockLocation').value = f.location || '';
-      }
-      document.getElementById('deleteTemplateBtn').style.display = 'inline-block';
-    });
-
-    document.getElementById('deleteTemplateBtn').addEventListener('click', async function() {
-      if (!selectedTemplateId) return;
-      if (!confirm('Delete this template?')) return;
-      await fetch('php/deleteSessionTemplate.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ templateId: selectedTemplateId })
-      });
-      await refreshTemplatesUI();
-      showToast('Template deleted');
-    });
-
-    document.getElementById('saveAsTemplateBtn').addEventListener('click', async function() {
-      const type = document.getElementById('modalSessionType').value;
-      let name = prompt('Template name:');
-      if (!name) return;
-      let attributes = {};
-      let formFields = {};
-      if (type === 'single') {
-        attributes = {
-          sessionType: document.getElementById('modalSessionTypeDetail').value,
-          location: document.getElementById('modalSessionLocation').value,
-          price: document.getElementById('modalSessionPrice').value,
-          capacity: document.getElementById('modalNumberOfSpots').value
-        };
-        formFields = {
-          title: document.getElementById('modalSlotTitle').value,
-          time: document.getElementById('modalSessionStartTime').value,
-          duration: document.getElementById('modalSessionDuration').value,
-          price: document.getElementById('modalSessionPrice').value,
-          location: document.getElementById('modalSessionLocation').value,
-          capacity: document.getElementById('modalNumberOfSpots').value,
-          sessionType: document.getElementById('modalSessionTypeDetail').value
-        };
-      } else if (type === 'block') {
-        attributes = {
-          sessionType: document.getElementById('modalBlockSessionTypeDetail').value,
-          location: document.getElementById('modalBlockLocation').value,
-          price: document.getElementById('modalBlockPrice').value,
-          capacity: document.getElementById('modalBlockNumberOfSpots').value
-        };
-        formFields = {
-          title: document.getElementById('modalBlockTitle').value,
-          firstDate: document.getElementById('modalBlockFirstDate').value,
-          numberOfSessions: document.getElementById('modalBlockNumberOfSessions').value,
-          time: document.getElementById('modalBlockStartTime').value,
-          duration: document.getElementById('modalBlockDuration').value,
-          price: document.getElementById('modalBlockPrice').value,
-          location: document.getElementById('modalBlockLocation').value,
-          capacity: document.getElementById('modalBlockNumberOfSpots').value,
-          sessionType: document.getElementById('modalBlockSessionTypeDetail').value
-        };
-      } else if (type === 'special') {
-        // For special, use single fields as base
-        attributes = {
-          sessionType: document.getElementById('modalSessionTypeDetail').value,
-          location: document.getElementById('modalSessionLocation').value,
-          price: document.getElementById('modalSessionPrice').value,
-          capacity: document.getElementById('modalNumberOfSpots').value
-        };
-        formFields = {
-          title: document.getElementById('modalSlotTitle').value,
-          time: document.getElementById('modalSessionStartTime').value,
-          duration: document.getElementById('modalSessionDuration').value,
-          price: document.getElementById('modalSessionPrice').value,
-          location: document.getElementById('modalSessionLocation').value,
-          capacity: document.getElementById('modalNumberOfSpots').value,
-          sessionType: document.getElementById('modalSessionTypeDetail').value
-        };
-      }
-      await fetch('php/saveSessionTemplate.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, type, attributes, formFields })
-      });
-      await refreshTemplatesUI();
-      showToast('Template saved');
-    });
-
-    // Initial load
-    refreshTemplatesUI();
   const openBtn = document.getElementById('openSessionModal');
   const modalClose = document.getElementById('sessionModalClose');
   const modalOverlay = document.getElementById('sessionModalOverlay');
@@ -3431,7 +3011,6 @@ setTimeout(() => {
     const isSingle = e.target.value === 'single';
     document.getElementById('modalSingleFields').style.display = isSingle ? 'block' : 'none';
     document.getElementById('modalBlockFields').style.display = isSingle ? 'none' : 'block';
-    refreshTemplatesUI();
   };
 
   modalCreate.onclick = async () => {
@@ -3733,42 +3312,24 @@ async function renderAllAvailableSlots(){
     if(dateCompare !== 0) return dateCompare;
     return a.slot.time.localeCompare(b.slot.time);
   });
-
-  // Remove duplicate slot cards by slotKey (prevents duplicate event handlers and emails)
-  const seenSlotKeys = new Set();
-  const uniqueSlotArray = [];
-  slotArray.forEach(({date, slot, isBlock}) => {
-    const slotKey = isBlock
-      ? `BLOCK|${slot.blockId}|${slot.time}|${slot.title}`
-      : `${date}|${slot.time}|${slot.title}`;
-    if (!seenSlotKeys.has(slotKey)) {
-      seenSlotKeys.add(slotKey);
-      uniqueSlotArray.push({date, slot, isBlock});
-    }
-  });
-
-
-  uniqueSlotArray.forEach(({date, slot, isBlock})=>{
+  slotArray.forEach(({date, slot, isBlock})=>{
     // ...existing card rendering code...
     const card=document.createElement('div');
     card.className='available-slot-card';
-
+    
     // Create unique slot key for tracking expanded state
     const slotKey = isBlock 
       ? `BLOCK|${slot.blockId}|${slot.time}|${slot.title}`
       : `${date}|${slot.time}|${slot.title}`;
-
-    // DEBUG: Track slotKey counts
-    window.__slotKeyCounts = window.__slotKeyCounts || {};
-    window.__slotKeyCounts[slotKey] = (window.__slotKeyCounts[slotKey] || 0) + 1;
-    console.log(`[SLOT RENDER] Creating slot: ${slotKey}, count: ${window.__slotKeyCounts[slotKey]}, expandedSlotCards.has(${slotKey}) = ${expandedSlotCards.has(slotKey)}`);
-
+    
     // Add data attributes for state tracking
     if (isBlock) {
       card.setAttribute('data-block-id', slot.blockId);
     }
     card.setAttribute('data-slot-key', slotKey);
-
+    
+    console.log(`[SLOT RENDER] Creating slot: ${slotKey}, expandedSlotCards.has(${slotKey}) = ${expandedSlotCards.has(slotKey)}`);
+    
     // Restore expanded state if this card was previously expanded
     const shouldBeExpanded = expandedSlotCards.has(slotKey);
     if (shouldBeExpanded) {
@@ -3829,95 +3390,18 @@ async function renderAllAvailableSlots(){
         </button>
       `;
       const removeBtn=card.querySelector('.available-slot-remove-btn');
-      console.log('[DELETE BTN] Block session button found:', !!removeBtn);
       if (!removeBtn) return;
-      // DEBUG: Track handler attachment
-      window.__removeBtnCounts = window.__removeBtnCounts || {};
-      window.__removeBtnCounts[slotKey] = (window.__removeBtnCounts[slotKey] || 0) + 1;
-      console.log(`[REMOVE BTN] Attaching handler for slotKey: ${slotKey}, count: ${window.__removeBtnCounts[slotKey]}`);
       removeBtn.addEventListener('click', async (e)=>{
-        console.log('[DELETE BTN] Block session delete clicked!');
         e.stopPropagation();
-        // Fetch emails from bookings.json for this slot
-        let emailsToNotify = [];
-        const bookingsData = await getBookings();
-        let sessionBookings = [];
-        if (Array.isArray(bookingsData[date])) {
-          sessionBookings = bookingsData[date].filter(b => {
-            const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-            if (!match) return false;
-            const bookingTime = match[1].trim();
-            const bookingTitle = match[2].trim();
-            return bookingTime === slot.time && bookingTitle === slot.title;
-          });
-        }
-        // Extract emails from sessionBookings
-        emailsToNotify = sessionBookings.map(b => {
-          const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-          return match ? match[4].trim() : null;
-        }).filter(e => !!e);
-        // Deduplicate emails
-        emailsToNotify = Array.from(new Set(emailsToNotify));
-        if (emailsToNotify.length > 0) {
-          console.log('[DELETE BTN] Emails of booked users (from bookings.json):', emailsToNotify);
-        } else {
-          console.log('[DELETE BTN] No booked users for this session (from bookings.json).');
-        }
-        // Send email to each booked user
-        for (const email of emailsToNotify) {
-          try {
-            // Always use slot.time for slot, and robustly determine date
-            let slotTime = slot.time || '';
-            let dateToSend = '';
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              dateToSend = slot.blockDates[0];
-            } else if (slot.date) {
-              dateToSend = slot.date;
-            } else if (typeof date !== 'undefined' && date) {
-              dateToSend = date;
-            }
-            const payload = {
-              email,
-              type: 'session_deleted',
-              title: slot.title,
-              slot: slotTime,
-              location: slot.location || '',
-              date: dateToSend
-            };
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              payload.blockDates = slot.blockDates;
-            }
-            if (!payload.slot || !payload.date) {
-              console.warn(`[DELETE BTN] Skipping email to ${email}: missing slot or date`, payload);
-              continue;
-            }
-            console.log('[DELETE BTN][DEBUG] Payload for', email, payload);
-            const resp = await fetch('php/sendEmail.php', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
-            });
-            let result = null;
-            try {
-              result = await resp.json();
-            } catch (parseErr) {
-              console.warn(`[DELETE BTN] Could not parse response for ${email}:`, parseErr);
-            }
-            if (result && result.success) {
-              console.log(`[DELETE BTN] Email sent to ${email}`);
-            } else {
-              console.warn(`[DELETE BTN] Email FAILED for ${email}:`, result && result.error ? result.error : 'Unknown error');
-            }
-          } catch (err) {
-            console.warn(`[DELETE BTN] Failed to send email to ${email}:`, err);
-          }
-        }
-        // Cascade delete directly, no modal or cancelSession.php
-        if (!await modalConfirm('Remove entire block session? This will delete all bookings and waitlist entries for this block.')) return;
-        await deleteSessionBookingsAndWaitlist(slot.blockDates, slot.time, slot.title, slot.blockId);
-        showToast('Block session deleted (cascade)');
-        await renderAllAvailableSlots();
-      }, { once: true });
+        openSessionCancellationModal({
+          sessionId: `${slot.blockId}_${slot.time}_${slot.title}`,
+          sessionTitle: slot.title,
+          sessionTime: slot.time,
+          sessionDate: slot.blockDates[0],
+          blockDates: slot.blockDates,
+          blockId: slot.blockId
+        });
+      });
     } else {
       const priceDisplay = slot.price ? `£${typeof slot.price === 'number' ? slot.price.toFixed(2) : slot.price}` : '';
       const locationDisplay = slot.location ? slot.location : '';
@@ -3951,97 +3435,148 @@ async function renderAllAvailableSlots(){
       `;
       const removeBtn=card.querySelector('.available-slot-remove-btn');
       if (!removeBtn) return;
-      // Replace removeBtn with a clone to remove any existing event listeners
-      const newRemoveBtn = removeBtn.cloneNode(true);
-      removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
-      newRemoveBtn.addEventListener('click', async (e)=>{
+      removeBtn.addEventListener('click', async (e)=>{
         e.stopPropagation();
-        // Fetch emails from bookings.json for this slot
-        let emailsToNotify = [];
-        const bookingsData = await getBookings();
-        let sessionBookings = [];
-        if (Array.isArray(bookingsData[date])) {
-          sessionBookings = bookingsData[date].filter(b => {
-            const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-            if (!match) return false;
-            const bookingTime = match[1].trim();
-            const bookingTitle = match[2].trim();
-            return bookingTime === slot.time && bookingTitle === slot.title;
-          });
-        }
-        // Extract emails from sessionBookings
-        emailsToNotify = sessionBookings.map(b => {
-          const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-          return match ? match[4].trim() : null;
-        }).filter(e => !!e);
-        // Deduplicate emails
-        emailsToNotify = Array.from(new Set(emailsToNotify));
-        if (emailsToNotify.length > 0) {
-          console.log('[DELETE BTN] Emails of booked users (from bookings.json):', emailsToNotify);
-        } else {
-          console.log('[DELETE BTN] No booked users for this session (from bookings.json).');
-        }
-        // Send email to each booked user
-        for (const email of emailsToNotify) {
-          try {
-            // Build payload matching backend expectations
-            let slotTime = slot.time || '';
-            let dateToSend = '';
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              dateToSend = slot.blockDates[0];
-            } else if (slot.date) {
-              dateToSend = slot.date;
-            } else if (typeof date !== 'undefined' && date) {
-              dateToSend = date;
-            }
-            const payload = {
-              email,
-              type: 'session_deleted',
-              title: slot.title,
-              slot: slotTime,
-              location: slot.location || '',
-              date: dateToSend
-            };
-            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
-              payload.blockDates = slot.blockDates;
-            }
-            if (!payload.slot || !payload.date) {
-              console.warn(`[DELETE BTN] Skipping email to ${email}: missing slot or date`, payload);
-              continue;
-            }
-            console.log('[DELETE BTN][DEBUG] Payload for', email, payload);
-            const resp = await fetch('php/sendEmail.php', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
+        openSessionCancellationModal({
+          sessionId: `${date}_${slot.time}_${slot.title}`,
+          sessionTitle: slot.title,
+          sessionTime: slot.time,
+          sessionDate: date
+        });
+      });
+    // --- Session Cancellation Modal ---
+    let sessionCancellationModal = null;
+    function openSessionCancellationModal({sessionId, sessionTitle, sessionTime, sessionDate, blockDates, blockId}) {
+      if (!sessionCancellationModal) {
+        sessionCancellationModal = document.createElement('div');
+        sessionCancellationModal.className = 'pt-modal';
+        sessionCancellationModal.id = 'sessionCancellationModal';
+        sessionCancellationModal.innerHTML = `
+          <div class="pt-modal-overlay"></div>
+          <div class="pt-modal-content" style="max-width: 420px;">
+            <button class="pt-modal-close" aria-label="Close">&times;</button>
+            <h3>Session Cancellation</h3>
+            <div class="pt-modal-body">
+              <div style="margin-bottom: 8px; color: #374151; font-size: 0.98rem;">
+                A cancellation email will be sent to all players booked on this session.<br>
+                <span style="color:#888;font-size:0.92em;">Session: <b>${escapeHtml(sessionTitle)}</b> &mdash; ${escapeHtml(sessionDate)} ${escapeHtml(sessionTime)}</span>
+                ${blockDates && blockDates.length > 1 ? `<div style='margin-top:6px;font-size:0.92em;color:#888;'>Block Dates: ${blockDates.map(d=>escapeHtml(d)).join(', ')}</div>` : ''}
+              </div>
+              <label for="sessionCancelExtraMsg" style="font-size: 0.92rem; color: #374151; font-weight: 600;">Optional extra message to include in the cancellation email</label>
+              <textarea id="sessionCancelExtraMsg" placeholder="Optional extra message to include in the cancellation email" style="width:100%;min-height:80px;padding:12px;border-radius:8px;border:1px solid #d1d5db;background:#fff;font-size:1rem;font-family:inherit;resize:vertical;margin-bottom:8px;"></textarea>
+              <div class="pt-actions" style="margin-top: 10px;">
+                <button class="btn btn-cancel-session-modal" style="background:#374151;color:#fff;">Cancel</button>
+                <button class="btn btn-confirm-session-cancel" style="background:#ef4444;color:#fff;">Confirm Cancellation</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(sessionCancellationModal);
+      }
+      sessionCancellationModal.classList.add('open');
+      document.body.classList.add('modal-open');
+      // Close modal handler
+      sessionCancellationModal.querySelector('.pt-modal-close').onclick = closeSessionCancellationModal;
+      sessionCancellationModal.querySelector('.btn-cancel-session-modal').onclick = closeSessionCancellationModal;
+      // Confirm handler
+      const confirmBtn = sessionCancellationModal.querySelector('.btn-confirm-session-cancel');
+      confirmBtn.onclick = async function() {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Cancelling...';
+        const extraMsg = sessionCancellationModal.querySelector('#sessionCancelExtraMsg').value;
+        try {
+          // Debug: fetch and log session extraction sources
+          const slotsData = await getAvailableSlots();
+          const bookingsData = await getBookings();
+          const bookingMappingsData = await (await fetch('data/bookingMappings.json')).json();
+          let bookedUsers = [];
+          const date = sessionId.split('_')[0];
+          const time = sessionId.split('_')[1];
+          const title = sessionId.split('_')[2];
+          console.log('[Session Cancel DEBUG] availableSlots.json:', slotsData[date]);
+          console.log('[Session Cancel DEBUG] bookings.json:', bookingsData[date]);
+          console.log('[Session Cancel DEBUG] bookingMappings.json:', bookingMappingsData);
+          // Try availableSlots
+          if (slotsData[date]) {
+            slotsData[date].forEach(slot => {
+              if (slot.time === time && slot.title === title && slot.bookedUsers && slot.bookedUsers.length > 0) {
+                bookedUsers = slot.bookedUsers;
+              }
             });
-            let result = null;
-            try {
-              result = await resp.json();
-            } catch (parseErr) {
-              console.warn(`[DELETE BTN] Could not parse response for ${email}:`, parseErr);
-            }
-            if (result && result.success) {
-              console.log(`[DELETE BTN] Email sent to ${email}`);
-            } else {
-              console.warn(`[DELETE BTN] Email FAILED for ${email}:`, result && result.error ? result.error : 'Unknown error');
-            }
-          } catch (err) {
-            console.warn(`[DELETE BTN] Failed to send email to ${email}:`, err);
           }
+          // Try bookings.json if empty
+          if (bookedUsers.length === 0 && bookingsData[date]) {
+            bookingsData[date].forEach(b => {
+              const m = b.match(/^([0-9]{2}:[0-9]{2}) - ([^\(]+) \(([^\)]+)\) \(([^\)]+)\)$/);
+              if (m && m[1] === time && m[2].trim() === title) {
+                bookedUsers.push({name: m[3], email: m[4]});
+              }
+            });
+          }
+          // Try bookingMappings.json if still empty
+          if (bookedUsers.length === 0) {
+            Object.values(bookingMappingsData).forEach(mapping => {
+              if (mapping.slot === time && mapping.title === title && mapping.date === date && mapping.email) {
+                bookedUsers.push({name: mapping.name || '', email: mapping.email});
+              }
+            });
+          }
+          console.log('[Session Cancel DEBUG] bookedUsers extracted:', bookedUsers);
+          // Call backend cancellation endpoint
+          const payload = {
+            sessionId,
+            extraMessage: extraMsg,
+            blockDates,
+            blockId,
+            bookedUsers // Pass bookedUsers to backend
+          };
+          console.log('[Session Cancel] Sending payload:', payload);
+          const res = await fetch('php/cancelSession.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          console.log('[Session Cancel] Response:', res);
+          let data = null;
+          try {
+            data = await res.json();
+            console.log('[Session Cancel] Response JSON:', data);
+          } catch (err) {
+            console.error('[Session Cancel Exception] JSON parse failed:', err);
+          }
+          // Always run cascade delete regardless of backend response
+          try {
+            const cascadeResult = await deleteSessionBookingsAndWaitlist(blockDates && blockDates.length ? blockDates : [date], time, title, blockId);
+            console.log('[CASCADE DELETE DEBUG] Cascade delete result:', cascadeResult);
+            showToast('Booking deleted (cascade) even if email failed.', {error: false});
+            closeSessionCancellationModal();
+            await renderAllAvailableSlots();
+          } catch (err) {
+            console.error('[CASCADE DELETE DEBUG] Cascade delete error:', err);
+            showToast('Cascade delete failed: ' + err.message, {error:true});
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Cancellation';
+          }
+        } catch (err) {
+          console.error('[Session Cancel Exception]', err);
+          showToast('Failed to cancel session or send emails. Please try again.', {error:true});
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirm Cancellation';
         }
-        // Cascade delete directly, no modal or cancelSession.php
-        if (slot.blockId) {
-          if (!await modalConfirm('Remove entire block session? This will delete all bookings and waitlist entries for this block.')) return;
-          await deleteSessionBookingsAndWaitlist(slot.blockDates, slot.time, slot.title, slot.blockId);
-          showToast('Block session deleted (cascade)');
-        } else {
-          if (!await modalConfirm('Remove this session? This will delete all bookings and waitlist entries for this session.')) return;
-          await deleteSessionBookingsAndWaitlist([date], slot.time, slot.title, null);
-          showToast('Session deleted (cascade)');
-        }
-        await renderAllAvailableSlots();
-      }, { once: true });
+      };
+    }
+
+    function closeSessionCancellationModal() {
+      if (sessionCancellationModal) {
+        sessionCancellationModal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+        // Reset textarea and button
+        sessionCancellationModal.querySelector('#sessionCancelExtraMsg').value = '';
+        const confirmBtn = sessionCancellationModal.querySelector('.btn-confirm-session-cancel');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Cancellation';
+      }
+    }
     }
     
     // CRITICAL FIX: Apply display styles AFTER HTML is set
@@ -4243,6 +3778,7 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
     console.log(`%c[CASCADE DELETE ERROR]`, 'background: #f44336; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold;', err);
     throw err;
   }
+}
 }
 
 // --- Table Mode: Remove block session ---
@@ -5082,18 +4618,7 @@ async function renderAllBookings(){
       const {name, email} = bookingGroup;
       const status = getBookingStatus(email, isBlockSession ? blockDates[0] : date, time, title);
       const isConfirmed = status === 'Confirmed';
-
-      // Get expiryTimestamp from booking mapping
-      let expiryDisplay = '';
-      const mapping = findBookingMapping(email, isBlockSession ? blockDates[0] : date, time, title)?.mapping;
-      if (!isConfirmed && mapping && mapping.expiryTimestamp) {
-        const expiryDate = new Date(mapping.expiryTimestamp * 1000);
-        // Format as YYYY-MM-DD HH:mm
-        const pad = n => n.toString().padStart(2, '0');
-        const formatted = `${expiryDate.getFullYear()}-${pad(expiryDate.getMonth()+1)}-${pad(expiryDate.getDate())} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
-        expiryDisplay = `<span style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:inline-block;vertical-align:middle;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</span>`;
-      }
-
+      
       const bookingCard = document.createElement('div');
       bookingCard.style.cssText = `
         padding: 12px 16px;
@@ -5113,11 +4638,8 @@ async function renderAllBookings(){
               <i class="fas fa-envelope"></i>
               ${email}
             </div>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0; flex-wrap:nowrap;">
-              <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
-                ${status}
-              </div>
-              ${expiryDisplay}
+            <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
+              ${status}
             </div>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
@@ -5126,7 +4648,7 @@ async function renderAllBookings(){
           </div>
         </div>
       `;
-
+      
       bookingsContainer.appendChild(bookingCard);
     });
     
@@ -5454,13 +4976,8 @@ async function renderWaitlist(){
     expandedWaitlistCards.add(key);
   });
 
-  Promise.all([
-    getWaitlist(),
-    getAvailableSlots(),
-    getBookings(),
-    fetch('php/getOffers.php').then(r => r.json())
-  ])
-    .then(([waitlistData, slotsData, bookingsData, offersData]) => {
+  Promise.all([getWaitlist(), getAvailableSlots(), getBookings()])
+    .then(([waitlistData, slotsData, bookingsData]) => {
       try {
         // Build a map of dates with their sessions
         const sessionMap = {}; // {date: {time-title: {count, people: [], blockDates: [], sessionType, blockId}}}
@@ -5621,27 +5138,11 @@ async function renderWaitlist(){
                 const joinDate = new Date(person.joinedAt);
                 if (!isNaN(joinDate.getTime())) joinedDisplay = formatDateForDisplay(person.joinedAt.split(' ')[0]);
               }
-
-              // Find pending offer for this person/session
-              let offerExpiryHtml = '';
-              if (offersData && typeof offersData === 'object') {
-                const offer = Object.values(offersData).find(o =>
-                  o.email === person.email &&
-                  o.title === title &&
-                  o.time === time &&
-                  o.status === 'pending'
-                );
-                if (offer && offer.expiresAt) {
-                  offerExpiryHtml = `<div style="color:#b45309;font-size:0.85em;margin-top:2px;">Offer expires: <b>${escapeHtml(offer.expiresAt)}</b></div>`;
-                }
-              }
-
               infoDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                   <div>
                     <div class="waitlist-person-name">${person.name}</div>
                     <div class="waitlist-person-email">${person.email}</div>
-                    ${offerExpiryHtml}
                   </div>
                   <div style="text-align: right; font-size: 0.85rem; color: #666;">
                     <div style="font-weight: 600; font-size: 0.9rem; color: #2E7D32;">#${positionDisplay}</div>
@@ -6173,6 +5674,44 @@ if (calendarSyncRange) {
   });
 }
 
+// Clear Data button handler
+const clearDataBtn = document.getElementById('clearDataBtn');
+if(clearDataBtn) {
+  clearDataBtn.addEventListener('click', async () => {
+    if(!confirm('Are you sure? This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.')) return;
+    
+    try {
+      // Clear ALL data
+      await saveAvailableSlots({});
+      await saveBookings({});
+      await saveWaitlist({});
+      await saveBookingMappings({});
+      
+      // Clear player profiles
+      const profileRes = await fetch(PHP_PATH + 'savePlayerProfile.php', { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({ action: 'clear_all' })
+      });
+      if (!profileRes.ok) throw new Error('Failed to clear player profiles');
+      
+      // Clear players
+      const playersRes = await fetch(PHP_PATH + 'getPlayers.php?action=clear_all', { method: 'GET' });
+      if (!playersRes.ok) throw new Error('Failed to clear players');
+      
+      showToast('All data cleared successfully');
+      
+      // Refresh the display
+      await renderAllAvailableSlots();
+      await renderAllBookings();
+      await renderWaitlist();
+      await updateSummaryBar();
+    } catch(err) {
+      console.error('Error clearing data:', err);
+      showToast('Error clearing data: ' + err.message, {error: true});
+    }
+  });
+}
 
 // Placeholder function for calendar sync selection
 // This will be implemented with actual calendar generation logic later

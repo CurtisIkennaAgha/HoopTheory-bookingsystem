@@ -1,3 +1,258 @@
+/* Red outline for fully booked block/session details */
+.fully-booked-outline {
+  border: 2.5px solid #ef4444 !important;
+  box-shadow: 0 0 0 2px #ef444433 !important;
+  border-radius: 10px !important;
+}
+.slot-title, .block-confirmation .slot-title {
+  line-height: 1.08;
+  margin-bottom: 0.5px;
+}
+.slot-meta, .block-confirmation .slot-meta {
+  line-height: 1.08;
+  margin-top: 1px;
+  margin-bottom: 0.5px;
+}
+.slot-extra, .block-confirmation .slot-extra {
+  line-height: 1.08;
+  margin-top: 1px;
+  margin-bottom: 0.5px;
+}
+.block-info, .block-confirmation .block-info {
+  gap: 1px !important;
+}
+.slot-header, .block-confirmation .slot-header {
+  margin-bottom: 0.5px;
+}
+.slot-card-inner, .block-confirmation .slot-card-inner {
+  padding: 1px 0 !important;
+}
+.block-confirmation .location-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.block-confirmation .slot-extra {
+  flex-direction: row !important;
+  gap: 10px !important;
+}
+/* Ensure block session details card matches session card layout exactly */
+.block-confirmation .slot-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 auto;
+  width: max-content;
+  min-width: 100%;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+.block-confirmation .slot-header {
+  width: 100%;
+  text-align: left;
+  align-items: flex-start !important;
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+}
+.block-confirmation .slot-meta {
+  width: 100%;
+  text-align: left;
+  align-items: flex-start !important;
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+}
+.block-confirmation .slot-extra {
+  width: 100%;
+  text-align: left;
+  align-items: center !important;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+.block-confirmation .slot-title-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 1.5em;
+  margin: 0;
+}
+.block-confirmation .slot-title {
+  font-size:1.09rem;
+  font-weight:900;
+  color:#0f172a;
+  display: block;
+  padding-right: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.block-confirmation .pill.spots-pill {
+  background: #e8fef4;
+  color: #065f46;
+  border: 1px solid #bbf7d0;
+  min-width: 110px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: right;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  z-index: 1;
+}
+/* Make block-confirmation details card visually match session card */
+.block-confirmation .slot-card-inner {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 auto;
+  width: max-content;
+  min-width: 100%;
+  font-size: 1.12em;
+}
+.block-confirmation .block-info {
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.block-confirmation .slot-header {
+  width: 100%;
+  text-align: left;
+  align-items: flex-start !important;
+  display: flex;
+  flex-direction: row;
+}
+.block-confirmation .slot-title-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 1.5em;
+  margin: 0;
+}
+.block-confirmation .slot-title {
+  font-size:1.09rem;
+  font-weight:900;
+  color:#0f172a;
+  display: block;
+  padding-right: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.price-row {
+  margin-left: -10px;
+}
+
+.location-row {
+  gap: 16px !important;
+}
+/* --- Session Card Price/Location Vertical Stacking --- */
+.slot-extra {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px;
+}
+
+
+.price-row,
+.location-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-icon {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.icon,
+.icon--location {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  display: block;
+}
+.icon--price {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  object-fit: contain;
+  vertical-align: middle;
+}
+/* Flex row for title and spots pill */
+.slot-title-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 1.5em;
+  margin: 0;
+}
+.slot-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 auto;
+  width: max-content;
+  min-width: 100%;
+  font-size: 1.12em;
+}
+  width: 23px !important;
+  height: 23px !important;
+  object-fit: contain;
+  vertical-align: middle;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+}
+/* Lowercase superscript for availability header date */
+.available-title sup {
+  font-size: 0.8em; /* 20% smaller than parent for ordinal suffix */
+  vertical-align: super;
+  text-transform: lowercase;
+  font-variant: none;
+  letter-spacing: 0;
+}
 /* Ensure placeholder text is always greyed out and visible */
 input::placeholder {
   color: #888 !important;
@@ -145,6 +400,7 @@ button:disabled {
   font-size: clamp(1rem, 3vw, 1.2rem);
 }
 
+
 .month-nav span {
   cursor: pointer;
   padding: 8px 12px;
@@ -153,16 +409,30 @@ button:disabled {
   user-select: none;
 }
 
-.month-nav span:hover {
-  background: #f0f0f0;
-  transform: scale(1.15);
+.month-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  background: none;
+  transition: transform 0.18s;
 }
-
-.month-nav span:active {
-  transform: scale(0.95);
+.month-arrow svg {
+  display: block;
 }
-
-#monthYear {
+.month-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  width: 63px;
+  height: 63px;
+  background: none;
+}
   min-width: 180px;
   text-align: center;
 }
@@ -1279,17 +1549,17 @@ body.modal-open-payment {
   width: 100%; /* fill the grid column */
   max-width: 100%;
   box-sizing: border-box;
-  padding: clamp(12px, 2.6vw, 16px);
-  border-radius: 14px;
+  padding: clamp(13.44px, 2.91vw, 17.92px); /* 12% increase */
+  border-radius: 15.68px;
   border: 1px solid rgba(16,24,40,0.06);
   text-align: left;
   cursor: pointer;
   background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-  min-height: var(--slot-min-height, 120px); /* allow cards to grow as needed to avoid clipping */
+  min-height: calc(var(--slot-min-height, 120px) * 1.12); /* allow cards to grow as needed to avoid clipping */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: stretch;
+  align-items: center;
   position: relative;
   overflow: visible; /* allow content like payment info to be visible */
   transition: transform .18s ease, box-shadow .18s ease;
@@ -1328,6 +1598,7 @@ body.modal-open-payment {
 .meta-icon { display:inline-flex; align-items:center; gap:8px; color:#475569; }
 .icon { width: 18px; height:18px; }
 .price-text, .location-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.location-text { font-size: 0.85em; }
 
 
 /* Ensure grid items stretch to match heights */
@@ -1343,11 +1614,15 @@ body.modal-open-payment {
 
 /* Clamp titles to two lines to avoid overflow while keeping uniform height */
 .slot-title {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  font-size:1.09rem;
+  font-weight:900;
+  color:#0f172a;
+  display: block;
+  padding-right: 130px; /* 110px pill + 8px gap + ~12px buffer */
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .slot-meta, .slot-extra { word-break: break-word; }
@@ -1359,14 +1634,13 @@ body.modal-open-payment {
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:12px;
+  gap:13.44px;
 }
 
-.slot-title { font-weight:700; font-size:1rem; color:#0f172a; }
-.slot-meta { font-size:0.9rem; color:#6b7280; margin-top:8px; }
-.slot-extra { font-size:0.9rem; color:#475569; margin-top:10px; }
+.slot-title { font-size:1.09rem; font-weight:900; color:#0f172a; }
+.slot-meta { font-size:1.008rem; color:#6b7280; margin-top:8.96px; }
+.slot-extra { font-size:1.008rem; color:#475569; margin-top:11.2px; }
 .slot-actions { display:flex; align-items:center; gap:8px; }
-
 .badge { background:#111827; color:#fff; padding:6px 8px; border-radius:8px; font-size:0.75rem; font-weight:700; }
 
 .pill { display:inline-block; padding:6px 10px; border-radius:999px; font-size:0.82rem; font-weight:700; }
@@ -1375,21 +1649,23 @@ body.modal-open-payment {
 
 /* Spots-left pill (used next to session titles) */
 .pill.spots-pill { 
-  background: #e8fef4; 
-  color: #065f46; 
-  border: 1px solid #bbf7d0; 
-  margin-left: 8px; 
-  font-weight: 700; 
-  padding: 6px 10px; 
-  border-radius: 999px; 
+  background: #e8fef4;
+  color: #065f46;
+  border: 1px solid #bbf7d0;
+  min-width: 110px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
   font-size: 0.82rem;
   white-space: nowrap;
   display: inline-block;
-}
-
-.pill.spots-pill.block-first {
-  background: #e8fef4;
-  border-color: #bbf7d0;
+  text-align: right;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  z-index: 1;
 }
 
 .pill.spots-pill.block-subsequent {
@@ -1398,7 +1674,14 @@ body.modal-open-payment {
 }
 
 /* Selectable circle indicator (bottom-right of slot card) */
-.slot-card { position: relative; padding-bottom: 28px; }
+.slot-card {
+  position: relative;
+  padding-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 .select-indicator{position:absolute;right:12px;bottom:10px;width:18px;height:18px;border-radius:50%;border:2px solid rgba(15,23,42,0.12);background:transparent;box-shadow:0 6px 14px rgba(2,6,23,0.03);transition:all .16s ease;cursor:pointer;display:inline-block}
 .select-indicator:focus{outline:3px solid rgba(16,185,129,0.12);outline-offset:4px}
 .slot-card.selected .select-indicator{background:#10b981;border-color:#10b981;transform:scale(1.05);box-shadow:0 8px 24px rgba(16,185,129,0.14)}
@@ -1501,7 +1784,7 @@ body.modal-open-payment {
 
 .available-title {
   margin: 0 0 10px;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: #0f172a;
   font-weight: 500;
   font-family: 'Florida Project One', Inter, sans-serif;
@@ -1552,16 +1835,34 @@ body.modal-open-payment {
 .meta-icon {
   display:inline-flex;
   align-items:center;
-  gap:8px;
+  gap:2px;
   color: #475569;
   opacity: 0.95;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100vw;
+  flex-wrap: nowrap;
 }
 
 .icon {
   width: 18px;
   height: 18px;
-  display:block;
+  display: inline-block;
   flex: 0 0 18px;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.price-text {
+  vertical-align: middle;
 }
 
 .sep {
@@ -1571,10 +1872,36 @@ body.modal-open-payment {
 
 .price-text, .location-text { display:inline-block; vertical-align:middle; color:#475569; font-weight:600; }
 
-.slot-extra { display:flex; gap:12px; align-items:center; justify-content:flex-start; flex-wrap:wrap; }
+.slot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 18px 18px 14px 18px;
+  margin-bottom: 18px;
+  transition: box-shadow 0.2s;
+  /* Remove align-items: center; so children are not centered */
+}
 
-/* Block cards use the same sizing as single cards (full width); left accent indicates block */
-.slot-card[data-block-id] {
+.slot-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: auto;
+  margin-right: auto;
+  width: max-content;
+  max-width: 100%;
+}
+
+.slot-header, .slot-meta, .slot-extra {
+  width: 100%;
+  text-align: left;
+  align-items: flex-start !important;
+  display: flex;
+  flex-direction: row;
+}
   width: 100%;
   max-width: 100%;
   margin: 0;
@@ -1590,7 +1917,7 @@ body.modal-open-payment {
 .block-card .block-info { padding: 10px 12px; display:flex; flex-direction:column; justify-content:center; gap:6px; height:100%; }
 
 /* Clamp multi-line titles to two lines */
-.slot-title { display:flex; align-items:center; gap:10px; }
+
  .title-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
  .pill.session-type { margin-left: 6px; }
 

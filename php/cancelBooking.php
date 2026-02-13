@@ -173,7 +173,58 @@ try {
     file_put_contents($slotsFile, json_encode($slots, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
   }
   
-  echo json_encode(['status' => 'ok', 'message' => 'Booking cancelled successfully'], JSON_UNESCAPED_SLASHES);
+  // Send cancellation email to user
+  // Use HTTP URL for sendEmail.php as in other scripts
+  $sendEmailUrl = 'https://hooptheory.co.uk/php/sendEmail.php';
+  $emailPayload = [
+    'email' => $email,
+    'slot' => $time,
+    'date' => $date,
+    'title' => $title,
+    'name' => $name,
+    'blockDates' => $blockDates,
+    'type' => 'booking_cancellation',
+    'bookingId' => $bookingId
+  ];
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $sendEmailUrl);
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailPayload));
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+  curl_setopt($ch, CURLOPT_HEADER, true); // Get headers + body
+  $emailResponse = curl_exec($ch);
+  $emailErr = curl_error($ch);
+  $emailInfo = curl_getinfo($ch);
+  $httpCode = $emailInfo['http_code'] ?? null;
+  $headerSize = $emailInfo['header_size'] ?? 0;
+  $emailHeaders = substr($emailResponse, 0, $headerSize);
+  $emailBody = substr($emailResponse, $headerSize);
+  curl_close($ch);
+  error_log('CancelBooking: sendEmail.php HTTP code: ' . print_r($httpCode, true));
+  error_log('CancelBooking: sendEmail.php headers: ' . print_r($emailHeaders, true));
+  error_log('CancelBooking: sendEmail.php body: ' . print_r($emailBody, true));
+  if ($emailErr) {
+    error_log('CancelBooking: sendEmail.php CURL error: ' . $emailErr);
+  }
+
+  $emailResultDecoded = null;
+  if ($emailBody) {
+    $emailResultDecoded = json_decode($emailBody, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+      error_log('CancelBooking: sendEmail.php JSON decode error: ' . json_last_error_msg());
+    }
+  }
+
+  echo json_encode([
+    'status' => 'ok',
+    'message' => 'Booking cancelled successfully',
+    'emailResult' => $emailResultDecoded,
+    'emailHttpCode' => $httpCode,
+    'emailCurlError' => $emailErr,
+    'emailHeaders' => $emailHeaders,
+    'emailBody' => $emailBody
+  ], JSON_UNESCAPED_SLASHES);
   
 } catch (Exception $e) {
   error_log('Cancel booking error: ' . $e->getMessage());

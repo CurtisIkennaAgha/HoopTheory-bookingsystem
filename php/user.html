@@ -951,7 +951,15 @@ function showBookingForm(isFullyBooked) {
   const regHostWaitlist = document.getElementById('playerRegistrationHostWaitlist');
   const blockCheckbox = document.getElementById('blockCheckbox');
   const titleEl = document.getElementById('playerRegistrationTitle');
-  
+
+  // Null checks for all required elements
+  if (!bookingForm || !waitlistForm || !waitlistNote) {
+    console.error('showBookingForm: Required form element(s) missing:', {
+      bookingForm, waitlistForm, waitlistNote, waitlistConfirm, regForm, regHostBooking, regHostWaitlist, blockCheckbox, titleEl
+    });
+    return;
+  }
+
   // If no session selected (both false/undefined), hide both forms
   if (isFullyBooked === null || isFullyBooked === undefined) {
     bookingForm.classList.add('hidden');
@@ -963,7 +971,7 @@ function showBookingForm(isFullyBooked) {
     if (waitlistConfirm) waitlistConfirm.checked = false;
     return;
   }
-  
+
   if (isFullyBooked) {
     // Ensure the normal booking form is hidden (both class and inline styles)
     bookingForm.classList.add('hidden');

@@ -1785,7 +1785,7 @@ function openEditProfileModal(playerId, profile) {
         await renderPlayerProfiles();
       } else {
         showToast('Save failed: ' + (data.error || 'Unknown error'), {error:true});
-      }
+      // ...existing code...
     } catch (err) {
       showToast('Save failed: ' + err.message, {error:true});
     }
@@ -1874,55 +1874,55 @@ function ensurePlayerProfilesSection() {
   const sessionModalHTML = `
     <div id="sessionCreationModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
         <button id="openCustomEmailModalBtn" style="margin-top:16px;background:#2563eb;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:1rem;cursor:pointer;display:block;width:100%;">Custom Email</button>
-      // --- Custom Email Modal ---
-      function openCustomEmailModal() {
-        let modal = document.getElementById('customEmailModal');
-        if (modal) modal.remove();
-        modal = document.createElement('div');
-        modal.id = 'customEmailModal';
-        modal.className = 'pt-modal';
-        modal.style.display = 'block';
-        modal.innerHTML = `
-          <div class="pt-modal-overlay" id="customEmailModalOverlay"></div>
-          <div class="pt-modal-content" role="document" aria-labelledby="customEmailModalTitle" style="max-width: 520px;">
-            <button class="pt-modal-close" id="customEmailModalClose" aria-label="Close dialog">×</button>
-            <h3 id="customEmailModalTitle">Custom Email</h3>
-            <form id="customEmailForm" style="display:flex;flex-direction:column;gap:12px;">
-              <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Message</label>
-              <textarea id="customEmailMessage" placeholder="Write your message here..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;min-height:100px;resize:vertical;"></textarea>
-              <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Send To</label>
-              <select id="customEmailRecipient" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;">
-                <option value="">-- Select a recipient --</option>
-                <option value="all">All Users</option>
-                <option value="saved">Players (from Player Profiles)</option>
-                <option value="new">New Email Address</option>
-              </select>
-              <div id="savedEmailsContainer" style="display:none;">
-                <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Select players (multiple allowed)</label>
-                <select id="customEmailSavedList" multiple size="6" style="width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;font-family:inherit;background:#fff;color:#333;">
-                  <option value="">-- Select players --</option>
-                </select>
-                <div class="small muted" style="margin-top:8px">Tip: hold Ctrl/Cmd to select multiple players, or use Shift for range selection.</div>
-              </div>
-              <div id="newEmailContainer" style="display:none;">
-                <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Email Address</label>
-                <input type="email" id="customEmailNewAddress" placeholder="user@example.com" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;">
-              </div>
-              <div style="display:flex;gap:8px;margin-top:16px;">
-                <button type="submit" id="customEmailSendBtn" style="flex:1;background:#ca8a04;color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:background 0.3s;">Send Email</button>
-                <button type="reset" id="customEmailResetBtn" style="flex:1;background:transparent;color:#ca8a04;padding:12px;border:2px solid #ca8a04;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:all 0.3s;">Clear</button>
-              </div>
-            </form>
+    </div>
+  `;
+
+  // --- Custom Email Modal ---
+  function openCustomEmailModal() {
+    let modal = document.getElementById('customEmailModal');
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'customEmailModal';
+    modal.className = 'pt-modal';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+      <div class="pt-modal-overlay" id="customEmailModalOverlay"></div>
+      <div class="pt-modal-content" role="document" aria-labelledby="customEmailModalTitle" style="max-width: 520px;">
+        <button class="pt-modal-close" id="customEmailModalClose" aria-label="Close dialog">×</button>
+        <h3 id="customEmailModalTitle">Custom Email</h3>
+        <form id="customEmailForm" style="display:flex;flex-direction:column;gap:12px;">
+          <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Message</label>
+          <textarea id="customEmailMessage" placeholder="Write your message here..." style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;min-height:100px;resize:vertical;"></textarea>
+          <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Send To</label>
+          <select id="customEmailRecipient" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;">
+            <option value="">-- Select a recipient --</option>
+            <option value="all">All Users</option>
+            <option value="saved">Players (from Player Profiles)</option>
+            <option value="new">New Email Address</option>
+          </select>
+          <div id="savedEmailsContainer" style="display:none;">
+            <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Select players (multiple allowed)</label>
+            <select id="customEmailSavedList" multiple size="6" style="width:100%;padding:10px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;font-family:inherit;background:#fff;color:#333;">
+              <option value="">-- Select players --</option>
+            </select>
+            <div class="small muted" style="margin-top:8px">Tip: hold Ctrl/Cmd to select multiple players, or use Shift for range selection.</div>
           </div>
-        `;
-        document.body.appendChild(modal);
+          <div id="newEmailContainer" style="display:none;">
+            <label style="display:block;color:#555;font-weight:600;margin-bottom:8px;font-size:1rem;">Email Address</label>
+            <input type="email" id="customEmailNewAddress" placeholder="user@example.com" style="width:100%;padding:12px;border-radius:8px;border:1px solid #d1d5db;font-size:1rem;font-family:inherit;background:#fff;color:#333;">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button type="submit" id="customEmailSendBtn" style="flex:1;background:#ca8a04;color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:background 0.3s;">Send Email</button>
+            <button type="reset" id="customEmailResetBtn" style="flex:1;background:transparent;color:#ca8a04;padding:12px;border:2px solid #ca8a04;border-radius:8px;cursor:pointer;font-weight:600;font-size:1rem;transition:all 0.3s;">Clear</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
 
-        // Close modal handlers
-        modal.querySelector('#customEmailModalClose').onclick = closeCustomEmailModal;
-        modal.querySelector('#customEmailModalOverlay').onclick = closeCustomEmailModal;
-
-        // Copy all event logic from the existing custom email section
-        // (You can move the JS event handlers for recipient selection, sending, etc. into this modal)
+    // Close modal handlers
+    // ...existing modal logic...
+  }
       }
 
       function closeCustomEmailModal() {
@@ -1934,145 +1934,12 @@ function ensurePlayerProfilesSection() {
         const btn = document.getElementById('openCustomEmailModalBtn');
         if (btn) btn.onclick = openCustomEmailModal;
       });
-      <div class="pt-modal-overlay" id="sessionModalOverlay"></div>
-      <div class="pt-modal-content" role="document" aria-labelledby="sessionModalTitle" style="max-width: 600px;">
-        <button class="pt-modal-close" id="sessionModalClose" aria-label="Close dialog">×</button>
-        <h3 id="sessionModalTitle">Create Session</h3>
-        <div class="pt-modal-body" id="sessionModalBody" style="max-height: 70vh; overflow-y: auto;">
-          
-          <div style="margin-bottom: 16px;">
-            <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Session Type</label>
-            <select id="modalSessionType" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-              <option value="single">Single Session</option>
-              <option value="block">Block Session (4-Week Series)</option>
-            </select>
-          </div>
-
-          <!-- Single Session Fields -->
-          <div id="modalSingleFields" style="display: block;">
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Select Date</label>
-              <input type="date" id="modalAdminDate" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Slot Title</label>
-              <input type="text" id="modalSlotTitle" placeholder="e.g., Basketball Training, Court Rental" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Number of Spots</label>
-              <input type="number" id="modalNumberOfSpots" placeholder="e.g., 10" min="1" value="1" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Session Type</label>
-              <select id="modalSessionTypeDetail" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-                <option value="group">Group</option>
-                <option value="solo">Solo</option>
-              </select>
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Session Start Time</label>
-              <input type="time" id="modalSessionStartTime" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Session Duration (minutes)</label>
-              <input type="number" id="modalSessionDuration" placeholder="e.g., 40" min="15" max="240" value="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Price (£)</label>
-              <input type="number" id="modalSessionPrice" placeholder="e.g., 15.00" min="0" step="0.01" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Location</label>
-              <input type="text" id="modalSessionLocation" placeholder="e.g., Main Studio, Room 101" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-          </div>
-
-          <!-- Block Session Fields -->
-          <div id="modalBlockFields" style="display: none;">
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Block Title</label>
-              <input type="text" id="modalBlockTitle" placeholder="e.g., Basketball Training Series" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">First Session Date</label>
-              <input type="date" id="modalBlockFirstDate" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Start Time</label>
-              <input type="time" id="modalBlockStartTime" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Number of Sessions</label>
-              <input type="number" id="modalBlockNumberOfSessions" placeholder="e.g., 4" min="1" max="12" value="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Duration (minutes)</label>
-              <input type="number" id="modalBlockDuration" placeholder="e.g., 40" min="15" max="240" value="40" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Number of Spots</label>
-              <input type="number" id="modalBlockNumberOfSpots" placeholder="e.g., 10" min="1" value="1" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Session Type</label>
-              <select id="modalBlockSessionTypeDetail" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-                <option value="group">Group</option>
-                <option value="solo">Solo</option>
-              </select>
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Price (£)</label>
-              <input type="number" id="modalBlockPrice" placeholder="e.g., 60.00" min="0" step="0.01" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Location</label>
-              <input type="text" id="modalBlockLocation" placeholder="e.g., Main Studio, Room 101" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
-            </div>
-          </div>
-
-        </div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-          <button class="btn" id="sessionModalCreate" style="flex: 1; background: #FF9800; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Create</button>
-          <button class="btn" id="sessionModalCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Sync to Calendar Modal -->
-    <div id="syncToCalendarModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
-      <div class="pt-modal-overlay" id="syncToCalendarModalOverlay"></div>
-      <div class="pt-modal-content" role="document" aria-labelledby="syncToCalendarModalTitle">
-        <button class="pt-modal-close" id="syncToCalendarModalClose" aria-label="Close dialog">×</button>
-        <h3 id="syncToCalendarModalTitle">Sync to Calendar</h3>
-        <div class="pt-modal-body" style="display: flex; flex-direction: column; gap: 16px;">
-          <div>
-            <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px; font-size: clamp(0.9rem, 2vw, 1rem);">Select Time Range</label>
-            <select id="calendarSyncRange" style="width: 100%; padding: clamp(10px, 3vw, 14px); border-radius: 8px; border: 1px solid #d1d5db; font-size: clamp(0.9rem, 2vw, 1rem); font-family: inherit; background: #fff; color: #333;">
-              <option value="">-- Choose an option --</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="all">All Sessions</option>
-            </select>
-          </div>
-          
-          <div id="calendarLinkPlaceholder" style="display: flex; flex-direction: column; gap: 16px; padding: 0; background: transparent; border: none; min-height: auto; width: 100%; box-sizing: border-box;">
-            <div style="min-height: 80px; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: clamp(0.85rem, 2vw, 0.95rem); text-align: center;">
-              Generated calendar link or button will appear here
-            </div>
-          </div>
-        </div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
-          <button class="btn" id="syncToCalendarModalCloseBtn" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Close</button>
-        </div>
-      </div>
-    </div>`;
-  container.insertAdjacentHTML('beforeend', sessionModalHTML);
-}
+      // ...existing code...
 
 // ========= Player modal (view-only) =========
 function _buildRow(label, value, missing) {
   return `
-    <div class="pt-row ${missing ? 'missing-field' : ''}">
+    <div class="pt-row${missing ? ' missing-field' : ''}">
       <div class="pt-label">${escapeHtml(label)}</div>
       <div class="pt-value">${escapeHtml(value === undefined || value === null || value === '' ? '—' : value)}</div>
     </div>`;
@@ -2173,7 +2040,7 @@ function closePlayerModal() {
 // ===== Player Notes (frontend) =====
 function showToast(msg, opts = {}){
   const container = document.createElement('div');
-  container.style.cssText = `position:fixed;right:20px;bottom:24px;background:${opts.error? '#ef4444':'#111827'};color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 8px 32px rgba(2,6,23,0.3);z-index:14000;font-weight:600;`;
+  container.style.cssText = `position:fixed;right:20px;bottom:24px;background:${opts.error ? '#ef4444' : '#111827'};color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 8px 32px rgba(2,6,23,0.3);z-index:14000;font-weight:600;`;
   container.textContent = msg;
   document.body.appendChild(container);
   setTimeout(()=>{ container.style.opacity = '0'; setTimeout(()=>container.remove(), 300); }, opts.duration||3200);
@@ -3867,7 +3734,7 @@ function ensureAdminTableStyles() {
   if (document.getElementById('admin-table-styles')) return;
   const style = document.createElement('style');
   style.id = 'admin-table-styles';
-  style.innerHTML = `
+  style.textContent = `
     .admin-table-wrapper { width: 100%; overflow-x: auto; }
     .admin-table { table-layout: fixed; width: 100%; border-collapse: collapse; min-width: 600px; }
     .admin-table th, .admin-table td { padding: 8px; word-break: break-word; white-space: normal; vertical-align: top; overflow-wrap: break-word; }
@@ -3940,13 +3807,10 @@ async function renderAllBookings(){
                 const bookingsData = await getBookings();
                 blockDates.forEach(d => {
                   if (bookingsData[d]) {
-                    console.log('Before filter on date', d, ':', bookingsData[d]);
                     bookingsData[d] = bookingsData[d].filter(b => {
                       const shouldKeep = !(b.includes(time) && b.includes(title) && b.includes(`(${name})`) && b.includes(`(${email})`));
-                      console.log('  Booking:', b, '-> Keep?', shouldKeep);
                       return shouldKeep;
                     });
-                    console.log('After filter on date', d, ':', bookingsData[d]);
                     if (bookingsData[d].length === 0) delete bookingsData[d];
                   }
                 });
@@ -3973,7 +3837,6 @@ async function renderAllBookings(){
                 console.log('Before filter:', bookingsData[date]);
                 bookingsData[date] = bookingsData[date].filter((b, i) => {
                   const shouldKeep = i !== idx;
-                  console.log(`  Index ${i} (${b}) -> Keep?`, shouldKeep);
                   return shouldKeep;
                 });
                 console.log('After filter:', bookingsData[date]);
@@ -4004,24 +3867,36 @@ async function renderAllBookings(){
           const tr = document.createElement('tr');
           tr.innerHTML = `<td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.name)}</td><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.email)}</td><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.title)}</td><td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.dates)}</td><td style="white-space:nowrap;">${row.price}</td><td style="white-space:nowrap;">${row.status}</td><td class='actions'><a href="#" class="delete-link" style="color:#0074d9;text-decoration:underline;border:none;background:none;padding:0;">Delete</a></td>`;
           tr.querySelector('.delete-link').onclick = function(e) { e.preventDefault(); row.remove(); };
-          // make first (name), third (title) and fourth (dates) columns wrap words
           try {
             const tds = tr.querySelectorAll('td');
-            if (tds[0]) {
-              tds[0].classList.add('wrap-words');
-            }
-            // Email column: ensure it stays single-line and truncates with ellipsis
+            if (tds[0]) tds[0].classList.add('wrap-words');
             if (tds[1]) {
               tds[1].style.overflow = 'hidden';
               tds[1].style.textOverflow = 'ellipsis';
               tds[1].style.whiteSpace = 'nowrap';
             }
-            if (tds[2]) {
-              tds[2].classList.add('wrap-words');
+            if (tds[2]) tds[2].classList.add('wrap-words');
+            if (tds[3]) tds[3].classList.add('wrap-words');
+          } catch (e) { /* ignore */ }
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'admin-table-wrapper';
+        wrapper.appendChild(table);
+        allBookingsDiv.appendChild(wrapper);
+        return;
+          tr.querySelector('.delete-link').onclick = function(e) { e.preventDefault(); row.remove(); };
+          try {
+            const tds = tr.querySelectorAll('td');
+            if (tds[0]) tds[0].classList.add('wrap-words');
+            if (tds[1]) {
+              tds[1].style.overflow = 'hidden';
+              tds[1].style.textOverflow = 'ellipsis';
+              tds[1].style.whiteSpace = 'nowrap';
             }
-            if (tds[3]) {
-              tds[3].classList.add('wrap-words');
-            }
+            if (tds[2]) tds[2].classList.add('wrap-words');
+            if (tds[3]) tds[3].classList.add('wrap-words');
           } catch (e) { /* ignore */ }
           tbody.appendChild(tr);
         });
@@ -4059,6 +3934,24 @@ async function renderAllBookings(){
           tbody.appendChild(tr);
         });
       });
+      table.appendChild(tbody);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'admin-table-wrapper';
+      wrapper.appendChild(table);
+      container.appendChild(wrapper);
+      container.querySelectorAll('button.delete').forEach(btn => {
+        btn.onclick = async (e) => {
+          const date = btn.getAttribute('data-date');
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          const slotsData = await getAvailableSlots();
+          if (!slotsData[date]) return;
+          slotsData[date].splice(idx, 1);
+          if (slotsData[date].length === 0) delete slotsData[date];
+          await saveAvailableSlots(slotsData);
+          await renderAllAvailableSlotsTableUltraSimple();
+        };
+      });
+    }
       table.appendChild(tbody);
       const wrapper = document.createElement('div');
       wrapper.className = 'admin-table-wrapper';
@@ -4660,7 +4553,7 @@ async function renderAllBookings(){
         await refreshBookingMappings();
         const mappingFound = findBookingMapping(email, date, time, title);
         const bookingId = mappingFound ? mappingFound.bookingId : '';
-        
+
         // Use the backend API to delete the booking (handles block sessions properly)
         const res = await fetch(PHP_PATH + 'cancelBooking.php', {
           method: 'POST',

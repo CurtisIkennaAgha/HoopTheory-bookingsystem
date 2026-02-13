@@ -89,24 +89,10 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     ]);
     exit;
 }
-
-// For session_deleted, allow through if slot, date, and title are present (location optional)
-if ($emailType === 'session_deleted') {
-    if (!$slot || !$date || !$title) {
-        error_log('[sendEmail.php] DEBUG: session_deleted missing slot, date, or title. slot=' . var_export($slot, true) . ', date=' . var_export($date, true) . ', title=' . var_export($title, true) . ', payload=' . json_encode($data));
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'error' => 'Missing data: slot, date, and title are required for session_deleted',
-            'email' => $email,
-            'slot' => $slot,
-            'date' => $date,
-            'title' => $title,
-            'payload' => $data
-        ]);
-        exit;
-    }
-    // Compose session deleted email
+if (!$slot || !$date) exit('Missing data');
+// Handle booking_cancellation email type
+if ($emailType === 'booking_cancellation') {
+    error_log('Processing booking_cancellation email type');
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
@@ -116,72 +102,35 @@ if ($emailType === 'session_deleted') {
         $mail->Password   = getenv('MAIL_PASSWORD');
         $mail->SMTPSecure = 'tls';
         $mail->Port       = 587;
-
         $mail->setFrom(getenv('MAIL_FROM_ADDRESS'), 'Hoop Theory');
         $mail->addAddress($email);
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
         $mail->Subject = "Session Cancelled – Hoop Theory";
-
-        $displayLocation = $location ? htmlspecialchars((string)$location) : '';
-
-        $mail->Body = "<!DOCTYPE html>
-<html>
-<body style='margin:0;padding:0;background:#f5f5f5;'>
-<table width='100%' cellpadding='0' cellspacing='0'>
-<tr><td align='center'>
-<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>
-<tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>
-<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>
-<p style='margin:0 0 20px;color:#666;font-size:15px;'>
-We regret to inform you that your booked session has been cancelled by the administrator. We apologize for any inconvenience.
-</p>
-<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #ef4444;border-radius:8px;'>
-<tr><td style='padding:20px;font-family:Arial,sans-serif;'>
-<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>
-<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>
-<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>
-<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>
-<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>" .
-($displayLocation ? "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Location:</span> $displayLocation</div>" : "") .
-"</div>
-</td></tr></table>
-<p style='margin:20px 0 10px;color:#666;font-size:14px;line-height:1.6;'>
-If you have already paid for this session, please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund.
-</p>
-<p style='margin:20px 0 10px;color:#666;font-size:14px;'>
-If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>.
-</p>
-<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>
-<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>
-</td></tr></table>
-</td></tr></table>
-</body>
-</html>";
+        $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>"
+            . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
+            . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
+            . "<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>"
+            . "<p style='margin:0 0 30px;color:#666;font-size:14px;'>Your booking for the session below has been cancelled by the administrator.</p>"
+            . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #ef4444;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'>"
+            . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
+            . "<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
+            . "</div></td></tr></table>"
+            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;line-height:1.6;'>If you had made a payment for this booking, please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund.</p>"
+            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>.</p>"
+            . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
+            . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
+            . "</td></tr></table></td></tr></table></body></html>";
         $mail->send();
-        error_log('Session deleted email sent successfully to: ' . $email);
-        header('Content-Type: application/json');
+        error_log('booking_cancellation email sent successfully to: ' . $email);
         echo json_encode(['success' => true, 'email' => $email]);
-        exit;
     } catch (Exception $e) {
-        error_log('Mailer Error (session_deleted): ' . $mail->ErrorInfo);
-        header('Content-Type: application/json');
+        error_log('Mailer Error (booking_cancellation): ' . $mail->ErrorInfo);
         echo json_encode(['success' => false, 'error' => $mail->ErrorInfo, 'email' => $email]);
-        exit;
     }
-}
-// Default: require slot and date for all other types
-if (!$slot || !$date) {
-    error_log('[sendEmail.php] DEBUG: Missing slot or date. slot=' . var_export($slot, true) . ', date=' . var_export($date, true) . ', payload=' . json_encode($data));
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => false,
-        'error' => 'Missing data: slot and date are required',
-        'email' => $email,
-        'slot' => $slot,
-        'date' => $date,
-        'payload' => $data
-    ]);
     exit;
 }
 
@@ -320,8 +269,45 @@ try {
     $mail->isHTML(true);
     $mail->CharSet = 'UTF-8';
 
-    // Handle different email types
-    if ($emailType === 'temporary_reservation') {
+        // Handle different email types
+        if ($emailType === 'session_deleted' || $emailType === 'booking_cancellation') {
+            if ($emailType === 'booking_cancellation') error_log('Processing booking_cancellation email type (new handler)');
+            error_log('Processing session_deleted email type');
+            $mail->Subject = "Session Cancelled – Hoop Theory";
+            $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>"
+                . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
+                . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
+                . "<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>"
+                . "<p style='margin:0 0 30px;color:#666;font-size:14px;'>"
+                . "We regret to inform you that your booked session has been cancelled by the administrator."
+                . "</p>"
+                . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #ef4444;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'>"
+                . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
+                . "<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>"
+                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>"
+                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>"
+                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
+                . "</div></td></tr></table>"
+                . "<p style='margin:20px 0 10px;color:#666;font-size:14px;line-height:1.6;'>"
+                . "If you had made a payment for this booking, please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund."
+                . "</p>"
+                . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>"
+                . "If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>."
+                . "</p>"
+                . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
+                . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
+                . "</td></tr></table></td></tr></table></body></html>";
+            try {
+                $mail->send();
+                error_log('session_deleted email sent successfully to: ' . $email);
+                echo json_encode(['success' => true, 'email' => $email]);
+            } catch (Exception $e) {
+                error_log('Mailer Error (session_deleted): ' . $mail->ErrorInfo);
+                echo json_encode(['success' => false, 'error' => $mail->ErrorInfo, 'email' => $email]);
+            }
+            exit;
+        }
+        if ($emailType === 'temporary_reservation') {
         error_log('Processing temporary_reservation email type');
         // Ensure we have a payment reference and deadline
         if (!$paymentRef) {
@@ -390,7 +376,7 @@ try {
 
         $mail->send();
         error_log('temporary_reservation email sent successfully to: ' . $email);
-        echo 'Email sent';
+        echo json_encode(['success' => true, 'message' => 'Email sent']);
         exit;
     }
 
@@ -488,7 +474,7 @@ $sessionDetailsHtml
 </html>";
 
         $mail->send();
-        echo 'Email sent';
+        echo json_encode(['success' => true, 'message' => 'Email sent']);
         exit;
     }
 
@@ -557,7 +543,7 @@ Follow us on Instagram
 </html>";
 
     $mail->send();
-    echo 'Email sent';
+    echo json_encode(['success' => true, 'message' => 'Email sent']);
 
 } catch (Exception $e) {
     echo 'Mailer Error: ' . $mail->ErrorInfo;
