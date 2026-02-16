@@ -1223,17 +1223,23 @@ input:focus, select:focus, textarea:focus {
       <option value="solo">Solo</option>
     </select>
 
+
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">Price (£)</label>
     <input type="number" id="blockPrice" placeholder="e.g., 60.00" min="0" step="0.01" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
 
     <label style="display: block; color: #555; font-weight: 600; margin-bottom: 8px; font-size: clamp(0.9rem, 2vw, 1rem);">Location</label>
     <input type="text" id="blockLocation" placeholder="e.g., Main Studio, Room 101" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
 
+    <!-- Editable session list for block creation -->
+    <div id="blockSessionEditListContainer" style="margin-top: 18px; display: none;">
+      <label style="font-weight: 600; color: #333; margin-bottom: 6px;">Edit Block Session Dates/Times</label>
+      <div id="blockSessionEditList"></div>
+    </div>
+
     <div style="display: flex; gap: 8px; margin-top: 16px;">
       <button id="createBlockSession" style="flex: 1; background: #FF9800; color: white; padding: clamp(10px, 3vw, 14px); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">Create Block Session</button>
       <button id="cancelBlockSession" style="flex: 1; background: transparent; color: #666; padding: clamp(10px, 3vw, 14px); border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">Cancel</button>
     </div>
-  </div>
   </div>
 
   <div id="createdSlotsList" style="margin-top: 12px; margin-bottom: 20px; padding: 12px; background: #f5f5f5; border-radius: 8px; display: none;">
@@ -1242,7 +1248,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div id="allAvailableSlotsSection">
-    <h2><i class="fas fa-list-check"></i> All sessions</h2>
+    <h2><i class="fas fa-cube"></i> All sessions</h2>
     <div class="available-slots-container" id="allAvailableSlots"></div>
   </div>
 
@@ -2797,7 +2803,7 @@ document.getElementById('createSlot').onclick=async ()=>{
     endTime: endTime,
     duration: duration,
     title: title,
-    numberOfSpots: numberOfSpots,
+    capacity: numberOfSpots,
     sessionType: sessionType,
     price: price,
     location: location,
@@ -2868,52 +2874,92 @@ document.getElementById('cancelSingleSession').onclick = () => {
   document.getElementById('sessionLocation').value = '';
 };
 
-// --- Create Block Session ---
-document.getElementById('createBlockSession').onclick=async ()=>{
-  const blockTitle=document.getElementById('blockTitle').value.trim();
-  const firstDate=document.getElementById('blockFirstDate').value;
-  const numberOfSessions=parseInt(document.getElementById('blockNumberOfSessions').value) || 4;
-  const startTime=document.getElementById('blockStartTime').value;
-  const duration=parseInt(document.getElementById('blockDuration').value) || 40;
-  const numberOfSpots=parseInt(document.getElementById('blockNumberOfSpots').value) || 1;
-  const sessionType=document.getElementById('blockSessionType').value;
-  const price=parseFloat(document.getElementById('blockPrice').value) || 0;
-  const location=document.getElementById('blockLocation').value.trim() || '';
-  
-  if(!blockTitle){ showToast('Enter block title', {error: true}); return; }
-  if(!firstDate){ showToast('Select first session date', {error: true}); return; }
-  if(!startTime){ showToast('Select start time', {error: true}); return; }
-  if(numberOfSessions < 1 || numberOfSessions > 12){ showToast('Number of sessions must be between 1 and 12', {error: true}); return; }
-  
-  // Generate weekly dates starting from firstDate
-  const blockDates=[];
-  let current=new Date(firstDate);
-  for(let i = 0; i < numberOfSessions; i++){
-    blockDates.push(current.toISOString().split('T')[0]);
+// --- Block Session Editable Dates/Times ---
+function renderBlockSessionEditList() {
+  const firstDate = document.getElementById('blockFirstDate').value;
+  const numberOfSessions = parseInt(document.getElementById('blockNumberOfSessions').value) || 4;
+  const startTime = document.getElementById('blockStartTime').value;
+  const editListContainer = document.getElementById('blockSessionEditListContainer');
+  const editList = document.getElementById('blockSessionEditList');
+  editList.innerHTML = '';
+  if (!firstDate || !startTime || numberOfSessions < 1) {
+    editListContainer.style.display = 'none';
+    return;
+  }
+  // Generate weekly dates
+  let current = new Date(firstDate);
+  for (let i = 0; i < numberOfSessions; i++) {
+    const dateStr = current.toISOString().split('T')[0];
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.gap = '8px';
+    row.style.marginBottom = '6px';
+    row.innerHTML = `
+      <input type="date" class="blockEditDate" value="${dateStr}" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid #bbb; font-size: 1rem;" />
+      <input type="time" class="blockEditTime" value="${startTime}" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid #bbb; font-size: 1rem;" />
+      <span style="color:#888; font-size:0.95em;">#${i+1}</span>
+    `;
+    editList.appendChild(row);
     current.setDate(current.getDate() + 7);
   }
-  
-  // Generate unique block ID
-  const blockId='block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  const endTime=calculateEndTime(startTime, duration);
-  
-  const slotsData=await getAvailableSlots();
-  
-  // Create slots for each date
-  for(const date of blockDates){
-    slotsData[date]=slotsData[date] || [];
-    
-    if(slotsData[date].some(s => s.time === startTime)){
-      showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
+  editListContainer.style.display = 'block';
+}
+
+['blockFirstDate','blockNumberOfSessions','blockStartTime'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', renderBlockSessionEditList);
+});
+
+// --- Create Block Session ---
+document.getElementById('createBlockSession').onclick = async () => {
+  const blockTitle = document.getElementById('blockTitle').value.trim();
+  const duration = parseInt(document.getElementById('blockDuration').value) || 40;
+  const numberOfSpots = parseInt(document.getElementById('blockNumberOfSpots').value) || 1;
+  const sessionType = document.getElementById('blockSessionType').value;
+  const price = parseFloat(document.getElementById('blockPrice').value) || 0;
+  const location = document.getElementById('blockLocation').value.trim() || '';
+
+  if (!blockTitle) { showToast('Enter block title', { error: true }); return; }
+  // Validate at least one session row
+  const editList = document.getElementById('blockSessionEditList');
+  const dateInputs = editList.querySelectorAll('.blockEditDate');
+  const timeInputs = editList.querySelectorAll('.blockEditTime');
+  if (dateInputs.length === 0 || timeInputs.length === 0) {
+    showToast('Please generate and review session dates/times', { error: true });
+    return;
+  }
+  // Collect edited dates/times
+  const blockDates = [];
+  const blockTimes = [];
+  for (let i = 0; i < dateInputs.length; i++) {
+    const d = dateInputs[i].value;
+    const t = timeInputs[i].value;
+    if (!d || !t) {
+      showToast('All session dates/times must be filled', { error: true });
       return;
     }
-    
+    blockDates.push(d);
+    blockTimes.push(t);
+  }
+  // Generate unique block ID
+  const blockId = 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  const slotsData = await getAvailableSlots();
+  // Create slots for each date/time
+  for (let i = 0; i < blockDates.length; i++) {
+    const date = blockDates[i];
+    const time = blockTimes[i];
+    const endTime = calculateEndTime(time, duration);
+    slotsData[date] = slotsData[date] || [];
+    if (slotsData[date].some(s => s.time === time)) {
+      showToast(`Slot already exists at ${date} ${time}`, { error: true });
+      return;
+    }
     slotsData[date].push({
-      time: startTime,
+      time: time,
       endTime: endTime,
       duration: duration,
       title: blockTitle,
-      numberOfSpots: numberOfSpots,
+      capacity: numberOfSpots,
       sessionType: sessionType,
       price: price,
       location: location,
@@ -2922,11 +2968,9 @@ document.getElementById('createBlockSession').onclick=async ()=>{
       blockDates: blockDates
     });
   }
-  
   await saveAvailableSlots(slotsData);
   const lastDate = blockDates[blockDates.length - 1];
-  showToast(`Block session created: ${numberOfSessions} sessions from ${blockDates[0]} to ${lastDate}`);
-  
+  showToast(`Block session created: ${blockDates.length} sessions from ${blockDates[0]} to ${lastDate}`);
   // Clear form
   document.getElementById('blockTitle').value='';
   document.getElementById('blockFirstDate').value='';
@@ -3010,7 +3054,7 @@ setTimeout(() => {
       endTime: endTime,
       duration: duration,
       title: title,
-      numberOfSpots: spots,
+      capacity: spots,
       sessionType: type,
       price: price,
       location: location,
@@ -3076,7 +3120,7 @@ setTimeout(() => {
         endTime: endTime,
         duration: duration,
         title: blockTitle,
-        numberOfSpots: numberOfSpots,
+        capacity: numberOfSpots,
         sessionType: sessionType,
         price: price,
         location: location,
@@ -3328,7 +3372,7 @@ async function renderAllAvailableSlots(){
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <div class="available-slot-date">
-              <i class="fas fa-link"></i>
+              <i class="fas fa-cube"></i>
               4-Week Block
             </div>
             <span class="block-session-badge">Block Session</span>
@@ -5021,7 +5065,30 @@ async function renderWaitlist(){
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Failed to send offer');
                   }
-                  showToast(`Offer sent to ${person.name}! They have 24 hours to confirm or decline.`);
+                  // Fetch expiry config from offerExpiryConfig.json
+                  let expirySeconds = 86400; // fallback 24h
+                  try {
+                    const expiryRes = await fetch('data/offerExpiryConfig.json?_=' + Date.now());
+                    if (expiryRes.ok) {
+                      const expiryJson = await expiryRes.json();
+                      if (expiryJson && expiryJson.expirySeconds) expirySeconds = parseInt(expiryJson.expirySeconds);
+                    }
+                  } catch (e) { /* ignore, fallback to default */ }
+                  const expiryDate = new Date();
+                  expiryDate.setSeconds(expiryDate.getSeconds() + expirySeconds);
+                  const expiryStr = expiryDate.toLocaleString('en-GB', {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                  });
+                  // Find or create expiry display element
+                  let expiryEl = personDiv.querySelector('.waitlist-offer-expiry');
+                  if (!expiryEl) {
+                    expiryEl = document.createElement('div');
+                    expiryEl.className = 'waitlist-offer-expiry';
+                    expiryEl.style = 'margin-top:6px;font-size:0.92em;color:#b91c1c;font-weight:600;';
+                    personDiv.appendChild(expiryEl);
+                  }
+                  expiryEl.textContent = `Offer expires: ${expiryStr}`;
+                  showToast(`Offer sent to ${person.name}! They have ${(expirySeconds/3600).toFixed(1)} hours to confirm or decline.`);
                   offerBtn.innerHTML = '<i class="fas fa-check"></i> Offer Spot';
                   await renderWaitlist();
                 } catch (error) {
@@ -5081,15 +5148,24 @@ async function renderBookings(){
 function startAutoRefresh(){
   // Refresh confirmation status from booking mappings
   refreshBookingMappings();
-  
+
   if(autoRefreshInterval) clearInterval(autoRefreshInterval);
   autoRefreshInterval=setInterval(async ()=>{
     if(isAutoRefreshing) return; // Skip if already refreshing
     isAutoRefreshing=true;
     try {
+      // --- Run bridgeState cleanup on every refresh ---
+      try {
+        const resp = await fetch(PHP_PATH + 'cleanupExpiredOffers.php?t=' + Date.now());
+        const text = await resp.text();
+        console.log('[AUTO REFRESH] cleanupExpiredOffers.php output:', text);
+      } catch (err) {
+        console.error('[AUTO REFRESH] cleanupExpiredOffers.php failed:', err);
+      }
+
       console.log('=== AUTO REFRESH DEBUG ===');
       console.log('1. SCANNING DOM BEFORE REFRESH...');
-      
+
       // Scan DOM to capture current expanded/collapsed state BEFORE refresh
       // This ensures we capture any manual clicks the user made
       const currentExpandedSessions = new Set();
@@ -5104,11 +5180,11 @@ function startAutoRefresh(){
         console.log(`   Session: ${sessionKey} -> ${isExpanded ? 'EXPANDED' : 'COLLAPSED'}`);
       });
       console.log('2. SCANNED SESSIONS:', currentExpandedSessions);
-      
+
       // REPLACE expandedSessionCards with scanned state to ensure accuracy
       expandedSessionCards = currentExpandedSessions;
       console.log('3. expandedSessionCards REPLACED with:', expandedSessionCards);
-      
+
       // Also scan slot cards for expanded state
       const currentExpandedSlots = new Set();
       document.querySelectorAll('[data-slot-key]').forEach(card => {
@@ -5119,7 +5195,7 @@ function startAutoRefresh(){
       });
       // REPLACE expandedSlotCards with scanned state to ensure accuracy
       expandedSlotCards = currentExpandedSlots;
-      
+
       // Store scroll positions for all table wrappers
       const tableScrolls = new Map();
       document.querySelectorAll('.admin-table-wrapper').forEach(wrapper => {
@@ -5128,11 +5204,11 @@ function startAutoRefresh(){
       });
       const bookingsScroll=document.getElementById('allBookings')?.parentElement?.scrollTop || 0;
       const slotsScroll=document.getElementById('allAvailableSlots')?.parentElement?.scrollTop || 0;
-      
+
       // Now render with the accurate state
       console.log('4. CALLING renderAllBookings() with expandedSessionCards:', expandedSessionCards);
       await renderAllBookings();
-      
+
       // Restore bookings scroll immediately after rendering
       requestAnimationFrame(() => {
         if(document.getElementById('allBookings')?.parentElement) {
@@ -5145,7 +5221,7 @@ function startAutoRefresh(){
           }
         });
       });
-      
+
       console.log('5. AFTER renderAllBookings(), checking DOM...');
       // Sync bookings DOM with state immediately after rendering
       setTimeout(() => {
@@ -5155,9 +5231,9 @@ function startAutoRefresh(){
           const bookingsContainer = headerDiv.nextElementSibling;
           const shouldBeExpanded = expandedSessionCards.has(sessionKey);
           const isCurrentlyExpanded = bookingsContainer && bookingsContainer.style.display !== 'none';
-          
+
           console.log(`   ${sessionKey}: should=${shouldBeExpanded}, is=${isCurrentlyExpanded}, container=${bookingsContainer ? 'exists' : 'MISSING'}`);
-          
+
           // Force correct state if mismatch
           if (shouldBeExpanded && !isCurrentlyExpanded && bookingsContainer) {
             console.log(`     -> FIXING: setting to display:block`);
@@ -5171,7 +5247,7 @@ function startAutoRefresh(){
       }, 0);
 
       await renderAllAvailableSlots();
-      
+
       // Restore slots scroll immediately
       requestAnimationFrame(() => {
         if(document.getElementById('allAvailableSlots')?.parentElement) {
@@ -5184,7 +5260,7 @@ function startAutoRefresh(){
           }
         });
       });
-      
+
       await renderPlayerProfiles();
       renderWaitlist();
       updateSummaryBar();

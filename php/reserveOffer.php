@@ -169,7 +169,7 @@ foreach ($slots[$date] as $k => $slot) {
         // Use bookings.json as authoritative for capacity
         $bookedEmails = $bookedFromBookings;
         $bookedCount = count($bookedEmails);
-        $capacity = intval($slot['numberOfSpots'] ?? 0);
+        $capacity = intval($slot['capacity'] ?? 0);
 
         // Diagnostic logging to help track down mismatch reports
         $blockInfo = $blockId ? " [BLOCK: $blockId, " . count($blockDates) . " dates]" : "";

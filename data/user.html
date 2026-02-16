@@ -745,6 +745,48 @@ async function isPlayerAlreadyOnWaitlist(email, date, slot) {
   }
 }
 
+async function updateWaitlistCount(){
+  const countEl = document.getElementById('waitlistCount');
+  if (!countEl) return;
+  if (!selectedSlot || !selectedDate) {
+    countEl.textContent = '0 people on the waitlist';
+    return;
+  }
+
+  try {
+    const waitlistData = await getWaitlist();
+    
+    // For block sessions, check the first date (where all block waitlist entries are stored)
+    let lookupDate = selectedDate;
+    if (selectedSlot.blockId && selectedSlot.blockDates && selectedSlot.blockDates.length > 0) {
+      lookupDate = selectedSlot.blockDates[0];
+    }
+    
+    const entries = waitlistData[lookupDate] || [];
+    
+    // Filter by time, title, and blockId (if applicable)
+    const norm = v => (v ?? '').toString().trim().toLowerCase();
+    const count = entries.filter(e => {
+      if (!e) return false;
+      const titleMatch = norm(e.title) === norm(selectedSlot.title);
+      if (selectedSlot.blockId) {
+        // For block sessions, match by time, title, and blockId
+        const timeMatch = norm(e.time) === norm(selectedSlot.time);
+        return timeMatch && titleMatch && e.blockId === selectedSlot.blockId;
+      } else {
+        // For single sessions, match by title, time, and blockId must be null/undefined/empty
+        const timeMatch = norm(e.time) === norm(selectedSlot.time);
+        const blockIdMatch = e.blockId === null || e.blockId === undefined || e.blockId === '';
+        return titleMatch && timeMatch && blockIdMatch;
+      }
+    }).length;
+    
+    countEl.textContent = `${count} ${count === 1 ? 'person' : 'people'} on the waitlist`;
+  } catch (e) {
+    console.error('Failed to load waitlist count', e);
+    countEl.textContent = 'Waitlist count unavailable';
+  }
+}
 
 /* ================= CALENDAR ================= */
 function buildCalendarSkeleton(){
@@ -769,6 +811,10 @@ function buildCalendarSkeleton(){
   document.getElementById('waitlistName').value = '';
   document.getElementById('waitlistEmail').value = '';
 
+  // Ensure waitlist count is reset on calendar render
+  if (typeof updateWaitlistCount === 'function') {
+    updateWaitlistCount();
+  }
 
   const year = currentDisplayDate.getFullYear();
   const month = currentDisplayDate.getMonth();
@@ -1053,11 +1099,13 @@ async function handleDateClick(div, dateStr){
 
   const slotsData = await getAvailableSlots();
   const bookingsData = await getBookings();
-  // Always load waitlist data before rendering slots (force fresh)
-  try {
-    window.waitlistData = await getWaitlist();
-  } catch (e) {
-    window.waitlistData = {};
+  // Always load waitlist data before rendering slots
+  if (!window.waitlistData) {
+    try {
+      window.waitlistData = await getWaitlist();
+    } catch (e) {
+      window.waitlistData = {};
+    }
   }
   
   // Discard this render if a newer one has started
@@ -1226,6 +1274,7 @@ async function handleDateClick(div, dateStr){
         selectedSlot = slot;
         selectedDate = dateStr;
         showBookingForm(true);
+        updateWaitlistCount();
       });
     }
 
@@ -1239,6 +1288,7 @@ async function handleDateClick(div, dateStr){
         el.classList.add('selected');
         selectedSlot = slot;
         selectedDate = dateStr;
+        updateWaitlistCount();
         showBlockConfirmation(slot, true); // Always show block details in waitlist mode
         showBookingForm(full); // Show waitlist form if full, registration form if available
         // Improved auto-scroll: show half previous, half new step
@@ -1347,17 +1397,10 @@ async function handleDateClick(div, dateStr){
       const norm = (val) => (val ?? '').toString().trim().toLowerCase();
       waitlistCount = entries.filter(entry => {
         if (!entry) return false;
-        const titleMatch = norm(entry.title) === norm(slot.title);
-        if (slot.blockId) {
-          // For block sessions, match by time, title, and blockId
-          const timeMatch = norm(entry.time) === norm(slot.time);
-          return timeMatch && titleMatch && entry.blockId === slot.blockId;
-        } else {
-          // For single sessions, match by title, time, and blockId must be null/undefined/empty
-          const timeMatch = norm(entry.time) === norm(slot.time);
-          const blockIdMatch = entry.blockId === null || entry.blockId === undefined || entry.blockId === '';
-          return titleMatch && timeMatch && blockIdMatch;
-        }
+        const entryTime = norm(entry.time);
+        const entryTitle = norm(entry.title);
+        if (!entryTime || !entryTitle) return false;
+        return entryTime === norm(slot.time) && entryTitle === norm(slot.title);
       }).length;
     }
 
@@ -1426,6 +1469,7 @@ async function handleDateClick(div, dateStr){
         el.classList.add('selected');
         selectedSlot = slot;
         selectedDate = dateStr;
+        updateWaitlistCount();
         showBookingForm(true); // Show waitlist form only
         // Always scroll to waitlistForm for fully booked
         const waitlistForm = document.getElementById('waitlistForm');
@@ -1639,6 +1683,11 @@ function hideBlockConfirmation() {
 
 /* ================= FORM TOGGLE ================= */
 function showBookingForm(isFullyBooked) {
+    // Always update waitlist count and log
+    if (typeof updateWaitlistCount === 'function') {
+      console.log('[showBookingForm] Calling updateWaitlistCount');
+      updateWaitlistCount();
+    }
   const bookingForm = document.getElementById('bookingForm');
   const waitlistForm = document.getElementById('waitlistForm');
   const waitlistConfirm = document.getElementById('waitlistConfirm');
@@ -1701,6 +1750,7 @@ function showBookingForm(isFullyBooked) {
       }, 200);
     }
     if (waitlistConfirm) waitlistConfirm.checked = true;
+    updateWaitlistCount();
     // Move registration form into waitlist form container
     if (regForm && regHostWaitlist && regForm.parentElement !== regHostWaitlist) {
       regHostWaitlist.appendChild(regForm);
@@ -1876,45 +1926,55 @@ function showWaitlistEmailConflictModal() {
   const content = modal.querySelector('.payment-modal-content');
   if (content) content.scrollTop = 0;
     setTimeout(function() {
-      const nameField = document.getElementById('waitlistName');
-      if (nameField) {
-        nameField.scrollIntoView({behavior: 'smooth', block: 'center'});
+      const countEl = document.getElementById('waitlistCount');
+      console.log('[WaitlistCount] Called');
+      if (!countEl) {
+        console.warn('[WaitlistCount] No countEl found');
+        return;
       }
-    }, 200);
-    _waitlistConflictModalActive = true;
-}
+      if (!selectedSlot || !selectedDate) {
+        console.warn('[WaitlistCount] No selectedSlot or selectedDate', { selectedSlot, selectedDate });
+        countEl.textContent = '0 people on the waitlist';
+        return;
+      }
 
-function hideWaitlistEmailConflictModal() {
-  const modal = document.getElementById('waitlistEmailConflictModal');
-  if (!modal) return;
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('modal-open-payment');
-    setTimeout(function() {
-      const formSection = document.getElementById('waitlistForm');
-      if (formSection) {
-        formSection.scrollIntoView({behavior: 'smooth', block: 'center'});
+      try {
+        const waitlistData = await getWaitlist();
+        console.log('[WaitlistCount] waitlistData:', waitlistData);
+        // For block sessions, check the first date (where all block waitlist entries are stored)
+        let lookupDate = selectedDate;
+        if (selectedSlot.blockId && selectedSlot.blockDates && selectedSlot.blockDates.length > 0) {
+          lookupDate = selectedSlot.blockDates[0];
+        }
+        console.log('[WaitlistCount] lookupDate:', lookupDate);
+        const entries = waitlistData[lookupDate] || [];
+        console.log('[WaitlistCount] entries for lookupDate:', entries);
+        const norm = v => (v ?? '').toString().trim().toLowerCase();
+        const count = entries.filter(e => {
+          if (!e) {
+            console.log('[WaitlistCount] Skipping null entry');
+            return false;
+          }
+          const titleMatch = norm(e.title) === norm(selectedSlot.title);
+          const timeMatch = norm(e.time) === norm(selectedSlot.time);
+          const blockIdMatch = e.blockId === null || e.blockId === undefined || e.blockId === '';
+          console.log('[WaitlistCount] Entry:', e, '| titleMatch:', titleMatch, '| timeMatch:', timeMatch, '| blockIdMatch:', blockIdMatch);
+          if (selectedSlot.blockId) {
+            // For block sessions, match by time, title, and blockId
+            const blockMatch = e.blockId === selectedSlot.blockId;
+            console.log('[WaitlistCount] Block session: blockMatch:', blockMatch);
+            return timeMatch && titleMatch && blockMatch;
+          } else {
+            // For single sessions, match by title, time, and blockId must be null/undefined/empty
+            return titleMatch && timeMatch && blockIdMatch;
+          }
+        }).length;
+        console.log('[WaitlistCount] FINAL COUNT:', count);
+        countEl.textContent = `${count} ${count === 1 ? 'person' : 'people'} on the waitlist`;
+      } catch (e) {
+        console.error('Failed to load waitlist count', e);
+        countEl.textContent = 'Waitlist count unavailable';
       }
-    }, 200);
-    _waitlistConflictModalActive = false;
-}
-
-function showWaitlistNameConflictModal() {
-  const modal = document.getElementById('waitlistNameConflictModal');
-  if (!modal) return;
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('modal-open-payment');
-  const content = modal.querySelector('.payment-modal-content');
-  if (content) content.scrollTop = 0;
-    setTimeout(function() {
-      const nameField = document.getElementById('waitlistName');
-      if (nameField) {
-        nameField.scrollIntoView({behavior: 'smooth', block: 'center'});
-      }
-    }, 200);
-    _waitlistConflictModalActive = true;
-}
 
 function hideWaitlistNameConflictModal() {
   const modal = document.getElementById('waitlistNameConflictModal');

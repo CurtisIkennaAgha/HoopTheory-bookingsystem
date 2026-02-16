@@ -424,26 +424,20 @@
         return;
       }
       
-      // Fetch booking details from backend
+      // Fetch booking details directly from bookingMappings.json
       console.log('🔵 CANCEL-SESSION: Fetching booking details for bookingId:', bookingId);
-      fetch('/php/getBookingDetails.php?bookingId=' + encodeURIComponent(bookingId))
+      fetch('/data/bookingMappings.json')
         .then(response => response.json())
-        .then(data => {
+        .then(mappings => {
           loading.style.display = 'none';
-          console.log('🟢 CANCEL-SESSION: Retrieved booking data:', JSON.stringify(data));
-          
-          if (data.status === 'error') {
-            console.error('❌ CANCEL-SESSION: Error status received:', data.message);
-            showError(data.message || 'Could not load booking details.');
+          if (!mappings[bookingId]) {
+            showError('Booking not found. It may have already been cancelled.');
             return;
           }
-          
-          if (data.cancelled) {
-            console.log('⚠️  CANCEL-SESSION: Booking already cancelled');
-            document.getElementById('alreadyCancelledState').style.display = 'block';
-            return;
-          }
-          
+          const data = mappings[bookingId];
+          // Add status and cancelled fields for compatibility
+          data.status = 'ok';
+          data.cancelled = false;
           bookingData = data;
           console.log('🟡 CANCEL-SESSION: Is Block Session?', data.isBlock, 'Block Dates:', data.blockDates);
           populateSessionDetails(data);

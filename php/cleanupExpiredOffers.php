@@ -1,20 +1,59 @@
-// Reset bridgeState for all slots if bookings and waitlist are empty
+<?php
+// --- BridgeState Cleanup Debug ---
 $slotsFile = __DIR__ . '/../data/availableSlots.json';
 $bookingsFile = __DIR__ . '/../data/bookings.json';
+$waitlistFile = __DIR__ . '/../data/waitlist.json';
 $bookings = file_exists($bookingsFile) ? json_decode(file_get_contents($bookingsFile), true) : [];
-if (empty($waitlist) && empty($bookings)) {
-    $slots = file_exists($slotsFile) ? json_decode(file_get_contents($slotsFile), true) : [];
-    foreach ($slots as $date => &$slotArr) {
-        foreach ($slotArr as &$slot) {
-            if (isset($slot['bridgeState']) && $slot['bridgeState']) {
-                $slot['bridgeState'] = false;
+$waitlist = file_exists($waitlistFile) ? json_decode(file_get_contents($waitlistFile), true) : [];
+// Per-session bridgeState cleanup
+$debug = [];
+$debug[] = "[START] Per-session BridgeState cleanup.";
+$slots = file_exists($slotsFile) ? json_decode(file_get_contents($slotsFile), true) : [];
+$changes = [];
+foreach ($slots as $date => &$slotArr) {
+    $debug[] = "Checking date: $date (" . count($slotArr) . " slots)";
+    foreach ($slotArr as &$slot) {
+        $desc = sprintf("%s | %s | %s | blockId=%s", $date, $slot['time'], $slot['title'], $slot['blockId'] ?? 'null');
+        $hasBookings = !empty($slot['bookedUsers']);
+        $debug[] = "  [CHECK] $desc hasBookings: " . ($hasBookings ? 'true' : 'false');
+        // Check for waitlist entries for this slot
+        $hasWaitlist = false;
+        if (is_array($waitlist) && isset($waitlist[$date])) {
+            foreach ($waitlist[$date] as $waitlistEntry) {
+                if (
+                    $waitlistEntry['time'] === $slot['time'] &&
+                    $waitlistEntry['title'] === $slot['title'] &&
+                    (empty($slot['blockId']) || ($waitlistEntry['blockId'] ?? null) === $slot['blockId'])
+                ) {
+                    $hasWaitlist = true;
+                    break;
+                }
             }
         }
+        $debug[] = "  [CHECK] $desc hasWaitlist: " . ($hasWaitlist ? 'true' : 'false');
+        if (isset($slot['bridgeState'])) {
+            $debug[] = "  [CHECK] $desc bridgeState: " . ($slot['bridgeState'] ? 'true' : 'false');
+            if ($slot['bridgeState'] && !$hasBookings && !$hasWaitlist) {
+                $slot['bridgeState'] = false;
+                $changes[] = "REMOVED bridgeState for $desc";
+                $debug[] = "    [ACTION] Reset bridgeState for $desc";
+            } else {
+                $debug[] = "    [SKIP] Did not reset bridgeState for $desc";
+            }
+        } else {
+            $debug[] = "  [INFO] $desc has no bridgeState property.";
+        }
     }
-    file_put_contents($slotsFile, json_encode($slots, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    echo "Reset bridgeState for all slots (no bookings/waitlist)\n";
 }
-<?php
+file_put_contents($slotsFile, json_encode($slots, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+if (count($changes)) {
+    foreach ($changes as $msg) $debug[] = $msg;
+} else {
+    $debug[] = "No bridgeState changes needed.";
+}
+$debug[] = "[END] Per-session BridgeState cleanup complete.";
+foreach ($debug as $msg) echo $msg . "\n";
+echo "BridgeState cleanup complete.\n";
 // cleanupExpiredOffers.php: Remove waitlist entries for expired offers
 // Run manually or via cron to keep waitlist.json in sync
 

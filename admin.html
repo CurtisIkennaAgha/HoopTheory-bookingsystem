@@ -1,3 +1,377 @@
+
+
+<!-- (JS code block removed from top of file; should be inside <script> at the end) -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Booking System</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<!-- Edit Booking Modal -->
+<div id="editBookingModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:10px; max-width:420px; width:95vw; padding:28px 24px 18px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative;">
+    <button id="closeEditBookingModal" style="position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.5rem; color:#888; cursor:pointer;">&times;</button>
+    <h2 style="margin-top:0; font-size:1.25rem; margin-bottom:18px; text-align:center;">Edit Booking</h2>
+    <form id="editBookingForm" autocomplete="off">
+      <div style="margin-bottom:12px;">
+        <label>Name<br><input type="text" id="editBookingName" name="name" style="width:100%;padding:6px 8px;"></label>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>Email<br><input type="email" id="editBookingEmail" name="email" style="width:100%;padding:6px 8px;"></label>
+      </div>
+      <!-- Only Name, Email, and Status fields remain -->
+      <div style="margin-bottom:12px;">
+        <label>Status<br>
+          <select id="editBookingStatus" name="status" style="width:100%;padding:6px 8px;">
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+          </select>
+        </label>
+      </div>
+      <div style="margin-bottom:18px; text-align:center;">
+        <button type="submit" style="background:#2196F3;color:#fff;padding:8px 24px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ========== ADMIN SETTINGS MODAL (BOOKING EXPIRY CONFIG) ========== 
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-run cleanupExpiredOffers.php to remove expired offers/waitlist entries
+  fetch('php/cleanupExpiredOffers.php', { method: 'GET' })
+    .then(r => r.text())
+    .then(txt => { console.log('CleanupExpiredOffers:', txt); })
+    .catch(err => { console.warn('CleanupExpiredOffers error:', err); });
+  const openSettingsModalBtn = document.getElementById('openSettingsModal');
+  const adminSettingsModal = document.getElementById('adminSettingsModal');
+  const adminSettingsModalOverlay = document.getElementById('adminSettingsModalOverlay');
+  const adminSettingsModalClose = document.getElementById('adminSettingsModalClose');
+  const saveExpiryBtn = document.getElementById('saveExpiryBtn');
+  const cancelExpiryBtn = document.getElementById('cancelExpiryBtn');
+  // Booking expiry fields
+  const expiryHoursInput = document.getElementById('expiryHours');
+  const expiryMinutesInput = document.getElementById('expiryMinutes');
+  const expirySecondsInput = document.getElementById('expirySeconds');
+  const currentExpiryDisplay = document.getElementById('currentExpiryDisplay');
+  // Offer expiry fields
+  const offerExpiryHoursInput = document.getElementById('offerExpiryHours');
+  const offerExpiryMinutesInput = document.getElementById('offerExpiryMinutes');
+  const offerExpirySecondsInput = document.getElementById('offerExpirySeconds');
+  const currentOfferExpiryDisplay = document.getElementById('currentOfferExpiryDisplay');
+  const expirySettingsFeedback = document.getElementById('expirySettingsFeedback');
+
+  function openSettingsModal() {
+    expirySettingsFeedback.textContent = '';
+    // Booking expiry
+    fetch('data/bookingExpiryConfig.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cfg => {
+        let secs = parseInt(cfg.expirySeconds || 0);
+        const h = Math.floor(secs / 3600);
+        secs -= h * 3600;
+        const m = Math.floor(secs / 60);
+        const s = secs - m * 60;
+        expiryHoursInput.value = h;
+        expiryMinutesInput.value = m;
+        expirySecondsInput.value = s;
+        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
+      })
+      .catch(() => {
+        expiryHoursInput.value = 0;
+        expiryMinutesInput.value = 0;
+        expirySecondsInput.value = 0;
+        currentExpiryDisplay.textContent = 'Current expiry: unknown';
+      });
+    // Offer expiry
+    fetch('data/offerExpiryConfig.json?t=' + Date.now())
+      .then(r => r.json())
+      .then(cfg => {
+        let secs = parseInt(cfg.expirySeconds || 0);
+        const h = Math.floor(secs / 3600);
+        secs -= h * 3600;
+        const m = Math.floor(secs / 60);
+        const s = secs - m * 60;
+        offerExpiryHoursInput.value = h;
+        offerExpiryMinutesInput.value = m;
+        offerExpirySecondsInput.value = s;
+        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${h}h ${m}m ${s}s`;
+      })
+      .catch(() => {
+        offerExpiryHoursInput.value = 0;
+        offerExpiryMinutesInput.value = 0;
+        offerExpirySecondsInput.value = 0;
+        currentOfferExpiryDisplay.textContent = 'Current offer expiry: unknown';
+      });
+    adminSettingsModal.style.display = 'flex';
+    adminSettingsModal.classList.add('open');
+    document.body.classList.add('modal-open');
+  }
+  function closeSettingsModal() {
+    adminSettingsModal.style.display = 'none';
+    adminSettingsModal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+  }
+  if (openSettingsModalBtn) openSettingsModalBtn.onclick = openSettingsModal;
+  if (adminSettingsModalOverlay) adminSettingsModalOverlay.onclick = closeSettingsModal;
+  if (adminSettingsModalClose) adminSettingsModalClose.onclick = closeSettingsModal;
+  if (cancelExpiryBtn) cancelExpiryBtn.onclick = closeSettingsModal;
+  if (saveExpiryBtn) saveExpiryBtn.onclick = async function() {
+    expirySettingsFeedback.textContent = '';
+    // Booking expiry
+    const h = parseInt(expiryHoursInput.value) || 0;
+    const m = parseInt(expiryMinutesInput.value) || 0;
+    const s = parseInt(expirySecondsInput.value) || 0;
+    const totalSeconds = h * 3600 + m * 60 + s;
+    // Offer expiry
+    const oh = parseInt(offerExpiryHoursInput.value) || 0;
+    const om = parseInt(offerExpiryMinutesInput.value) || 0;
+    const os = parseInt(offerExpirySecondsInput.value) || 0;
+    const offerTotalSeconds = oh * 3600 + om * 60 + os;
+    if (totalSeconds < 10 || offerTotalSeconds < 10) {
+      expirySettingsFeedback.textContent = 'Expiry must be at least 10 seconds for both.';
+      expirySettingsFeedback.style.color = '#ef4444';
+      return;
+    }
+    saveExpiryBtn.disabled = true;
+    saveExpiryBtn.textContent = 'Saving...';
+    try {
+      // Update booking expiry
+      const res = await fetch('php/saveBookingExpiry.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expirySeconds: totalSeconds })
+      });
+      // Update offer expiry
+      const offerRes = await fetch('php/saveOfferExpiry.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expirySeconds: offerTotalSeconds })
+      });
+      // Run cleanup after expiry update
+      await fetch('php/cleanupExpiredOffers.php', { method: 'GET' });
+      const data = await res.json();
+      const offerData = await offerRes.json();
+      if (data.success && offerData.success) {
+        expirySettingsFeedback.textContent = 'Expiry updated for bookings and waitlist offers.';
+        expirySettingsFeedback.style.color = '#22c55e';
+        currentExpiryDisplay.textContent = `Current expiry: ${h}h ${m}m ${s}s`;
+        currentOfferExpiryDisplay.textContent = `Current offer expiry: ${oh}h ${om} ${os}s`;
+        setTimeout(() => { closeSettingsModal(); }, 1200);
+        if (typeof renderAllBookings === 'function') await renderAllBookings();
+      } else {
+        let msg = 'Failed to update:';
+        if (!data.success) msg += ' bookings (' + (data.error || 'Unknown error') + ')';
+        if (!offerData.success) msg += ' offers (' + (offerData.error || 'Unknown error') + ')';
+        expirySettingsFeedback.textContent = msg;
+        expirySettingsFeedback.style.color = '#ef4444';
+      }
+    } catch (err) {
+      expirySettingsFeedback.textContent = 'Error: ' + err.message;
+      expirySettingsFeedback.style.color = '#ef4444';
+    } finally {
+      saveExpiryBtn.disabled = false;
+      saveExpiryBtn.textContent = 'Save';
+    }
+  };
+});
+</script>
+<script>
+// ========== BLOCK SESSION PREVIEW LOGIC (MODAL-AWARE) ========== //
+// This logic attaches only after the session modal is created and shown.
+// It auto-generates session dates/times based on admin input, but preserves manual edits.
+
+function attachBlockSessionPreviewLogic() {
+  console.log('[BLOCK PREVIEW] attachBlockSessionPreviewLogic called');
+  // Field selectors (modal block session fields)
+  const startDateInput = document.getElementById('modalBlockFirstDate');
+  const startTimeInput = document.getElementById('modalBlockStartTime');
+  const durationInput = document.getElementById('modalBlockDuration');
+  const numSessionsInput = document.getElementById('modalBlockNumberOfSessions');
+  console.log('[BLOCK PREVIEW] Inputs:', {
+    startDateInput, startTimeInput, durationInput, numSessionsInput
+  });
+  const previewRows = Array.from(document.querySelectorAll('#blockSessionPreviewRows .block-session-row'));
+  console.log('[BLOCK PREVIEW] previewRows:', previewRows);
+  const rowFields = previewRows.map((row, idx) => {
+    const inputs = row.querySelectorAll('input');
+    console.log(`[BLOCK PREVIEW] Row ${idx} inputs:`, inputs);
+    return {
+      date: inputs[0],
+      time: inputs[1]
+    };
+  });
+  const customRows = new Set();
+  function parseDate(str) {
+    if (!str) return null;
+    const [y, m, d] = str.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  }
+  function formatDate(date) {
+    if (!(date instanceof Date)) return '';
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${mm}-${dd}`;
+  }
+  function formatTime(date) {
+    if (!(date instanceof Date)) return '';
+    return date.toTimeString().slice(0,5);
+  }
+  function parseTime(str) {
+    if (!str) return null;
+    const [h, m] = str.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return d;
+  }
+  function updatePreviewRows() {
+    console.log('[BLOCK PREVIEW] updatePreviewRows called');
+    if (!startDateInput || !startTimeInput || !durationInput || !numSessionsInput) {
+      console.warn('[BLOCK PREVIEW] One or more modal input fields are missing:', {
+        startDateInput, startTimeInput, durationInput, numSessionsInput
+      });
+      return;
+    }
+    const startDate = parseDate(startDateInput.value);
+    const startTime = parseTime(startTimeInput.value);
+    const duration = parseInt(durationInput.value, 10);
+    let numSessions = parseInt(numSessionsInput.value, 10);
+    console.log('[BLOCK PREVIEW] Values:', {
+      startDateInput: startDateInput.value,
+      startTimeInput: startTimeInput.value,
+      durationInput: durationInput.value,
+      numSessionsInput: numSessionsInput.value,
+      startDate, startTime, duration, numSessions
+    });
+    if (!numSessions || numSessions < 1) numSessions = 1;
+    if (numSessions > rowFields.length) numSessions = rowFields.length;
+    for (let i = 0; i < rowFields.length; ++i) {
+      if (!customRows.has(i)) {
+        if (i < numSessions && startDate && startTime && duration) {
+          const sessionDate = new Date(startDate.getTime());
+          sessionDate.setDate(sessionDate.getDate() + i * 7);
+          const sessionTime = new Date(startTime.getTime());
+          console.log(`[BLOCK PREVIEW] Autofilling row ${i}:`, {
+            sessionDate, sessionTime
+          });
+          if (!rowFields[i].date.value) rowFields[i].date.value = formatDate(sessionDate);
+          if (!rowFields[i].time.value) rowFields[i].time.value = formatTime(sessionTime);
+        } else {
+          console.log(`[BLOCK PREVIEW] Clearing row ${i}`);
+          if (!rowFields[i].date.value || !customRows.has(i)) rowFields[i].date.value = '';
+          if (!rowFields[i].time.value || !customRows.has(i)) rowFields[i].time.value = '';
+        }
+      } else {
+        console.log(`[BLOCK PREVIEW] Row ${i} is custom, skipping autofill`);
+      }
+    }
+  }
+  rowFields.forEach((fields, idx) => {
+    fields.date.addEventListener('input', () => {
+      if (fields.date.value) {
+        customRows.add(idx);
+        console.log(`[BLOCK PREVIEW] Row ${idx} date manually edited, marking as custom`);
+      }
+    });
+    fields.time.addEventListener('input', () => {
+      if (fields.time.value) {
+        customRows.add(idx);
+        console.log(`[BLOCK PREVIEW] Row ${idx} time manually edited, marking as custom`);
+      }
+    });
+  });
+  [startDateInput, startTimeInput, durationInput, numSessionsInput].forEach((input, idx) => {
+    if (input) {
+      input.addEventListener('input', updatePreviewRows);
+      console.log(`[BLOCK PREVIEW] Attached input event to field ${input.id}`);
+    } else {
+      console.warn(`[BLOCK PREVIEW] Input field missing for index ${idx}`);
+    }
+  });
+  updatePreviewRows();
+  console.log('[BLOCK PREVIEW] Initial updatePreviewRows complete');
+}
+
+// Patch modal open logic to call attachBlockSessionPreviewLogic after modal is inserted
+console.log('[BLOCK PREVIEW] Patching showSessionModal');
+if (window.showSessionModal) {
+  const origShowSessionModal = window.showSessionModal;
+  window.showSessionModal = function(...args) {
+    console.log('[BLOCK PREVIEW] showSessionModal called', args);
+    const result = origShowSessionModal.apply(this, args);
+    setTimeout(() => {
+      console.log('[BLOCK PREVIEW] setTimeout after showSessionModal');
+      attachBlockSessionPreviewLogic();
+    }, 0);
+    return result;
+  };
+} else {
+  console.warn('[BLOCK PREVIEW] showSessionModal is not defined at patch time');
+}
+
+// Force run preview logic on page load for debugging
+window.addEventListener('DOMContentLoaded', () => {
+  console.log('[BLOCK PREVIEW] DOMContentLoaded - forcibly running attachBlockSessionPreviewLogic');
+  attachBlockSessionPreviewLogic();
+});
+
+
+// Dynamically adjust preview rows to match number of sessions
+function ensureBlockSessionPreviewRows(numSessions) {
+  const maxSessions = 8;
+  const n = Math.max(1, Math.min(numSessions || 1, maxSessions));
+  const container = document.getElementById('blockSessionPreviewRows');
+  if (!container) return;
+  let currentRows = container.querySelectorAll('.block-session-row');
+  currentRows = Array.from(currentRows);
+  // Add rows if needed
+  while (currentRows.length < n) {
+    const idx = currentRows.length;
+    const row = document.createElement('div');
+    row.className = 'block-session-row';
+    row.setAttribute('style', 'display:flex; align-items:center; gap:12px; background:#fff; border-radius:6px; padding:10px 8px; border:1px solid #e0e7ef;');
+    row.innerHTML = `
+      <span style="min-width:32px; font-weight:600; color:#374151; margin-left:8px;">#${idx + 1}</span>
+      <input type="date" style="width:80px; min-width:0; max-width:100px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;" />
+      <input type="time" style="width:64px; min-width:0; max-width:80px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;" />
+    `;
+    container.appendChild(row);
+    currentRows.push(row);
+  }
+  // Remove rows if needed
+  while (currentRows.length > n) {
+    container.removeChild(currentRows.pop());
+  }
+}
+
+// Patch attachBlockSessionPreviewLogic to support dynamic rows
+const origAttachBlockSessionPreviewLogic = attachBlockSessionPreviewLogic;
+attachBlockSessionPreviewLogic = function() {
+  // Get numSessions from input
+  const numSessionsInput = document.getElementById('modalBlockNumberOfSessions');
+  let numSessions = 1;
+  if (numSessionsInput && numSessionsInput.value) {
+    numSessions = parseInt(numSessionsInput.value, 10) || 1;
+  }
+  ensureBlockSessionPreviewRows(numSessions);
+  // Now call original logic (which will re-query the rows)
+  origAttachBlockSessionPreviewLogic();
+  // Also, re-adjust rows on input change
+  if (numSessionsInput && !numSessionsInput._blockPreviewPatched) {
+    numSessionsInput.addEventListener('input', function() {
+      let n = parseInt(numSessionsInput.value, 10) || 1;
+      ensureBlockSessionPreviewRows(n);
+      origAttachBlockSessionPreviewLogic();
+    });
+    numSessionsInput._blockPreviewPatched = true;
+  }
+};
+</script>
+</script>
+<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,26 +385,8 @@
     font-size: 0.5rem !important;
     font-family: inherit;
     padding: 1px 2px;
-        let emailResult = null;
-        let cascadeResult = null;
-        try {
-          if (blockDates.length) {
-            emailResult = await adminSendConfirmation(email, date, time, title, name, blockDates);
-          } else {
-            emailResult = await adminSendConfirmation(email, date, time, title, name);
-          }
-        } catch (err) {
-          console.warn('Email send failed, proceeding with cascade delete:', err);
-        }
-        // Always cascade delete booking, slot, mappings, and waitlist
-        try {
-          cascadeResult = await deleteSessionBookingsAndWaitlist(blockDates.length ? blockDates : [date], time, title, blockDates.length ? (blockDates[0] ? blockDates[0] : null) : null);
-          console.log('[CASCADE DELETE DEBUG] Cascade delete result:', cascadeResult);
-        } catch (err) {
-          console.error('[CASCADE DELETE DEBUG] Cascade delete error:', err);
-        }
-        showToast('Booking deleted (cascade) even if email failed.', {error: false});
-        await renderAllBookingsTable();
+  }
+  .admin-table .delete-btn {
     background: none;
     border: none;
     color: #0074d9;
@@ -947,6 +1303,27 @@ input:focus, select:focus, textarea:focus {
 .pt-modal-body input, .pt-modal-body select, .pt-modal-body textarea { font-size: 16px !important; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
 .pt-modal-body input[type="date"], .pt-modal-body input[type="time"] { font-size: 16px !important; }
 .pt-modal-body label { font-size: 14px; }
+
+/* Responsive modal fields: limit width and center on mobile */
+.pt-modal-body input,
+.pt-modal-body select,
+.pt-modal-body textarea {
+  max-width: 400px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .pt-modal-body input,
+  .pt-modal-body select,
+  .pt-modal-body textarea {
+    max-width: 95vw;
+    min-width: 0;
+    font-size: 15px !important;
+  }
+}
 .pt-row { display: flex; gap: 16px; align-items: flex-start; padding: 12px; border-radius: 8px; border: 1px solid rgba(15,23,42,0.04); background: #fff; }
 .pt-label { min-width: 160px; color: #374151; font-weight: 700; font-size: 0.9rem; }
 
@@ -1070,9 +1447,49 @@ input:focus, select:focus, textarea:focus {
 
 <div class="admin-container">
   <img src="NewLogo.png" alt="Logo" style="display:block;margin:0 auto 2px;width:70vw;max-width:600px;">
-  <h1>Admin - Manage Slots & Bookings</h1>
+  <h1>ADMIN - MANAGE SLOTS & BOOKINGS</h1>
 
   <!-- Summary Bar -->
+      <!-- Settings Button -->
+  <!-- Admin Settings Modal for Expiry Config -->
+  <div id="adminSettingsModal" class="pt-modal" style="display:none;z-index:13000;" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="pt-modal-overlay" id="adminSettingsModalOverlay"></div>
+    <div class="pt-modal-content" role="document" aria-labelledby="adminSettingsModalTitle" style="max-width: 420px;">
+      <button class="pt-modal-close" id="adminSettingsModalClose" aria-label="Close dialog">×</button>
+      <h3 id="adminSettingsModalTitle">Booking Expiry Settings</h3>
+      <div class="pt-modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <label for="expiryHours" style="font-weight:600;">Booking Expiry Time</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="expiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
+            <input type="number" id="expiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
+            <input type="number" id="expirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
+          </div>
+          <div id="currentExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
+        </div>
+        <div>
+          <label for="offerExpiryHours" style="font-weight:600;">Waitlist Offer Expiry Time</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+            <input type="number" id="offerExpiryHours" min="0" max="168" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>h</span>
+            <input type="number" id="offerExpiryMinutes" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>m</span>
+            <input type="number" id="offerExpirySeconds" min="0" max="59" value="0" style="width:60px;padding:8px;border-radius:6px;border:1px solid #ccc;"> <span>s</span>
+          </div>
+          <div id="currentOfferExpiryDisplay" style="margin-top:8px;color:#666;font-size:0.95em;"></div>
+        </div>
+        <div class="pt-actions" style="display:flex;gap:12px;margin-top:8px;">
+          <button class="btn" id="saveExpiryBtn" style="flex:1;background:#6366f1;color:white;">Save</button>
+          <button class="btn" id="cancelExpiryBtn" style="flex:1;background:transparent;color:#666;border:1px solid #ccc;">Cancel</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button id="clearDataBtn" style="width:100%;background:#e74c3c;color:white;padding:12px 0;border:none;border-radius:8px;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fas fa-trash"></i> Clear ALL Data
+          </button>
+          <div style="margin-top:8px;font-size:0.92em;color:#b91c1c;text-align:center;">This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.</div>
+        </div>
+        <div id="expirySettingsFeedback" style="margin-top:8px;font-size:0.95em;"></div>
+      </div>
+    </div>
+  </div>
   <div id="summaryBar" style="margin: 12px 0; padding: clamp(8px, 3vw, 16px); background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: clamp(6px, 1.5vw, 10px); width: 100%; box-sizing: border-box;">
     <!-- Summary Cards -->
     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(4px, 1vw, 8px); width: 100%; box-sizing: border-box;">
@@ -1114,19 +1531,19 @@ input:focus, select:focus, textarea:focus {
         <i class="fas fa-calendar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Sync</span>
       </button>
       
-      <!-- Clear Data Button (smaller, secondary) -->
-      <button id="clearDataBtn" style="padding: 0px 2px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
-        <i class="fas fa-trash" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Clear</span>
-      </button>
       
       <!-- Analytics Button (smaller, secondary) -->
       <button id="analyticsBtn" style="padding: 0px 2px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; opacity: 0.8; flex-shrink: 1; line-height: 0.8; height: 18px;">
         <i class="fas fa-chart-bar" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Analytics</span>
       </button>
+      <!-- Settings Button (styled like others) -->
+      <button id="openSettingsModal" style="padding: 0px 2px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; flex-shrink: 1; line-height: 0.8; height: 18px;">
+        <i class="fas fa-cog" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Settings</span>
+      </button>
     </div>
   </div>
 
-  <button id="openSessionModal" style="margin-top: 12px; margin-bottom: 20px; background: #2a2a2a; color: white; width: 100%; padding: clamp(10px, 3vw, 14px); border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">
+  <button id="openSessionModal" style="margin-top: 12px; margin-bottom: 2px; background: #2a2a2a; color: white; width: 100%; padding: clamp(10px, 3vw, 14px); border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">
     <i class="fas fa-plus"></i> Create Session
   </button>
 
@@ -1166,23 +1583,51 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div id="blockSessionForm" style="display: none; margin-top: 20px; padding: 16px; background: transparent; border-radius: 10px; border: 2px solid #333; color: #333;">
+      <style>
+        #blockSessionForm input,
+        #blockSessionForm select,
+        #blockSessionForm textarea {
+          max-width: 400px;
+          width: 100%;
+          margin-left: auto;
+          margin-right: auto;
+          box-sizing: border-box;
+          min-width: 0;
+        }
+        @media (max-width: 700px) {
+          #blockSessionForm input,
+          #blockSessionForm select,
+          #blockSessionForm textarea,
+          #blockSessionPreviewRows .block-session-row {
+            max-width: 100vw !important;
+            width: 100vw !important;
+            min-width: 0 !important;
+            font-size: 15px !important;
+            box-sizing: border-box !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+        }
+      </style>
     <label style="color: #333; font-weight: 600;">Block Title</label>
-    <input type="text" id="blockTitle" placeholder="e.g., Basketball Training Series" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
+    <input type="text" id="blockTitle" placeholder="e.g., Basketball Training Series" style="width:80vw;min-width:0;max-width:100%;padding:clamp(10px,3vw,14px);margin-top:8px;border-radius:8px;border:1px solid #ccc;font-size:clamp(0.9rem,2.5vw,1rem);font-family:inherit;background:#fff;color:#333;">
 
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">First Session Date</label>
-    <input type="date" id="blockFirstDate" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
+    <input type="date" id="blockFirstDate" style="width:80vw;min-width:0;max-width:100%;padding:clamp(10px,3vw,14px);margin-top:8px;border-radius:8px;border:1px solid #ccc;font-size:clamp(0.9rem,2.5vw,1rem);font-family:inherit;background:#fff;color:#333;">
 
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">Start Time</label>
-    <input type="time" id="blockStartTime" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
+    <input type="time" id="blockStartTime" style="width:80vw;min-width:0;max-width:100%;padding:clamp(10px,3vw,14px);margin-top:8px;border-radius:8px;border:1px solid #ccc;font-size:clamp(0.9rem,2.5vw,1rem);font-family:inherit;background:#fff;color:#333;">
 
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">Number of Sessions</label>
-    <input type="number" id="blockNumberOfSessions" placeholder="e.g., 4" min="1" max="12" value="4" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
+    <input type="number" id="blockNumberOfSessions" placeholder="e.g., 4" min="1" max="12" value="4" style="width:80vw;min-width:0;max-width:100%;padding:clamp(10px,3vw,14px);margin-top:8px;border-radius:8px;border:1px solid #ccc;font-size:clamp(0.9rem,2.5vw,1rem);font-family:inherit;background:#fff;color:#333;">
 
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">Duration (minutes)</label>
-    <input type="number" id="blockDuration" placeholder="e.g., 40" min="15" max="240" value="40" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
+    <input type="number" id="blockDuration" placeholder="e.g., 40" min="15" max="240" value="40" style="width:80vw;min-width:0;max-width:100%;padding:clamp(10px,3vw,14px);margin-top:8px;border-radius:8px;border:1px solid #ccc;font-size:clamp(0.9rem,2.5vw,1rem);font-family:inherit;background:#fff;color:#333;">
 
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">Number of Spots</label>
-    <input type="number" id="blockNumberOfSpots" placeholder="e.g., 10" min="1" value="1" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
+    <input type="number" id="blockNumberOfSpots" placeholder="e.g., 10" min="1" value="1" style="width:80vw;min-width:0;max-width:100%;padding:clamp(10px,3vw,14px);margin-top:8px;border-radius:8px;border:1px solid #ccc;font-size:clamp(0.9rem,2.5vw,1rem);font-family:inherit;background:#fff;color:#333;">
 
     <label style="margin-top: 12px; color: #333; display: block; font-weight: 600;">Session Type</label>
     <select id="blockSessionType" style="width: 100%; padding: clamp(10px, 3vw, 14px); margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: clamp(0.9rem, 2.5vw, 1rem); font-family: inherit; background: #fff; color: #333;">
@@ -1200,27 +1645,28 @@ input:focus, select:focus, textarea:focus {
       <button id="createBlockSession" style="flex: 1; background: #FF9800; color: white; padding: clamp(10px, 3vw, 14px); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">Create Block Session</button>
       <button id="cancelBlockSession" style="flex: 1; background: transparent; color: #666; padding: clamp(10px, 3vw, 14px); border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">Cancel</button>
     </div>
+    <div id="blockSessionPreviewText" style="margin-top:18px; text-align:center; color:#6366f1; font-weight:600; font-size:1.05rem; display:block;">preview</div>
   </div>
   </div>
 
   <div id="createdSlotsList" style="margin-top: 12px; margin-bottom: 20px; padding: 12px; background: #f5f5f5; border-radius: 8px; display: none;">
-    <label style="font-weight: 600; margin-top: 0;">Created Slots for This Date:</label>
-    <div id="createdSlotsContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
+    <label style="font-weight: 600; margin-top: 0; display:block; max-width:90vw; width:90vw; margin-left:auto; margin-right:auto;">Created Slots for This Date:</label>
+    <div id="createdSlotsContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; max-width:90vw; width:90vw; margin-left:auto; margin-right:auto;"></div>
   </div>
 
   <div id="allAvailableSlotsSection">
-    <h2><i class="fas fa-list-check"></i> All sessions</h2>
+    <h2><i class="fas fa-list-check"></i> ALL SESSIONS</h2>
     <div class="available-slots-container" id="allAvailableSlots"></div>
   </div>
 
   <div id="allBookingsSection" style="margin-top: clamp(20px, 5vh, 30px); padding: clamp(16px, 4vw, 24px); background: linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%); border-radius: 12px; box-shadow: 0 8px 20px rgba(15,23,42,0.05);">
-    <h2 style="margin: 0 0 15px 0; font-size: clamp(1.1rem, 4vw, 1.3rem); color: #333; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><i class="fas fa-calendar-check"></i> All Bookings</h2>
+    <h2 style="margin: 0 0 15px 0; font-size: clamp(1.1rem, 4vw, 1.3rem); color: #333; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;"><i class="fas fa-calendar-check"></i> ALL BOOKINGS</h2>
     <div class="all-bookings-container" id="allBookings"></div>
   </div>
 
   <div id="waitlistSection" style="margin-top: clamp(20px, 5vh, 30px); padding: clamp(16px, 4vw, 24px); background: linear-gradient(135deg,#f7fafc 0%,#eef2f7 100%); border-radius: 12px; box-shadow: 0 8px 20px rgba(15,23,42,0.05);">
     <h2 style="margin: 0 0 15px 0; font-size: clamp(1.1rem, 4vw, 1.3rem); color: #334155; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-      <i class="fas fa-hourglass-end"></i> Waitlist Management
+      <i class="fas fa-hourglass-end"></i> WAITLIST MANAGEMENT
     </h2>
     <div id="waitlistContainer" style="display: grid; gap: 12px; overflow-y: auto; padding-right: 8px; min-height: auto; height: auto; width: 100%; max-height: calc(100vh - 340px);"></div>
     <div id="emptyWaitlist" style="text-align: center; padding: clamp(20px, 8vw, 40px); color: #999; font-style: italic; font-size: clamp(0.9rem, 2vw, 1rem);">
@@ -1231,7 +1677,7 @@ input:focus, select:focus, textarea:focus {
 
   <div id="customEmailSection" style="margin-top: clamp(20px, 5vh, 30px); padding: clamp(16px, 4vw, 24px); background: linear-gradient(135deg,#fff8db 0%,#fffdf6 100%); border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.06);">
     <h2 style="margin: 0 0 15px 0; font-size: clamp(1.1rem, 4vw, 1.3rem); color: #333; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-      <i class="fas fa-envelope"></i> Custom Email
+      <i class="fas fa-envelope"></i> CUSTOM EMAIL
     </h2>
     
     <form id="customEmailForm" style="display: flex; flex-direction: column; gap: 12px;">
@@ -1489,178 +1935,189 @@ async function updateSummaryBar() {
 
 // --- View Mode State ---
 let adminViewMode = localStorage.getItem('adminViewMode') || 'aesthetic';
+const viewModeSwitch = document.getElementById('viewModeSwitch');
+if (adminViewMode === 'table') viewModeSwitch.checked = true;
+viewModeSwitch.addEventListener('change', () => {
+  adminViewMode = viewModeSwitch.checked ? 'table' : 'aesthetic';
+  localStorage.setItem('adminViewMode', adminViewMode);
+  updateTableModeStyle();
+  console.log('viewModeSwitch changed ->', adminViewMode);
+  // Immediately render the appropriate views for the selected mode
+  if (adminViewMode === 'table') {
+    try { if (typeof renderAllBookingsTable === 'function') renderAllBookingsTable(); } catch(e){console.error('renderAllBookingsTable error',e)}
+    try { if (typeof renderAllAvailableSlotsTable === 'function') renderAllAvailableSlotsTable(); } catch(e){console.error('renderAllAvailableSlotsTable error',e)}
+    try { if (typeof renderAllAvailableSlotsTableUltraSimple === 'function') renderAllAvailableSlotsTableUltraSimple(); } catch(e){}
+    try { if (typeof renderWaitlistTableUltraSimple === 'function') renderWaitlistTableUltraSimple(); } catch(e){}
+  } else {
+    // aesthetic mode
+    console.log('switching to aesthetic mode: rendering aesthetic views');
+    try { renderAllBookings(); } catch(e){console.error('renderAllBookings error',e)}
+    try { renderAllAvailableSlots(); } catch(e){console.error('renderAllAvailableSlots error',e)}
+    try { renderWaitlist(); } catch(e){console.error('renderWaitlist error',e)}
+  }
+});
 
-// --- Session Creation Modal Handlers (Refactored & Fixed) ---
-setTimeout(() => {
-  // Get modal and button references
-  const openBtn = document.getElementById('openSessionModal');
-  const modalClose = document.getElementById('sessionModalClose');
-  const modalOverlay = document.getElementById('sessionModalOverlay');
-  const modalCancel = document.getElementById('sessionModalCancel');
-  const modalCreate = document.getElementById('sessionModalCreate');
-  const sessionTypeSelect = document.getElementById('modalSessionType');
+// --- Table Mode CSS Toggle ---
+const tableModeStyle = document.getElementById('tableModeStyle');
+function updateTableModeStyle() {
+  if (adminViewMode === 'table') tableModeStyle.removeAttribute('disabled');
+  else tableModeStyle.setAttribute('disabled', '');
+}
+updateTableModeStyle();
+viewModeSwitch.addEventListener('change', updateTableModeStyle);
 
-  // Ensure all elements exist before attaching handlers
-  if (!openBtn || !modalClose || !modalOverlay || !modalCancel || !modalCreate || !sessionTypeSelect) {
-    console.warn('Session modal elements not found yet, retrying...');
-    return;
+console.clear();
+console.log('═══════════════════════════════════════════════════════════');
+console.log('CHECKING CUSTOM EMAIL SECTION');
+console.log('═══════════════════════════════════════════════════════════');
+
+// Check if custom email section exists in DOM
+const customEmailSection = document.getElementById('customEmailSection');
+console.log('✓ customEmailSection element found:', !!customEmailSection);
+
+if (customEmailSection) {
+  console.log('✓ Display style:', customEmailSection.style.display);
+  console.log('✓ Visibility:', customEmailSection.style.visibility);
+  console.log('✓ Is visible:', customEmailSection.offsetParent !== null);
+  console.log('✓ Computed display:', window.getComputedStyle(customEmailSection).display);
+}
+
+// Check form elements
+const customEmailForm = document.getElementById('customEmailForm');
+console.log('✓ customEmailForm found:', !!customEmailForm);
+
+const customEmailMessage = document.getElementById('customEmailMessage');
+console.log('✓ customEmailMessage found:', !!customEmailMessage);
+
+const customEmailRecipient = document.getElementById('customEmailRecipient');
+console.log('✓ customEmailRecipient found:', !!customEmailRecipient);
+
+console.log('═══════════════════════════════════════════════════════════');
+
+// ========== CUSTOM EMAIL FUNCTIONALITY ==========
+async function getEmailsForCustomEmail() {
+  try {
+    // Source emails from Player Profiles (players.json) as requested
+    const players = await getPlayerProfiles();
+    // players is an object keyed by email -> profile
+    const out = Object.keys(players || {}).map(key => {
+      const p = players[key] || {};
+      // Use p.email as the true email, fallback to key only if missing
+      return {
+        email: p.email || key,
+        name: p.name || p.displayName || p.email || key,
+        bookings: p.bookings || [],
+        waitlist: p.waitlist || [],
+        offers: p.offers || []
+      };
+    }).filter(u => u.email && u.email.includes('@'));
+    return out;
+  } catch (err) {
+    console.error('Error fetching player profiles for custom email:', err);
+    return [];
+  }
+}
+
+// ========= Player Profiles (admin) =========
+async function getPlayerProfiles() {
+  try {
+    const res = await fetch(PHP_PATH + 'getPlayers.php?t=' + Date.now());
+    if (!res.ok) throw new Error('Failed to fetch player profiles');
+    return await res.json();
+  } catch (err) {
+    console.error('getPlayerProfiles error:', err);
+    return {};
+  }
+}
+
+async function renderPlayerProfiles() {
+  const container = document.getElementById('playerProfilesContainer');
+  if (!container) return;
+
+  // Show a loading placeholder only on the very first load — do NOT clear the DOM on subsequent polls
+  const showTransientLoading = !lastPlayersSnapshot;
+  if (showTransientLoading) {
+    container.innerHTML = `<div class="empty-profiles" style="display:flex;gap:10px;align-items:center;color:#666;"><i class="fas fa-user"></i> Checking saved profiles ...</div>`;
   }
 
-  // Open modal handler
-  openBtn.onclick = () => {
-    document.getElementById('sessionCreationModal').classList.add('open');
-    document.body.classList.add('modal-open');
-  };
+  try {
+    const players = await getPlayerProfiles();
+    const keys = Object.keys(players || {});
 
-  // Close modal handler
-  const closeModal = () => {
-    document.getElementById('sessionCreationModal').classList.remove('open');
-    document.body.classList.remove('modal-open');
-  };
-  modalClose.onclick = closeModal;
-  modalOverlay.onclick = closeModal;
-  modalCancel.onclick = closeModal;
+    // Create a stable, deterministic snapshot for change detection
+    keys.sort();
+    const stableSnapshot = JSON.stringify(keys.map(k => [k, players[k]]));
+    lastPlayersFetchedAt = Date.now();
 
-  // Session type switch (single/block)
-  sessionTypeSelect.onchange = (e) => {
-    const isSingle = e.target.value === 'single';
-    document.getElementById('modalSingleFields').style.display = isSingle ? 'block' : 'none';
-    document.getElementById('modalBlockFields').style.display = isSingle ? 'none' : 'block';
-  };
+    // If nothing changed since last fetch, do nothing (prevents flicker)
+    if (stableSnapshot === lastPlayersSnapshot) return;
+    lastPlayersSnapshot = stableSnapshot;
 
-  // Create session handler
-  modalCreate.onclick = async () => {
-    const sessionType = sessionTypeSelect.value;
+    // Render only when snapshot changed
+    if (!keys.length) {
+      container.innerHTML = `
+        <div class="empty-slots-message">
+          <i class="fas fa-inbox"></i>
+          <p>No player profiles saved</p>
+        </div>`;
+      return;
+    }
 
-    if (sessionType === 'single') {
-      // --- Single Session Creation ---
-      const title = document.getElementById('modalSlotTitle').value.trim();
-      const date = document.getElementById('modalAdminDate').value;
-      const spots = parseInt(document.getElementById('modalNumberOfSpots').value) || 1;
-      const type = document.getElementById('modalSessionTypeDetail').value;
-      const startTime = document.getElementById('modalSessionStartTime').value;
-      const duration = parseInt(document.getElementById('modalSessionDuration').value) || 40;
-      const price = parseFloat(document.getElementById('modalSessionPrice').value) || 0;
-      const location = document.getElementById('modalSessionLocation').value.trim() || '';
+    const frag = document.createDocumentFragment();
 
-      // Validate required fields
-      if (!title) { showToast('Enter slot title', {error: true}); return; }
-      if (!date) { showToast('Select date', {error: true}); return; }
-      if (!startTime) { showToast('Select start time', {error: true}); return; }
+    // Sort by display name for UX (stable sort using name or email)
+    keys.sort((a,b)=> (players[a].name||a).localeCompare(players[b].name||b));
 
-      const endTime = calculateEndTime(startTime, duration);
-      const slotsData = await getAvailableSlots();
-      slotsData[date] = slotsData[date] || [];
+    for (const email of keys) {
+      const playerId = email; // Use the key from playerProfiles.json
+      const p = players[playerId] || {};
+      const card = document.createElement('div');
+      card.className = 'profile-card';
+      const displayName = p.name || playerId || '(no name)';
 
-      // Check for slot conflict
-      if (slotsData[date].some(s => s.time === startTime)) {
-        showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
-        return;
-      }
+      // Build content without transient 'checking' state to avoid animation/flicker
+      card.innerHTML = `
+        <div style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;width:100%;">
+          <div style="display:flex;flex-direction:column;align-items:flex-start;min-width:0;">
+            <div style="font-size:1.05rem;font-weight:600;color:#222;margin-bottom:2px;">${escapeHtml(displayName)}</div>
+            <div style="font-size:0.92rem;color:#555;margin-bottom:2px;">${escapeHtml(p.email || email)}</div>
+            <a class="profile-json-link" href="${PHP_PATH}getPlayers.php?email=${encodeURIComponent(p.email || email)}" target="_blank" rel="noopener" style="font-size:0.82rem;color:#4b5563;text-decoration:underline;margin-bottom:4px;">View JSON</a>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="edit-profile-btn" style="background:#2563eb;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-weight:600;font-size:0.82rem;min-width:48px;max-width:64px;cursor:pointer;">Edit</button>
+            <button class="delete-profile-btn" style="background:#ef4444;color:#fff;border:none;padding:4px 6px;border-radius:4px;font-weight:600;font-size:0.82rem;min-width:48px;max-width:64px;cursor:pointer;">Delete</button>
+          </div>
+        </div>`;
 
-      // Add new slot
-      slotsData[date].push({
-        time: startTime,
-        endTime: endTime,
-        duration: duration,
-        title: title,
-        numberOfSpots: spots,
-        sessionType: type,
-        price: price,
-        location: location,
-        bookedUsers: [],
-        blockId: null,
-        blockDates: []
+      // Open modal on card click (keep raw JSON link available)
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.profile-json-link')) return;
+        e.preventDefault();
+        showPlayerModal(p.email || email);
       });
 
-      await saveAvailableSlots(slotsData);
-      showToast(`Single slot created for ${date} at ${startTime}`);
+      // Ensure the raw-JSON link does not propagate/cause modal to open
+      card.querySelectorAll('.profile-json-link').forEach(a => a.addEventListener('click', ev => ev.stopPropagation()));
 
-      // Clear form fields
-      document.getElementById('modalSlotTitle').value = '';
-      document.getElementById('modalAdminDate').value = '';
-      document.getElementById('modalNumberOfSpots').value = '1';
-      document.getElementById('modalSessionTypeDetail').value = 'group';
-      document.getElementById('modalSessionStartTime').value = '';
-      document.getElementById('modalSessionDuration').value = '40';
-      document.getElementById('modalSessionPrice').value = '';
-      document.getElementById('modalSessionLocation').value = '';
-
-      closeModal();
-      renderAllAvailableSlots();
-    } else if (sessionType === 'block') {
-      // --- Block Session Creation ---
-      const blockTitle = document.getElementById('blockTitle').value.trim();
-      const firstDate = document.getElementById('blockFirstDate').value;
-      const numberOfSessions = parseInt(document.getElementById('blockNumberOfSessions').value) || 4;
-      const startTime = document.getElementById('blockStartTime').value;
-      const duration = parseInt(document.getElementById('blockDuration').value) || 40;
-      const numberOfSpots = parseInt(document.getElementById('blockNumberOfSpots').value) || 1;
-      const sessionType = document.getElementById('blockSessionType').value;
-
-      // Validate required fields
-      if (!blockTitle) { showToast('Enter block title', {error: true}); return; }
-      if (!firstDate) { showToast('Select first session date', {error: true}); return; }
-      if (!startTime) { showToast('Select start time', {error: true}); return; }
-      if (numberOfSessions < 1 || numberOfSessions > 12) { showToast('Number of sessions must be between 1 and 12', {error: true}); return; }
-
-      // Generate blockDates (weekly)
-      const blockDates = [];
-      let current = new Date(firstDate);
-      for (let i = 0; i < numberOfSessions; i++) {
-        blockDates.push(current.toISOString().split('T')[0]);
-        current.setDate(current.getDate() + 7);
-      }
-
-      const blockId = 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      const slotsData = await getAvailableSlots();
-      const endTime = calculateEndTime(startTime, duration);
-
-      // Check for slot conflicts for each date
-      for (const date of blockDates) {
-        slotsData[date] = slotsData[date] || [];
-        if (slotsData[date].some(s => s.time === startTime)) {
-          showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
-          return;
-        }
-      }
-
-      // Add new slots for each date
-      for (const date of blockDates) {
-        slotsData[date].push({
-          time: startTime,
-          endTime: endTime,
-          duration: duration,
-          title: blockTitle,
-          numberOfSpots: numberOfSpots,
-          sessionType: sessionType,
-          price: 0, // No price field in block form per requirements
-          location: '', // No location field in block form per requirements
-          bookedUsers: [],
-          blockId: blockId,
-          blockDates: blockDates
-        });
-      }
-
-      await saveAvailableSlots(slotsData);
-      const lastDate = blockDates[blockDates.length - 1];
-      showToast(`Block session created: ${numberOfSessions} sessions from ${blockDates[0]} to ${lastDate}`);
-
-      // Clear block form fields
-      document.getElementById('blockTitle').value = '';
-      document.getElementById('blockFirstDate').value = '';
-      document.getElementById('blockNumberOfSessions').value = '4';
-      document.getElementById('blockStartTime').value = '';
-      document.getElementById('blockDuration').value = '40';
-      document.getElementById('blockNumberOfSpots').value = '1';
-      document.getElementById('blockSessionType').value = 'group';
-
-      closeModal();
-      renderAllAvailableSlots();
-    }
-  };
-}, 100);
-// (Stray duplicate code removed by AI Copilot)
+      // Wire up Delete button
+            // Wire up Edit button
+            const editBtn = card.querySelector('.edit-profile-btn');
+            editBtn.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              openEditProfileModal(playerId, p);
+            });
+      const deleteBtn = card.querySelector('.delete-profile-btn');
+      deleteBtn.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = '...';
+        try {
+          const res = await fetch('php/deletePlayerProfile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'playerId=' + encodeURIComponent(playerId)
+          });
+          const data = await res.json();
           if (data.success) {
             card.remove();
             showToast('Profile deleted');
@@ -1715,7 +2172,12 @@ function openEditProfileModal(playerId, profile) {
         <label>Age<input type="number" name="age" value="${escapeHtml(profile.age || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <label>Experience<input type="text" name="experience" value="${escapeHtml(profile.experience || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
         <label>Medical<input type="text" name="medical" value="${escapeHtml(profile.medical || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
-        <label>Emergency<input type="text" name="emergency" value="${escapeHtml(profile.emergency || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
+        <fieldset class="emergency-contact" style="border:1px solid #eee;padding:8px 8px 4px 8px;border-radius:6px;margin-bottom:8px;">
+          <legend style="font-weight:600;color:#888;font-size:0.95rem;margin-bottom:4px;">Emergency contact</legend>
+          <label>Name<input type="text" name="emergency_name" value="${escapeHtml(profile.emergency?.name || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
+          <label>Phone<input type="text" name="emergency_phone" value="${escapeHtml(profile.emergency?.phone || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
+          <label>Relationship<input type="text" name="emergency_relationship" value="${escapeHtml(profile.emergency?.relationship || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
+        </fieldset>
         <div style="display:flex;gap:12px;margin-top:8px;">
           <button type="submit" class="btn" style="background:#2563eb;color:#fff;">Save</button>
           <button type="button" class="btn" id="editProfileCancelBtn" style="background:#888;color:#fff;">Cancel</button>
@@ -1736,6 +2198,18 @@ function openEditProfileModal(playerId, profile) {
     const form = modal.querySelector('#editProfileForm');
     const formData = new FormData(form);
     formData.append('playerId', playerId);
+
+    // Combine emergency fields into a single object and stringify
+    const emergency = {
+      name: form.elements['emergency_name'].value,
+      phone: form.elements['emergency_phone'].value,
+      relationship: form.elements['emergency_relationship'].value
+    };
+    formData.delete('emergency_name');
+    formData.delete('emergency_phone');
+    formData.delete('emergency_relationship');
+    formData.append('emergency', JSON.stringify(emergency));
+
     try {
       const res = await fetch('php/editPlayerProfile.php', {
         method: 'POST',
@@ -1847,7 +2321,15 @@ function ensurePlayerProfilesSection() {
             <select id="modalSessionType" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
               <option value="single">Single Session</option>
               <option value="block">Block Session (4-Week Series)</option>
+              <option value="special">Special</option>
             </select>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label for="templateDropdown" style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Templates</label>
+            <select id="templateDropdown" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
+              <option value="">-- Select a template --</option>
+            </select>
+            <button id="deleteTemplateBtn" style="margin-top: 6px; background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.95rem; font-weight: 600; display: none;">Delete Template</button>
           </div>
 
           <!-- Single Session Fields -->
@@ -1930,12 +2412,45 @@ function ensurePlayerProfilesSection() {
               <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Location</label>
               <input type="text" id="modalBlockLocation" placeholder="e.g., Main Studio, Room 101" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
             </div>
+            <div id="modalBlockPreviewText" style="margin-top:18px; text-align:center; color:#6366f1; font-weight:600; font-size:1.05rem; display:block;">preview</div>
+
+            <!-- Block Session Preview Section: Always visible, static -->
+            <div id="blockSessionPreviewSection" style="margin-top:28px; background:#f8fafc; border-radius:8px; border:1px solid #e5e7eb; padding:18px 14px 14px 14px;">
+              <div style="font-weight:700; color:#22223b; font-size:1.08rem; margin-bottom:12px; letter-spacing:0.01em;">Generated Sessions</div>
+              <div id="blockSessionPreviewRows" style="display:flex; flex-direction:column; gap:12px; max-width:100vw; width:100%; overflow-x:hidden;">
+                <div class="block-session-row" style="display:flex; align-items:center; gap:6px; background:#fff; border-radius:6px; padding:10px 8px; border:1px solid #e0e7ef; width:100%; box-sizing:border-box; min-width:0;">
+                  <span style="min-width:40px; font-weight:600; color:#374151; margin-left:8px;">#1</span>
+                  <input type="date" style="width:80px; min-width:0; max-width:100px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;">
+                  <input type="time" style="width:64px; min-width:0; max-width:80px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;">
+                </div>
+                <div class="block-session-row" style="display:flex; align-items:center; gap:12px; background:#fff; border-radius:6px; padding:10px 8px; border:1px solid #e0e7ef; width:100%; box-sizing:border-box; min-width:0;">
+                  <span style="min-width:32px; font-weight:600; color:#374151; margin-left:8px;">#2</span>
+                  <input type="date" style="width:80px; min-width:0; max-width:100px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;">
+                  <input type="time" style="width:64px; min-width:0; max-width:80px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;">
+                </div>
+                <div class="block-session-row" style="display:flex; align-items:center; gap:12px; background:#fff; border-radius:6px; padding:10px 8px; border:1px solid #e0e7ef; width:100%; box-sizing:border-box; min-width:0;">
+                                  <style>
+                                    @media (max-width: 600px) {
+                                      #blockSessionPreviewRows .block-session-row {
+                                        max-width: 90vw !important;
+                                        width: 90vw !important;
+                                        min-width: 0 !important;
+                                      }
+                                    }
+                                  </style>
+                  <span style="min-width:32px; font-weight:600; color:#374151; margin-left:8px;">#3</span>
+                  <input type="date" style="width:80px; min-width:0; max-width:100px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;">
+                  <input type="time" style="width:64px; min-width:0; max-width:80px; padding:2px 2px; border-radius:6px; border:1px solid #cbd5e1; font-size:1rem; background:#f9fafb; color:#222; text-align:center; margin:0;">
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
-        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
+        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
           <button class="btn" id="sessionModalCreate" style="flex: 1; background: #FF9800; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Create</button>
           <button class="btn" id="sessionModalCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+          <button class="btn" id="saveAsTemplateBtn" style="flex: 1; background: #2563eb; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Save as Template</button>
         </div>
       </div>
     </div>
@@ -1943,7 +2458,7 @@ function ensurePlayerProfilesSection() {
     <!-- Sync to Calendar Modal -->
     <div id="syncToCalendarModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="pt-modal-overlay" id="syncToCalendarModalOverlay"></div>
-      <div class="pt-modal-content" role="document" aria-labelledby="syncToCalendarModalTitle">
+      <div class="pt-modal-content" role="document" aria-labelledby="syncToCalendarModalTitle" style="font-family: 'Segoe UI Symbol', 'Arial Unicode MS', 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI', Arial, sans-serif;">
         <button class="pt-modal-close" id="syncToCalendarModalClose" aria-label="Close dialog">×</button>
         <h3 id="syncToCalendarModalTitle">Sync to Calendar</h3>
         <div class="pt-modal-body" style="display: flex; flex-direction: column; gap: 16px;">
@@ -2006,7 +2521,7 @@ async function showPlayerModal(email) {
     rows.push(_buildRow('Playing experience', p.experience || p.playing_experience || '', !p.experience));
     rows.push(_buildRow('Medical information', p.medical || p.medical_information || '', !p.medical));
 
-    const emergency = (p.emergency && (p.emergency.name || p.emergency.phone)) ? `${p.emergency.name || ''}${p.emergency.phone ? ' • ' + p.emergency.phone : ''}` : '';
+    const emergency = (p.emergency && (p.emergency.name || p.emergency.phone)) ? `${p.emergency.name || ''}${p.emergency.phone ? ' &bull; ' + p.emergency.phone : ''}` : '';
     rows.push(_buildRow('Emergency contact', emergency, !(p.emergency && p.emergency.name && p.emergency.phone)));
 
     rows.push(_buildRow('Media consent', p.media_consent ? 'Given' : 'Not given', !p.media_consent));
@@ -2047,7 +2562,7 @@ async function showPlayerModal(email) {
         }
         const latest = notes[0];
         const d = new Date(latest.date || Date.now()).toLocaleString();
-        summaryEl.innerHTML = `${notes.length} note${notes.length>1?'s':''} — <span class="note-author">${escapeHtml(latest.author||'')}</span> • <span class="note-date">${escapeHtml(d)}</span> <button id="playerModalNotesBtnInline3" class="btn" style="margin-left:10px;">View / Add Notes</button>`;
+        summaryEl.innerHTML = `${notes.length} note${notes.length>1?'s':''} &mdash; <span class="note-author">${escapeHtml(latest.author||'')}</span> &bull; <span class="note-date">${escapeHtml(d)}</span> <button id="playerModalNotesBtnInline3" class="btn" style="margin-left:10px;">View / Add Notes</button>`;
         const btn3 = document.getElementById('playerModalNotesBtnInline3');
         btn3?.addEventListener('click', (ev) => { ev.preventDefault(); closePlayerModal(); showPlayerNotesModal(playerEmail, playerName); });
       } catch (err) {
@@ -2483,7 +2998,21 @@ let lastPlayersSnapshot = null;
 let lastPlayersFetchedAt = 0; // ms since epoch (for debugging)
 
 // Fetch JSON
-async function getAvailableSlots(){ return await (await fetch(PHP_PATH+'getSlots.php?t='+Date.now())).json(); }
+async function getAvailableSlots() {
+  try {
+    const res = await fetch(PHP_PATH + 'getSlots.php?t=' + Date.now());
+    const data = await res.json();
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      return data;
+    } else {
+      console.warn('[getAvailableSlots] Invalid data, returning empty object:', data);
+      return {};
+    }
+  } catch (e) {
+    console.error('[getAvailableSlots] Fetch or parse error:', e);
+    return {};
+  }
+}
 async function getBookings(){ return await (await fetch(PHP_PATH+'getBookings.php?t='+Date.now())).json(); }
 async function getWaitlist(){ return await (await fetch(PHP_PATH+'getWaitlist.php?t='+Date.now())).json(); }
 async function getBookingMappings(){ 
@@ -2658,6 +3187,53 @@ function formatTime(hours, minutes) {
   return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}`;
 }
 
+// Modal confirm function (replaces browser confirm for delete operations)
+async function modalConfirm(message) {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'pt-modal';
+    modal.id = 'confirmModal_' + Date.now();
+    modal.innerHTML = `
+      <div class="pt-modal-overlay"></div>
+      <div class="pt-modal-content" style="max-width: 400px;">
+        <h3>Confirm Action</h3>
+        <div class="pt-modal-body">${escapeHtml(message)}</div>
+        <div class="pt-actions" style="display: flex; gap: 12px; margin-top: 16px;">
+          <button class="btn" id="modalConfirmOK" style="flex: 1; background: #ef4444; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Delete</button>
+          <button class="btn" id="modalConfirmCancel" style="flex: 1; background: transparent; color: #666; padding: 10px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    
+    const okBtn = modal.querySelector('#modalConfirmOK');
+    const cancelBtn = modal.querySelector('#modalConfirmCancel');
+    
+    const cleanup = () => {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(() => modal.remove(), 300);
+    };
+    
+    okBtn.onclick = () => {
+      cleanup();
+      resolve(true);
+    };
+    
+    cancelBtn.onclick = () => {
+      cleanup();
+      resolve(false);
+    };
+    
+    modal.querySelector('.pt-modal-overlay').onclick = () => {
+      cleanup();
+      resolve(false);
+    };
+  });
+}
+
 // --- Helper: Format date as dd/mm/yy ---
 function formatDateDDMMYY(dateStr) {
   if (!dateStr) return '';
@@ -2690,7 +3266,8 @@ function formatDateForDisplay(dateStr) {
 // Helper: Safely format price (handles both string and number)
 function formatPrice(price) {
   if (!price) return '';
-  return typeof price === 'number' ? `£${price.toFixed(2)}` : `£${price}`;
+  // Use HTML entity for pound sign
+  return typeof price === 'number' ? `&pound;${price.toFixed(2)}` : `&pound;${price}`;
 }
 
 // --- Helper: Send confirmation email and mark booking confirmed (reused by table and card views) ---
@@ -2802,32 +3379,51 @@ function calculateEndTime(startTime, durationMinutes) {
 }
 
 // --- Create slot with dynamic duration ---
-document.getElementById('createSlot').onclick=async ()=>{
-  if(!selectedDate){ showToast('Select date', {error: true}); return; }
-  const title=document.getElementById('slotTitle').value.trim();
-  const numberOfSpots=parseInt(document.getElementById('numberOfSpots').value) || 1;
-  const sessionType=document.getElementById('sessionType').value;
-  const startTime=document.getElementById('sessionStartTime').value;
-  const duration=parseInt(document.getElementById('sessionDuration').value) || 40;
-  const price=parseFloat(document.getElementById('sessionPrice').value) || 0;
-  const location=document.getElementById('sessionLocation').value.trim() || '';
-  
-  if(!title){ showToast('Enter slot title', {error: true}); return; }
-  if(!startTime){ showToast('Select start time', {error: true}); return; }
-  
-  const endTime = calculateEndTime(startTime, duration);
-  
-  const slotsData=await getAvailableSlots();
-  slotsData[selectedDate]=slotsData[selectedDate] || [];
-  
-  // Check if slot already exists at this time
-  if(slotsData[selectedDate].some(s => s.time === startTime)) {
-    showToast('A slot already exists at this time', {error: true});
+document.getElementById('createSlot').onclick = async () => {
+    // ...existing code...
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('SINGLE SESSION CREATION START');
+  if (!selectedDate) { showToast('Select date', { error: true }); console.log('✗ No selectedDate'); return; }
+  const titleInput = document.getElementById('slotTitle');
+  let title = '';
+  if (titleInput && titleInput.offsetParent !== null && !titleInput.disabled) {
+    title = titleInput.value.trim();
+    console.log('✓ slotTitle found:', title);
+  }
+  if (!title) {
+    const modalTitleInput = document.getElementById('modalSlotTitle');
+    if (modalTitleInput && modalTitleInput.offsetParent !== null && !modalTitleInput.disabled) {
+      title = modalTitleInput.value.trim();
+      console.log('✓ modalSlotTitle fallback:', title);
+    }
+  }
+  if (!title) {
+    showToast('Enter slot title (the field may be hidden or not filled)', { error: true });
+    console.log('✗ No slot title');
     return;
   }
-  
-  // Add new slot
-  slotsData[selectedDate].push({
+  const numberOfSpots = parseInt(document.getElementById('numberOfSpots').value) || 1;
+  const sessionType = document.getElementById('sessionType').value;
+  const startTime = document.getElementById('sessionStartTime').value;
+  const duration = parseInt(document.getElementById('sessionDuration').value) || 40;
+  const price = parseFloat(document.getElementById('sessionPrice').value) || 0;
+  const location = document.getElementById('sessionLocation').value.trim() || '';
+  console.log('✓ Params:', {selectedDate, title, numberOfSpots, sessionType, startTime, duration, price, location});
+  if (!startTime) { showToast('Select start time', { error: true }); console.log('✗ No startTime'); return; }
+  const endTime = calculateEndTime(startTime, duration);
+  const slotsData = await getAvailableSlots();
+  console.log('✓ slotsData before:', JSON.stringify(slotsData[selectedDate]));
+  slotsData[selectedDate] = slotsData[selectedDate] || [];
+  if (!Array.isArray(slotsData[selectedDate])) {
+    console.log('✗ slotsData[selectedDate] is not array, resetting');
+    slotsData[selectedDate] = [];
+  }
+  if (slotsData[selectedDate].some(s => s.time === startTime)) {
+    showToast('A slot already exists at this time', { error: true });
+    console.log('✗ Slot already exists at this time:', startTime);
+    return;
+  }
+  const newSlot = {
     time: startTime,
     endTime: endTime,
     duration: duration,
@@ -2837,18 +3433,25 @@ document.getElementById('createSlot').onclick=async ()=>{
     price: price,
     location: location,
     bookedUsers: []
-  });
-  
-  await saveAvailableSlots(slotsData);
-  showToast(`Slot created: ${startTime}-${endTime}`);
-  
-  // Clear form
+  };
+  console.log('✓ New slot object:', newSlot);
+  slotsData[selectedDate].push(newSlot);
+  console.log('✓ slotsData after:', JSON.stringify(slotsData[selectedDate]));
+  try {
+    const resp = await saveAvailableSlots(slotsData);
+    console.log('✓ saveAvailableSlots response:', resp);
+    showToast(`Slot created: ${startTime}-${endTime}`);
+  } catch (err) {
+    showToast('Failed to save slot: ' + err.message, { error: true });
+    console.log('✗ saveAvailableSlots error:', err);
+  }
   document.getElementById('sessionStartTime').value = '';
   document.getElementById('sessionDuration').value = '40';
   document.getElementById('sessionPrice').value = '';
   document.getElementById('sessionLocation').value = '';
-  
   renderAllAvailableSlots();
+  console.log('SINGLE SESSION CREATION END');
+  console.log('═══════════════════════════════════════════════════════════');
 };
 
 // --- OLD HANDLERS (kept for reference but disabled since we now use modal) ---
@@ -2876,6 +3479,20 @@ document.getElementById('toggleSingleSession').onclick = () => {
 // --- Cancel Block Session Form ---
 document.getElementById('cancelBlockSession').onclick = () => {
   document.getElementById('blockSessionForm').style.display = 'none';
+  document.querySelectorAll('.slot-card').forEach(card => {
+    card.addEventListener('click', function() {
+      // Find session info from card dataset
+      const booked = parseInt(card.getAttribute('data-booked') || '0', 10);
+      const spots = parseInt(card.getAttribute('data-spots') || '1', 10);
+      if (booked >= spots) {
+        showToast('Session is fully booked. Registration unavailable.', { error: true });
+        return;
+      }
+      document.getElementById('singleSessionForm').style.display = 'block';
+      document.getElementById('blockSessionForm').style.display = 'none';
+      // Optionally populate form fields here
+    });
+  });
   document.getElementById('toggleBlockSession').innerHTML = '<i class="fas fa-plus"></i> Create Block Session (4-Week Series)';
   // Clear form
   document.getElementById('blockTitle').value = '';
@@ -2979,6 +3596,154 @@ document.getElementById('createBlockSession').onclick=async ()=>{
 // --- Session Creation Modal Handlers ---
 // Wait for DOM to be ready and modal to exist
 setTimeout(() => {
+    // --- Session Templates Logic ---
+    let sessionTemplates = [];
+    let selectedTemplateId = null;
+
+    async function fetchTemplates(type) {
+      let url = 'php/getSessionTemplates.php';
+      if (type) url += '?type=' + encodeURIComponent(type);
+      const res = await fetch(url);
+      sessionTemplates = await res.json();
+      return sessionTemplates;
+    }
+
+    function updateTemplateDropdown(type) {
+      const dropdown = document.getElementById('templateDropdown');
+      dropdown.innerHTML = '<option value="">-- Select a template --</option>';
+      let filtered = sessionTemplates.filter(t => t.type === type);
+      filtered.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.templateId;
+        opt.textContent = t.name + (t.attributes && t.attributes.location ? ' (' + t.attributes.location + ')' : '');
+        dropdown.appendChild(opt);
+      });
+    }
+
+    async function refreshTemplatesUI() {
+      const type = document.getElementById('modalSessionType').value;
+      await fetchTemplates(type);
+      updateTemplateDropdown(type);
+      document.getElementById('deleteTemplateBtn').style.display = 'none';
+      selectedTemplateId = null;
+    }
+
+    document.getElementById('modalSessionType').addEventListener('change', refreshTemplatesUI);
+    document.getElementById('templateDropdown').addEventListener('change', function() {
+      const tid = this.value;
+      selectedTemplateId = tid;
+      const t = sessionTemplates.find(t => t.templateId === tid);
+      if (!t) return;
+      // Auto-fill form fields
+      const f = t.formFields || {};
+      if (t.type === 'single') {
+        document.getElementById('modalSingleFields').style.display = 'block';
+        document.getElementById('modalBlockFields').style.display = 'none';
+        document.getElementById('modalAdminDate').value = f.date || '';
+        document.getElementById('modalSlotTitle').value = f.title || '';
+        document.getElementById('modalNumberOfSpots').value = f.capacity || 1;
+        document.getElementById('modalSessionTypeDetail').value = f.sessionType || 'group';
+        document.getElementById('modalSessionStartTime').value = f.time || '';
+        document.getElementById('modalSessionDuration').value = f.duration || 40;
+        document.getElementById('modalSessionPrice').value = f.price || '';
+        document.getElementById('modalSessionLocation').value = f.location || '';
+      } else if (t.type === 'block') {
+        document.getElementById('modalSingleFields').style.display = 'none';
+        document.getElementById('modalBlockFields').style.display = 'block';
+        document.getElementById('modalBlockTitle').value = f.title || '';
+        document.getElementById('modalBlockFirstDate').value = f.firstDate || '';
+        document.getElementById('modalBlockNumberOfSessions').value = f.numberOfSessions || 4;
+        document.getElementById('modalBlockStartTime').value = f.time || '';
+        document.getElementById('modalBlockDuration').value = f.duration || 40;
+        document.getElementById('modalBlockNumberOfSpots').value = f.capacity || 1;
+        document.getElementById('modalBlockSessionTypeDetail').value = f.sessionType || 'group';
+        document.getElementById('modalBlockPrice').value = f.price || '';
+        document.getElementById('modalBlockLocation').value = f.location || '';
+      }
+      document.getElementById('deleteTemplateBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('deleteTemplateBtn').addEventListener('click', async function() {
+      if (!selectedTemplateId) return;
+      if (!confirm('Delete this template?')) return;
+      await fetch('php/deleteSessionTemplate.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId: selectedTemplateId })
+      });
+      await refreshTemplatesUI();
+      showToast('Template deleted');
+    });
+
+    document.getElementById('saveAsTemplateBtn').addEventListener('click', async function() {
+      const type = document.getElementById('modalSessionType').value;
+      let name = prompt('Template name:');
+      if (!name) return;
+      let attributes = {};
+      let formFields = {};
+      if (type === 'single') {
+        attributes = {
+          sessionType: document.getElementById('modalSessionTypeDetail').value,
+          location: document.getElementById('modalSessionLocation').value,
+          price: document.getElementById('modalSessionPrice').value,
+          capacity: document.getElementById('modalNumberOfSpots').value
+        };
+        formFields = {
+          title: document.getElementById('modalSlotTitle').value,
+          time: document.getElementById('modalSessionStartTime').value,
+          duration: document.getElementById('modalSessionDuration').value,
+          price: document.getElementById('modalSessionPrice').value,
+          location: document.getElementById('modalSessionLocation').value,
+          capacity: document.getElementById('modalNumberOfSpots').value,
+          sessionType: document.getElementById('modalSessionTypeDetail').value
+        };
+      } else if (type === 'block') {
+        attributes = {
+          sessionType: document.getElementById('modalBlockSessionTypeDetail').value,
+          location: document.getElementById('modalBlockLocation').value,
+          price: document.getElementById('modalBlockPrice').value,
+          capacity: document.getElementById('modalBlockNumberOfSpots').value
+        };
+        formFields = {
+          title: document.getElementById('modalBlockTitle').value,
+          firstDate: document.getElementById('modalBlockFirstDate').value,
+          numberOfSessions: document.getElementById('modalBlockNumberOfSessions').value,
+          time: document.getElementById('modalBlockStartTime').value,
+          duration: document.getElementById('modalBlockDuration').value,
+          price: document.getElementById('modalBlockPrice').value,
+          location: document.getElementById('modalBlockLocation').value,
+          capacity: document.getElementById('modalBlockNumberOfSpots').value,
+          sessionType: document.getElementById('modalBlockSessionTypeDetail').value
+        };
+      } else if (type === 'special') {
+        // For special, use single fields as base
+        attributes = {
+          sessionType: document.getElementById('modalSessionTypeDetail').value,
+          location: document.getElementById('modalSessionLocation').value,
+          price: document.getElementById('modalSessionPrice').value,
+          capacity: document.getElementById('modalNumberOfSpots').value
+        };
+        formFields = {
+          title: document.getElementById('modalSlotTitle').value,
+          time: document.getElementById('modalSessionStartTime').value,
+          duration: document.getElementById('modalSessionDuration').value,
+          price: document.getElementById('modalSessionPrice').value,
+          location: document.getElementById('modalSessionLocation').value,
+          capacity: document.getElementById('modalNumberOfSpots').value,
+          sessionType: document.getElementById('modalSessionTypeDetail').value
+        };
+      }
+      await fetch('php/saveSessionTemplate.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type, attributes, formFields })
+      });
+      await refreshTemplatesUI();
+      showToast('Template saved');
+    });
+
+    // Initial load
+    refreshTemplatesUI();
   const openBtn = document.getElementById('openSessionModal');
   const modalClose = document.getElementById('sessionModalClose');
   const modalOverlay = document.getElementById('sessionModalOverlay');
@@ -3011,135 +3776,179 @@ setTimeout(() => {
     const isSingle = e.target.value === 'single';
     document.getElementById('modalSingleFields').style.display = isSingle ? 'block' : 'none';
     document.getElementById('modalBlockFields').style.display = isSingle ? 'none' : 'block';
+    refreshTemplatesUI();
   };
 
   modalCreate.onclick = async () => {
+    console.log('[DEBUG] modalCreate.onclick triggered');
     const sessionType = document.getElementById('modalSessionType').value;
+    // Extra debug: check modalCreate button existence
+    const btnCheck = document.getElementById('sessionModalCreate');
+    console.log('[DEBUG] sessionModalCreate button exists:', !!btnCheck);
   
-  if (sessionType === 'single') {
-    // Create single session using existing logic
-    const date = document.getElementById('modalAdminDate').value;
-    const title = document.getElementById('modalSlotTitle').value.trim();
-    const spots = parseInt(document.getElementById('modalNumberOfSpots').value) || 1;
-    const type = document.getElementById('modalSessionTypeDetail').value;
-    const startTime = document.getElementById('modalSessionStartTime').value;
-    const duration = parseInt(document.getElementById('modalSessionDuration').value) || 40;
-    const price = parseFloat(document.getElementById('modalSessionPrice').value) || 0;
-    const location = document.getElementById('modalSessionLocation').value.trim() || '';
-    
-    if (!date) { showToast('Select date', {error: true}); return; }
-    if (!title) { showToast('Enter slot title', {error: true}); return; }
-    if (!startTime) { showToast('Select start time', {error: true}); return; }
-    
-    const endTime = calculateEndTime(startTime, duration);
-    const slotsData = await getAvailableSlots();
-    slotsData[date] = slotsData[date] || [];
-    
-    if (slotsData[date].some(s => s.time === startTime)) {
-      showToast(`Slot already exists at ${startTime}`, {error: true});
-      return;
-    }
-    
-    slotsData[date].push({
-      time: startTime,
-      endTime: endTime,
-      duration: duration,
-      title: title,
-      numberOfSpots: spots,
-      sessionType: type,
-      price: price,
-      location: location,
-      bookedUsers: [],
-      blockId: null,
-      blockDates: []
-    });
-    
-    await saveAvailableSlots(slotsData);
-    showToast(`Single slot created for ${date} at ${startTime}`);
-    
-    // Clear form
-    document.getElementById('modalSlotTitle').value = '';
-    document.getElementById('modalNumberOfSpots').value = '1';
-    document.getElementById('modalSessionTypeDetail').value = 'group';
-    document.getElementById('modalSessionStartTime').value = '';
-    document.getElementById('modalSessionDuration').value = '40';
-    document.getElementById('modalSessionPrice').value = '';
-    document.getElementById('modalSessionLocation').value = '';
-    
-    document.getElementById('sessionCreationModal').classList.remove('open');
-    document.body.classList.remove('modal-open');
-    renderAllAvailableSlots();
-    
-  } else {
-    // Create block session using existing logic
-    const blockTitle = document.getElementById('modalBlockTitle').value.trim();
-    const firstDate = document.getElementById('modalBlockFirstDate').value;
-    const numberOfSessions = parseInt(document.getElementById('modalBlockNumberOfSessions').value) || 4;
-    const startTime = document.getElementById('modalBlockStartTime').value;
-    const duration = parseInt(document.getElementById('modalBlockDuration').value) || 40;
-    const numberOfSpots = parseInt(document.getElementById('modalBlockNumberOfSpots').value) || 1;
-    const sessionType = document.getElementById('modalBlockSessionTypeDetail').value;
-    const price = parseFloat(document.getElementById('modalBlockPrice').value) || 0;
-    const location = document.getElementById('modalBlockLocation').value.trim() || '';
-    
-    if (!blockTitle) { showToast('Enter block title', {error: true}); return; }
-    if (!firstDate) { showToast('Select first session date', {error: true}); return; }
-    if (!startTime) { showToast('Select start time', {error: true}); return; }
-    if (numberOfSessions < 1 || numberOfSessions > 12) { showToast('Number of sessions must be between 1 and 12', {error: true}); return; }
-    
-    const blockDates = [];
-    let current = new Date(firstDate);
-    for (let i = 0; i < numberOfSessions; i++) {
-      blockDates.push(current.toISOString().split('T')[0]);
-      current.setDate(current.getDate() + 7);
-    }
-    
-    const blockId = 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    const endTime = calculateEndTime(startTime, duration);
-    const slotsData = await getAvailableSlots();
-    
-    for (const date of blockDates) {
+    if (sessionType === 'single') {
+      // Create single session using existing logic
+      const date = document.getElementById('modalAdminDate').value;
+      const title = document.getElementById('modalSlotTitle').value.trim();
+      const capacity = parseInt(document.getElementById('modalNumberOfSpots').value) || 1;
+      const type = document.getElementById('modalSessionTypeDetail').value;
+      const startTime = document.getElementById('modalSessionStartTime').value;
+      const duration = parseInt(document.getElementById('modalSessionDuration').value) || 40;
+      const price = parseFloat(document.getElementById('modalSessionPrice').value) || 0;
+      const location = document.getElementById('modalSessionLocation').value.trim() || '';
+
+      if (!date) { showToast('Select date', {error: true}); return; }
+      if (!title) { showToast('Enter slot title', {error: true}); return; }
+      if (!startTime) { showToast('Select start time', {error: true}); return; }
+
+      const endTime = calculateEndTime(startTime, duration);
+      let slotsData = await getAvailableSlots();
       slotsData[date] = slotsData[date] || [];
-      
+
       if (slotsData[date].some(s => s.time === startTime)) {
-        showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
+        showToast(`Slot already exists at ${startTime}`, {error: true});
         return;
       }
-      
+
       slotsData[date].push({
         time: startTime,
         endTime: endTime,
         duration: duration,
-        title: blockTitle,
-        numberOfSpots: numberOfSpots,
-        sessionType: sessionType,
+        title: title,
+        capacity: capacity,
+        sessionType: type,
         price: price,
         location: location,
         bookedUsers: [],
-        blockId: blockId,
-        blockDates: blockDates
+        blockId: null,
+        blockDates: []
       });
+      
+      // Debug: Log the slotsData payload before saving
+      console.log('[DEBUG] Payload to saveAvailableSlots:', JSON.stringify(slotsData, null, 2));
+
+      // Validate slotsData before saving
+      const validDates = Object.keys(slotsData).filter(date => Array.isArray(slotsData[date]) && slotsData[date].length > 0);
+      if (validDates.length === 0) {
+        showToast('No valid sessions to save. Please check your input.', {error: true});
+        console.error('[BLOCK SESSION] No valid slots to save:', slotsData);
+        return;
+      }
+
+      // Save to backend
+      try {
+        await saveAvailableSlots(slotsData);
+        showToast('Session saved successfully!');
+      } catch (err) {
+        showToast('Failed to save session: ' + err.message, {error: true});
+        console.error('[SINGLE SESSION] Save error:', err);
+        return;
+      }
+
+      // Clear form
+      document.getElementById('modalSlotTitle').value = '';
+      document.getElementById('modalNumberOfSpots').value = '1';
+      document.getElementById('modalSessionTypeDetail').value = 'group';
+      document.getElementById('modalSessionStartTime').value = '';
+      document.getElementById('modalSessionDuration').value = '40';
+      document.getElementById('modalSessionPrice').value = '';
+      document.getElementById('modalSessionLocation').value = '';
+
+      document.getElementById('sessionCreationModal').classList.remove('open');
+      document.body.classList.remove('modal-open');
+      renderAllAvailableSlots();
+
+    } else {
+      // Create block session using existing logic
+      const blockTitle = document.getElementById('modalBlockTitle').value.trim();
+      const firstDate = document.getElementById('modalBlockFirstDate').value;
+      const numberOfSessions = parseInt(document.getElementById('modalBlockNumberOfSessions').value) || 4;
+      const startTime = document.getElementById('modalBlockStartTime').value;
+      const duration = parseInt(document.getElementById('modalBlockDuration').value) || 40;
+      const capacity = parseInt(document.getElementById('modalBlockNumberOfSpots').value) || 1;
+      const sessionType = document.getElementById('modalBlockSessionTypeDetail').value;
+      const price = parseFloat(document.getElementById('modalBlockPrice').value) || 0;
+      const location = document.getElementById('modalBlockLocation').value.trim() || '';
+
+      if (!blockTitle) { showToast('Enter block title', {error: true}); return; }
+      if (!firstDate) { showToast('Select first session date', {error: true}); return; }
+      if (!startTime) { showToast('Select start time', {error: true}); return; }
+      if (numberOfSessions < 1 || numberOfSessions > 12) { showToast('Number of sessions must be between 1 and 12', {error: true}); return; }
+
+
+      // Use preview row values if present, else fallback to generated
+      const blockDates = [];
+      const previewRows = document.querySelectorAll('#blockSessionPreviewRows .block-session-row');
+      for (let i = 0; i < numberOfSessions; i++) {
+        const row = previewRows[i];
+        if (row) {
+          const dateInput = row.querySelector('input[type="date"]');
+          if (dateInput && dateInput.value) {
+            blockDates.push(dateInput.value);
+            continue;
+          }
+        }
+        // fallback: generate from firstDate
+        let current = new Date(firstDate);
+        current.setDate(current.getDate() + i * 7);
+        blockDates.push(current.toISOString().split('T')[0]);
+      }
+
+      const blockId = 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      const endTime = calculateEndTime(startTime, duration);
+      const slotsData = await getAvailableSlots();
+
+      // Ensure slotsData is an object
+      if (!slotsData || typeof slotsData !== 'object' || Array.isArray(slotsData)) {
+        console.warn('[DEBUG] slotsData was not an object, resetting to {}');
+        slotsData = {};
+      }
+
+      for (const date of blockDates) {
+        slotsData[date] = slotsData[date] || [];
+
+        if (slotsData[date].some(s => s.time === startTime)) {
+          showToast(`Slot already exists at ${date} ${startTime}`, {error: true});
+          return;
+        }
+
+        slotsData[date].push({
+          time: startTime,
+          endTime: endTime,
+          duration: duration,
+          title: blockTitle,
+          capacity: capacity,
+          sessionType: sessionType,
+          price: price,
+          location: location,
+          bookedUsers: [],
+          blockId: blockId,
+          blockDates: blockDates
+        });
+      }
+
+      // Debug: Log the slotsData payload before saving (block session)
+      console.log('[DEBUG] Payload to saveAvailableSlots (block):', JSON.stringify(slotsData, null, 2));
+
+      await saveAvailableSlots(slotsData);
+      const lastDate = blockDates[blockDates.length - 1];
+      showToast(`Block session created: ${numberOfSessions} sessions from ${blockDates[0]} to ${lastDate}`);
+
+      // Clear form
+      document.getElementById('modalBlockTitle').value = '';
+      document.getElementById('modalBlockFirstDate').value = '';
+      document.getElementById('modalBlockNumberOfSessions').value = '4';
+      document.getElementById('modalBlockStartTime').value = '';
+      document.getElementById('modalBlockDuration').value = '40';
+      document.getElementById('modalBlockNumberOfSpots').value = '1';
+      document.getElementById('modalBlockSessionTypeDetail').value = 'group';
+      document.getElementById('modalBlockPrice').value = '';
+      document.getElementById('modalBlockLocation').value = '';
+
+      document.getElementById('sessionCreationModal').classList.remove('open');
+      document.body.classList.remove('modal-open');
+      renderAllAvailableSlots();
     }
-    
-    await saveAvailableSlots(slotsData);
-    const lastDate = blockDates[blockDates.length - 1];
-    showToast(`Block session created: ${numberOfSessions} sessions from ${blockDates[0]} to ${lastDate}`);
-    
-    // Clear form
-    document.getElementById('modalBlockTitle').value = '';
-    document.getElementById('modalBlockFirstDate').value = '';
-    document.getElementById('modalBlockNumberOfSessions').value = '4';
-    document.getElementById('modalBlockStartTime').value = '';
-    document.getElementById('modalBlockDuration').value = '40';
-    document.getElementById('modalBlockNumberOfSpots').value = '1';
-    document.getElementById('modalBlockSessionTypeDetail').value = 'group';
-    document.getElementById('modalBlockPrice').value = '';
-    document.getElementById('modalBlockLocation').value = '';
-    
-    document.getElementById('sessionCreationModal').classList.remove('open');
-    document.body.classList.remove('modal-open');
-    renderAllAvailableSlots();
-  }
   };
 }, 100);
 
@@ -3157,7 +3966,7 @@ document.getElementById('adminDate').onchange=async ()=>{
   await renderWaitlist();
 };
 
-// --- render all available slots (only show non-full slots) ---
+// --- Render All Available Slots (only show non-full slots) ---
 async function renderAllAvailableSlots(){
   const container = document.getElementById('allAvailableSlots');
   ensureAdminTableStyles();
@@ -3166,7 +3975,7 @@ async function renderAllAvailableSlots(){
   container.innerHTML = '';
 
   if (adminViewMode === 'table') {
-    // --- Table View for All Sessions (with block grouping) ---
+    // --- Table View for All Sessions (With Block Grouping) ---
     // Build a flat list of sessions, grouping block sessions as one row
     const rows = [];
     const processedBlockIds = new Set();
@@ -3312,24 +4121,42 @@ async function renderAllAvailableSlots(){
     if(dateCompare !== 0) return dateCompare;
     return a.slot.time.localeCompare(b.slot.time);
   });
-  slotArray.forEach(({date, slot, isBlock})=>{
+
+  // Remove duplicate slot cards by slotKey (prevents duplicate event handlers and emails)
+  const seenSlotKeys = new Set();
+  const uniqueSlotArray = [];
+  slotArray.forEach(({date, slot, isBlock}) => {
+    const slotKey = isBlock
+      ? `BLOCK|${slot.blockId}|${slot.time}|${slot.title}`
+      : `${date}|${slot.time}|${slot.title}`;
+    if (!seenSlotKeys.has(slotKey)) {
+      seenSlotKeys.add(slotKey);
+      uniqueSlotArray.push({date, slot, isBlock});
+    }
+  });
+
+
+  uniqueSlotArray.forEach(({date, slot, isBlock})=>{
     // ...existing card rendering code...
     const card=document.createElement('div');
     card.className='available-slot-card';
-    
+
     // Create unique slot key for tracking expanded state
     const slotKey = isBlock 
       ? `BLOCK|${slot.blockId}|${slot.time}|${slot.title}`
       : `${date}|${slot.time}|${slot.title}`;
-    
+
+    // DEBUG: Track slotKey counts
+    window.__slotKeyCounts = window.__slotKeyCounts || {};
+    window.__slotKeyCounts[slotKey] = (window.__slotKeyCounts[slotKey] || 0) + 1;
+    console.log(`[SLOT RENDER] Creating slot: ${slotKey}, count: ${window.__slotKeyCounts[slotKey]}, expandedSlotCards.has(${slotKey}) = ${expandedSlotCards.has(slotKey)}`);
+
     // Add data attributes for state tracking
     if (isBlock) {
       card.setAttribute('data-block-id', slot.blockId);
     }
     card.setAttribute('data-slot-key', slotKey);
-    
-    console.log(`[SLOT RENDER] Creating slot: ${slotKey}, expandedSlotCards.has(${slotKey}) = ${expandedSlotCards.has(slotKey)}`);
-    
+
     // Restore expanded state if this card was previously expanded
     const shouldBeExpanded = expandedSlotCards.has(slotKey);
     if (shouldBeExpanded) {
@@ -3358,18 +4185,18 @@ async function renderAllAvailableSlots(){
       const blockDates = slot.blockDates || [];
       const priceDisplay = formatPrice(slot.price);
       const locationDisplay = slot.location ? slot.location : '';
-      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' • ' : ''}${locationDisplay}</div>` : '';
+      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
       card.innerHTML=`
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <div class="available-slot-date">
-              <i class="fas fa-link"></i>
+              <i class="fas fa-cube"></i>
               4-Week Block
             </div>
             <span class="block-session-badge">Block Session</span>
           </div>
           <div class="available-slot-times compact">
-            <div style="font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> • ${slot.time} • <span style="color: #666;">(${booked}/${spots})</span></div>
+            <div style="font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span></div>
           </div>
           <div class="available-slot-times" style="display: none;">
             <div style="font-weight: 600; margin-bottom: 4px;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong></div>
@@ -3385,38 +4212,269 @@ async function renderAllAvailableSlots(){
             </div>
           </div>
         </div>
-        <button class="available-slot-remove-btn" data-block-id="${slot.blockId}" style="background: #FF9800;">
-          <i class="fas fa-times"></i>
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+          <button class="available-slot-edit-btn" style="background: #2196F3; color: #fff; border: none; border-radius: 6px; width: 32px; height: 32px; min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; margin: 0; padding: 0; display: none;">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="available-slot-remove-btn" data-block-id="${slot.blockId}" style="background: #FF9800; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       `;
-      const removeBtn=card.querySelector('.available-slot-remove-btn');
-      if (!removeBtn) return;
-      removeBtn.addEventListener('click', async (e)=>{
-        e.stopPropagation();
-        openSessionCancellationModal({
-          sessionId: `${slot.blockId}_${slot.time}_${slot.title}`,
-          sessionTitle: slot.title,
-          sessionTime: slot.time,
-          sessionDate: slot.blockDates[0],
-          blockDates: slot.blockDates,
-          blockId: slot.blockId
+      const editBtn = card.querySelector('.available-slot-edit-btn');
+      // Add event handler for edit button (session edit)
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditSessionModal(slot, date);
         });
-      });
+      }
+      // Helper: create and show an empty modal for editing session (works for both block and single sessions)
+      function openEditSessionModal(slot, date) {
+        let modal = document.getElementById('editSessionModal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'editSessionModal';
+          modal.style.position = 'fixed';
+          modal.style.inset = '0';
+          modal.style.width = '100vw';
+          modal.style.minHeight = '100dvh';
+          modal.style.background = 'rgba(0,0,0,0.45)';
+          modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          modal.style.zIndex = '10000';
+          modal.style.padding = 'env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0)';
+          document.body.appendChild(modal);
+        } else {
+          modal.style.display = 'flex';
+        }
+        // Build the modal content with editable fields
+        // Use slot and date to prefill values
+        const isBlock = !!slot.blockId;
+        const blockDates = slot.blockDates || [];
+        modal.innerHTML = `
+          <div id="editSessionModalContent" style="background:#fff;padding:32px 16px 24px 16px;border-radius:10px;width:calc(100vw - 32px);max-width:400px;min-width:0;box-shadow:0 2px 16px rgba(0,0,0,0.18);position:relative;overflow-y:auto;max-height:80dvh;margin:0 auto;display:block;box-sizing:border-box;">
+            <h2 style="margin-top:0;font-size:1.25rem;margin-bottom:18px;text-align:center;">Edit Session</h2>
+            <form id="editSessionForm" autocomplete="off">
+              <div style="margin-bottom:12px;">
+                <label>Date${isBlock ? ' (first date)' : ''}<br><input type="date" id="editSessionDate" name="date" value="${isBlock ? (blockDates[0] || '') : (date || '')}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Title<br><input type="text" id="editSessionTitle" name="title" value="${slot.title || ''}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Capacity<br><input type="number" id="editSessionSpots" name="capacity" min="1" value="${slot.capacity || slot.numberOfSpots || 1}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Session Type<br>
+                  <select id="editSessionType" name="sessionType" style="width:100%;padding:6px 8px;">
+                    <option value="group"${slot.sessionType === 'group' ? ' selected' : ''}>Group</option>
+                    <option value="solo"${slot.sessionType === 'solo' ? ' selected' : ''}>Solo</option>
+                  </select>
+                </label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Start Time<br><input type="time" id="editSessionStartTime" name="time" value="${slot.time || ''}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Duration (minutes)<br><input type="number" id="editSessionDuration" name="duration" min="15" max="240" value="${slot.duration || 40}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Price (£)<br><input type="number" id="editSessionPrice" name="price" min="0" step="0.01" value="${slot.price || ''}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              <div style="margin-bottom:12px;">
+                <label>Location<br><input type="text" id="editSessionLocation" name="location" value="${slot.location || ''}" style="width:100%;padding:6px 8px;"></label>
+              </div>
+              ${isBlock ? `
+                <div style="margin-bottom:12px;">
+                  <label>Block Dates<br>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                      <input type="date" id="editSessionBlockDate1" name="blockDate1" value="${blockDates[0] || ''}" style="flex:1 1 120px;padding:6px 8px;">
+                      <input type="date" id="editSessionBlockDate2" name="blockDate2" value="${blockDates[1] || ''}" style="flex:1 1 120px;padding:6px 8px;">
+                      <input type="date" id="editSessionBlockDate3" name="blockDate3" value="${blockDates[2] || ''}" style="flex:1 1 120px;padding:6px 8px;">
+                      <input type="date" id="editSessionBlockDate4" name="blockDate4" value="${blockDates[3] || ''}" style="flex:1 1 120px;padding:6px 8px;">
+                    </div>
+                  </label>
+                </div>
+              ` : ''}
+              <div style="margin-top:18px;text-align:center;">
+                <button type="submit" style="background:#2196F3;color:#fff;padding:8px 24px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        `;
+        // Close modal if click outside modal content
+        modal.onclick = function(ev) {
+          if (ev.target === modal) {
+            modal.style.display = 'none';
+          }
+        };
+        // Add submit handler for editSessionForm
+        setTimeout(() => {
+          const form = document.getElementById('editSessionForm');
+          if (form) {
+            form.onsubmit = async function(e) {
+              e.preventDefault();
+              // Gather form values
+              const isBlock = !!slot.blockId;
+              const payload = {
+                originalDate: date,
+                originalTime: slot.time,
+                originalTitle: slot.title,
+                date: document.getElementById('editSessionDate').value,
+                title: document.getElementById('editSessionTitle').value,
+                capacity: parseInt(document.getElementById('editSessionSpots').value, 10),
+                sessionType: document.getElementById('editSessionType').value,
+                time: document.getElementById('editSessionStartTime').value,
+                duration: parseInt(document.getElementById('editSessionDuration').value, 10),
+                price: parseFloat(document.getElementById('editSessionPrice').value),
+                location: document.getElementById('editSessionLocation').value,
+                blockId: slot.blockId || null,
+                isBlock: isBlock,
+                blockDates: isBlock ? [
+                  document.getElementById('editSessionBlockDate1').value,
+                  document.getElementById('editSessionBlockDate2').value,
+                  document.getElementById('editSessionBlockDate3').value,
+                  document.getElementById('editSessionBlockDate4').value
+                ].filter(Boolean) : undefined
+              };
+              try {
+                const resp = await fetch('php/saveSlotsEdit.php', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                });
+                const result = await resp.json();
+                if (result.status === 'ok') {
+                  modal.style.display = 'none';
+                  // Optionally, refresh slots UI
+                  if (typeof renderAllAvailableSlots === 'function') renderAllAvailableSlots();
+                } else {
+                  alert('Failed to save changes: ' + (result.message || 'Unknown error'));
+                }
+              } catch (err) {
+                alert('Error saving changes: ' + err);
+              }
+            }
+          }
+        }, 0);
+      }
+      const removeBtn = card.querySelector('.available-slot-remove-btn');
+      // Show/hide edit button based on expanded state, just like delete
+      if (editBtn) {
+        if (card.classList.contains('expanded')) {
+          editBtn.style.display = 'inline-flex';
+        } else {
+          editBtn.style.display = 'none';
+        }
+      }
+      console.log('[DELETE BTN] Block session button found:', !!removeBtn);
+      if (!removeBtn) return;
+      // DEBUG: Track handler attachment
+      window.__removeBtnCounts = window.__removeBtnCounts || {};
+      window.__removeBtnCounts[slotKey] = (window.__removeBtnCounts[slotKey] || 0) + 1;
+      console.log(`[REMOVE BTN] Attaching handler for slotKey: ${slotKey}, count: ${window.__removeBtnCounts[slotKey]}`);
+      removeBtn.addEventListener('click', async (e)=>{
+        console.log('[DELETE BTN] Block session delete clicked!');
+        e.stopPropagation();
+        // Fetch emails from bookings.json for this slot
+        let emailsToNotify = [];
+        const bookingsData = await getBookings();
+        let sessionBookings = [];
+        if (Array.isArray(bookingsData[date])) {
+          sessionBookings = bookingsData[date].filter(b => {
+            const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
+            if (!match) return false;
+            const bookingTime = match[1].trim();
+            const bookingTitle = match[2].trim();
+            return bookingTime === slot.time && bookingTitle === slot.title;
+          });
+        }
+        // Extract emails from sessionBookings
+        emailsToNotify = sessionBookings.map(b => {
+          const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
+          return match ? match[4].trim() : null;
+        }).filter(e => !!e);
+        // Deduplicate emails
+        emailsToNotify = Array.from(new Set(emailsToNotify));
+        if (emailsToNotify.length > 0) {
+          console.log('[DELETE BTN] Emails of booked users (from bookings.json):', emailsToNotify);
+        } else {
+          console.log('[DELETE BTN] No booked users for this session (from bookings.json).');
+        }
+        // Send email to each booked user
+        for (const email of emailsToNotify) {
+          try {
+            // Always use slot.time for slot, and robustly determine date
+            let slotTime = slot.time || '';
+            let dateToSend = '';
+            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
+              dateToSend = slot.blockDates[0];
+            } else if (slot.date) {
+              dateToSend = slot.date;
+            } else if (typeof date !== 'undefined' && date) {
+              dateToSend = date;
+            }
+            const payload = {
+              email,
+              type: 'session_deleted',
+              title: slot.title,
+              slot: slotTime,
+              location: slot.location || '',
+              date: dateToSend
+            };
+            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
+              payload.blockDates = slot.blockDates;
+            }
+            if (!payload.slot || !payload.date) {
+              console.warn(`[DELETE BTN] Skipping email to ${email}: missing slot or date`, payload);
+              continue;
+            }
+            console.log('[DELETE BTN][DEBUG] Payload for', email, payload);
+            const resp = await fetch('php/sendEmail.php', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(payload)
+            });
+            let result = null;
+            try {
+              result = await resp.json();
+            } catch (parseErr) {
+              console.warn(`[DELETE BTN] Could not parse response for ${email}:`, parseErr);
+            }
+            if (result && result.success) {
+              console.log(`[DELETE BTN] Email sent to ${email}`);
+            } else {
+              console.warn(`[DELETE BTN] Email FAILED for ${email}:`, result && result.error ? result.error : 'Unknown error');
+            }
+          } catch (err) {
+            console.warn(`[DELETE BTN] Failed to send email to ${email}:`, err);
+          }
+        }
+        // Cascade delete directly, no modal or cancelSession.php
+        if (!await modalConfirm('Remove entire block session? This will delete all bookings and waitlist entries for this block.')) return;
+        await deleteSessionBookingsAndWaitlist(slot.blockDates, slot.time, slot.title, slot.blockId);
+        showToast('Block session deleted (cascade)');
+        await renderAllAvailableSlots();
+      }, { once: true });
     } else {
-      const priceDisplay = slot.price ? `£${typeof slot.price === 'number' ? slot.price.toFixed(2) : slot.price}` : '';
+      const priceDisplay = slot.price ? `&pound;${typeof slot.price === 'number' ? slot.price.toFixed(2) : slot.price}` : '';
       const locationDisplay = slot.location ? slot.location : '';
-      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666;">${priceDisplay}${priceDisplay && locationDisplay ? ' • ' : ''}${locationDisplay}</div>` : '';
+      const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
       card.innerHTML=`
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <div class="available-slot-date">
-              <i class="fas fa-calendar"></i>
-              ${formatDateForDisplay(date)}
-            </div>
+                <div class="available-slot-date">
+                  ${slot.sessionType === 'solo' ? `<svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="user" class="svg-inline--fa fa-user" width="18" height="18" viewBox="0 0 448 512" style="vertical-align:middle;margin-right:6px;" fill="#43A047"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm89.6 32h-11.7c-22.4 10.2-47.2 16-73.9 16s-51.5-5.8-73.9-16h-11.7C100.3 288 0 388.3 0 512h448c0-123.7-100.3-224-134.4-224z"></path></svg>`
+                    : (slot.sessionType === 'group' && !slot.blockId) ? `<svg width="32" height="18" viewBox="0 0 64 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="5" fill="#43A047"/><circle cx="32" cy="10" r="6" fill="#43A047"/><circle cx="52" cy="12" r="5" fill="#43A047"/><rect x="4" y="19" width="16" height="7" rx="3.5" fill="#43A047"/><rect x="22" y="17" width="20" height="9" rx="4.5" fill="#43A047"/><rect x="44" y="19" width="16" height="7" rx="3.5" fill="#43A047"/></svg>`
+                    : ''}
+                  ${formatDateForDisplay(date)}
+                </div>
             <span style="display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; background: #E3F2FD; color: #1565C0; white-space: nowrap;">Single</span>
           </div>
           <div class="available-slot-times compact">
-            <strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> • ${slot.time} • <span style="color: #666;">(${booked}/${spots})</span>
+            <strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span>
           </div>
           <div class="available-slot-times" style="display: none;">
             <div style="font-weight: 600; margin-bottom: 4px;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong></div>
@@ -3429,189 +4487,145 @@ async function renderAllAvailableSlots(){
             </div>
           </div>
         </div>
-        <button class="available-slot-remove-btn" data-date="${date}" data-time="${slot.time}">
-          <i class="fas fa-times"></i>
-        </button>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+          <button class="available-slot-edit-btn" style="background: #2196F3; color: #fff; border: none; border-radius: 6px; width: 32px; height: 32px; min-width: 32px; min-height: 32px; max-width: 32px; max-height: 32px; display: ${shouldBeExpanded ? 'inline-flex' : 'none'}; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; margin: 0; padding: 0;">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="available-slot-remove-btn" data-date="${date}" data-time="${slot.time}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       `;
+      const editBtn = card.querySelector('.available-slot-edit-btn');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditSessionModal(slot, date);
+        });
+      }
       const removeBtn=card.querySelector('.available-slot-remove-btn');
       if (!removeBtn) return;
-      removeBtn.addEventListener('click', async (e)=>{
+      // Replace removeBtn with a clone to remove any existing event listeners
+      const newRemoveBtn = removeBtn.cloneNode(true);
+      removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+      newRemoveBtn.addEventListener('click', async (e)=>{
         e.stopPropagation();
-        openSessionCancellationModal({
-          sessionId: `${date}_${slot.time}_${slot.title}`,
-          sessionTitle: slot.title,
-          sessionTime: slot.time,
-          sessionDate: date
-        });
-      });
-    // --- Session Cancellation Modal ---
-    let sessionCancellationModal = null;
-    function openSessionCancellationModal({sessionId, sessionTitle, sessionTime, sessionDate, blockDates, blockId}) {
-      if (!sessionCancellationModal) {
-        sessionCancellationModal = document.createElement('div');
-        sessionCancellationModal.className = 'pt-modal';
-        sessionCancellationModal.id = 'sessionCancellationModal';
-        sessionCancellationModal.innerHTML = `
-          <div class="pt-modal-overlay"></div>
-          <div class="pt-modal-content" style="max-width: 420px;">
-            <button class="pt-modal-close" aria-label="Close">&times;</button>
-            <h3>Session Cancellation</h3>
-            <div class="pt-modal-body">
-              <div style="margin-bottom: 8px; color: #374151; font-size: 0.98rem;">
-                A cancellation email will be sent to all players booked on this session.<br>
-                <span style="color:#888;font-size:0.92em;">Session: <b>${escapeHtml(sessionTitle)}</b> &mdash; ${escapeHtml(sessionDate)} ${escapeHtml(sessionTime)}</span>
-                ${blockDates && blockDates.length > 1 ? `<div style='margin-top:6px;font-size:0.92em;color:#888;'>Block Dates: ${blockDates.map(d=>escapeHtml(d)).join(', ')}</div>` : ''}
-              </div>
-              <label for="sessionCancelExtraMsg" style="font-size: 0.92rem; color: #374151; font-weight: 600;">Optional extra message to include in the cancellation email</label>
-              <textarea id="sessionCancelExtraMsg" placeholder="Optional extra message to include in the cancellation email" style="width:100%;min-height:80px;padding:12px;border-radius:8px;border:1px solid #d1d5db;background:#fff;font-size:1rem;font-family:inherit;resize:vertical;margin-bottom:8px;"></textarea>
-              <div class="pt-actions" style="margin-top: 10px;">
-                <button class="btn btn-cancel-session-modal" style="background:#374151;color:#fff;">Cancel</button>
-                <button class="btn btn-confirm-session-cancel" style="background:#ef4444;color:#fff;">Confirm Cancellation</button>
-              </div>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(sessionCancellationModal);
-      }
-      sessionCancellationModal.classList.add('open');
-      document.body.classList.add('modal-open');
-      // Close modal handler
-      sessionCancellationModal.querySelector('.pt-modal-close').onclick = closeSessionCancellationModal;
-      sessionCancellationModal.querySelector('.btn-cancel-session-modal').onclick = closeSessionCancellationModal;
-      // Confirm handler
-      const confirmBtn = sessionCancellationModal.querySelector('.btn-confirm-session-cancel');
-      confirmBtn.onclick = async function() {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Cancelling...';
-        const extraMsg = sessionCancellationModal.querySelector('#sessionCancelExtraMsg').value;
-        try {
-          // Debug: fetch and log session extraction sources
-          const slotsData = await getAvailableSlots();
-          const bookingsData = await getBookings();
-          const bookingMappingsData = await (await fetch('data/bookingMappings.json')).json();
-          let bookedUsers = [];
-          const date = sessionId.split('_')[0];
-          const time = sessionId.split('_')[1];
-          const title = sessionId.split('_')[2];
-          console.log('[Session Cancel DEBUG] availableSlots.json:', slotsData[date]);
-          console.log('[Session Cancel DEBUG] bookings.json:', bookingsData[date]);
-          console.log('[Session Cancel DEBUG] bookingMappings.json:', bookingMappingsData);
-          // Try availableSlots
-          if (slotsData[date]) {
-            slotsData[date].forEach(slot => {
-              if (slot.time === time && slot.title === title && slot.bookedUsers && slot.bookedUsers.length > 0) {
-                bookedUsers = slot.bookedUsers;
-              }
-            });
-          }
-          // Try bookings.json if empty
-          if (bookedUsers.length === 0 && bookingsData[date]) {
-            bookingsData[date].forEach(b => {
-              const m = b.match(/^([0-9]{2}:[0-9]{2}) - ([^\(]+) \(([^\)]+)\) \(([^\)]+)\)$/);
-              if (m && m[1] === time && m[2].trim() === title) {
-                bookedUsers.push({name: m[3], email: m[4]});
-              }
-            });
-          }
-          // Try bookingMappings.json if still empty
-          if (bookedUsers.length === 0) {
-            Object.values(bookingMappingsData).forEach(mapping => {
-              if (mapping.slot === time && mapping.title === title && mapping.date === date && mapping.email) {
-                bookedUsers.push({name: mapping.name || '', email: mapping.email});
-              }
-            });
-          }
-          console.log('[Session Cancel DEBUG] bookedUsers extracted:', bookedUsers);
-          // Call backend cancellation endpoint
-          const payload = {
-            sessionId,
-            extraMessage: extraMsg,
-            blockDates,
-            blockId,
-            bookedUsers // Pass bookedUsers to backend
-          };
-          console.log('[Session Cancel] Sending payload:', payload);
-          const res = await fetch('php/cancelSession.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        // Fetch emails from bookings.json for this slot
+        let emailsToNotify = [];
+        const bookingsData = await getBookings();
+        let sessionBookings = [];
+        if (Array.isArray(bookingsData[date])) {
+          sessionBookings = bookingsData[date].filter(b => {
+            const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
+            if (!match) return false;
+            const bookingTime = match[1].trim();
+            const bookingTitle = match[2].trim();
+            return bookingTime === slot.time && bookingTitle === slot.title;
           });
-          console.log('[Session Cancel] Response:', res);
-          let data = null;
-          try {
-            data = await res.json();
-            console.log('[Session Cancel] Response JSON:', data);
-          } catch (err) {
-            console.error('[Session Cancel Exception] JSON parse failed:', err);
-          }
-          // Always run cascade delete regardless of backend response
-          try {
-            const cascadeResult = await deleteSessionBookingsAndWaitlist(blockDates && blockDates.length ? blockDates : [date], time, title, blockId);
-            console.log('[CASCADE DELETE DEBUG] Cascade delete result:', cascadeResult);
-            showToast('Booking deleted (cascade) even if email failed.', {error: false});
-            closeSessionCancellationModal();
-            await renderAllAvailableSlots();
-          } catch (err) {
-            console.error('[CASCADE DELETE DEBUG] Cascade delete error:', err);
-            showToast('Cascade delete failed: ' + err.message, {error:true});
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Confirm Cancellation';
-          }
-        } catch (err) {
-          console.error('[Session Cancel Exception]', err);
-          showToast('Failed to cancel session or send emails. Please try again.', {error:true});
-          confirmBtn.disabled = false;
-          confirmBtn.textContent = 'Confirm Cancellation';
         }
-      };
-    }
-
-    function closeSessionCancellationModal() {
-      if (sessionCancellationModal) {
-        sessionCancellationModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
-        // Reset textarea and button
-        sessionCancellationModal.querySelector('#sessionCancelExtraMsg').value = '';
-        const confirmBtn = sessionCancellationModal.querySelector('.btn-confirm-session-cancel');
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirm Cancellation';
-      }
-    }
+        // Extract emails from sessionBookings
+        emailsToNotify = sessionBookings.map(b => {
+          const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
+          return match ? match[4].trim() : null;
+        }).filter(e => !!e);
+        // Deduplicate emails
+        emailsToNotify = Array.from(new Set(emailsToNotify));
+        if (emailsToNotify.length > 0) {
+          console.log('[DELETE BTN] Emails of booked users (from bookings.json):', emailsToNotify);
+        } else {
+          console.log('[DELETE BTN] No booked users for this session (from bookings.json).');
+        }
+        // Send email to each booked user
+        for (const email of emailsToNotify) {
+          try {
+            // Build payload matching backend expectations
+            let slotTime = slot.time || '';
+            let dateToSend = '';
+            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
+              dateToSend = slot.blockDates[0];
+            } else if (slot.date) {
+              dateToSend = slot.date;
+            } else if (typeof date !== 'undefined' && date) {
+              dateToSend = date;
+            }
+            const payload = {
+              email,
+              type: 'session_deleted',
+              title: slot.title,
+              slot: slotTime,
+              location: slot.location || '',
+              date: dateToSend
+            };
+            if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 0) {
+              payload.blockDates = slot.blockDates;
+            }
+            if (!payload.slot || !payload.date) {
+              console.warn(`[DELETE BTN] Skipping email to ${email}: missing slot or date`, payload);
+              continue;
+            }
+            console.log('[DELETE BTN][DEBUG] Payload for', email, payload);
+            const resp = await fetch('php/sendEmail.php', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(payload)
+            });
+            let result = null;
+            try {
+              result = await resp.json();
+            } catch (parseErr) {
+              console.warn(`[DELETE BTN] Could not parse response for ${email}:`, parseErr);
+            }
+            if (result && result.success) {
+              console.log(`[DELETE BTN] Email sent to ${email}`);
+            } else {
+              console.warn(`[DELETE BTN] Email FAILED for ${email}:`, result && result.error ? result.error : 'Unknown error');
+            }
+          } catch (err) {
+            console.warn(`[DELETE BTN] Failed to send email to ${email}:`, err);
+          }
+        }
+        // Cascade delete directly, no modal or cancelSession.php
+        if (slot.blockId) {
+          if (!await modalConfirm('Remove entire block session? This will delete all bookings and waitlist entries for this block.')) return;
+          await deleteSessionBookingsAndWaitlist(slot.blockDates, slot.time, slot.title, slot.blockId);
+          showToast('Block session deleted (cascade)');
+        } else {
+          if (!await modalConfirm('Remove this session? This will delete all bookings and waitlist entries for this session.')) return;
+          await deleteSessionBookingsAndWaitlist([date], slot.time, slot.title, null);
+          showToast('Session deleted (cascade)');
+        }
+        await renderAllAvailableSlots();
+      }, { once: true });
     }
     
-    // CRITICAL FIX: Apply display styles AFTER HTML is set
-    // Wait for next tick to ensure HTML is fully rendered
-    setTimeout(() => {
-      const compactDiv = card.querySelector('.available-slot-times.compact');
-      const expandedDiv = Array.from(card.querySelectorAll('.available-slot-times')).find(d => !d.classList.contains('compact'));
-      const isExpanded = card.classList.contains('expanded');
-      
-      console.log(`[SLOT RENDER] Post-HTML: ${slotKey}, isExpanded=${isExpanded}, compact=${compactDiv?'exists':'missing'}, expanded=${expandedDiv?'exists':'missing'}`);
-      
-      if (compactDiv && expandedDiv) {
-        if (isExpanded) {
-          compactDiv.style.display = 'none';
-          expandedDiv.style.display = '';
-          console.log(`[SLOT RENDER]   -> Set displays for EXPANDED state`);
-        } else {
-          compactDiv.style.display = '';
-          expandedDiv.style.display = 'none';
-          console.log(`[SLOT RENDER]   -> Set displays for COLLAPSED state`);
-        }
+    // Apply display styles for compact/expanded and edit button immediately
+    const compactDiv = card.querySelector('.available-slot-times.compact');
+    const expandedDiv = Array.from(card.querySelectorAll('.available-slot-times')).find(d => !d.classList.contains('compact'));
+    const isExpanded = card.classList.contains('expanded');
+    const editBtn = card.querySelector('.available-slot-edit-btn');
+    if (compactDiv && expandedDiv) {
+      if (isExpanded) {
+        compactDiv.style.display = 'none';
+        expandedDiv.style.display = '';
+        if (editBtn) editBtn.style.display = 'inline-flex';
+      } else {
+        compactDiv.style.display = '';
+        expandedDiv.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'none';
       }
-    }, 0);
+    }
     
     // Add toggle functionality on card click
     card.addEventListener('click', (e) => {
-      // Don't toggle if clicking the delete button
-      if (e.target.closest('.available-slot-remove-btn')) return;
-      
+      // Don't toggle if clicking the delete or edit button
+      if (e.target.closest('.available-slot-remove-btn') || e.target.closest('.available-slot-edit-btn')) return;
       card.classList.toggle('expanded');
       const compactDiv = card.querySelector('.available-slot-times.compact');
       const expandedDiv = Array.from(card.querySelectorAll('.available-slot-times')).find(d => !d.classList.contains('compact'));
+      const editBtn = card.querySelector('.available-slot-edit-btn');
       if (compactDiv) compactDiv.style.display = card.classList.contains('expanded') ? 'none' : '';
       if (expandedDiv) expandedDiv.style.display = card.classList.contains('expanded') ? '' : 'none';
-      
+      if (editBtn) editBtn.style.display = card.classList.contains('expanded') ? 'inline-flex' : 'none';
       // Update tracked state
       if (card.classList.contains('expanded')) {
         expandedSlotCards.add(slotKey);
@@ -3677,7 +4691,7 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
 
     // Delete session from availableSlots.json
     let slotsData = await getAvailableSlots();
-    log('Current slots data:', slotsData);
+    log('Current slots data (before filtering):', JSON.parse(JSON.stringify(slotsData)));
     let deletedSessions = 0;
     for(const date of dates) {
       if(slotsData[date]) {
@@ -3698,7 +4712,10 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
         if(slotsData[date].length === 0) delete slotsData[date];
       }
     }
+    log('Current slots data (after filtering):', JSON.parse(JSON.stringify(slotsData)));
     log('💾 Saving updated slots...');
+    // Debug: Log the slotsData payload before saving (delete)
+    console.log('[DEBUG] Payload to saveAvailableSlots (delete):', JSON.stringify(slotsData, null, 2));
     await saveAvailableSlots(slotsData);
     log('✅ Slots saved. Deleted sessions:', deletedSessions);
 
@@ -3779,7 +4796,6 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
     throw err;
   }
 }
-}
 
 // --- Table Mode: Remove block session ---
 async function removeBlockSession(blockId, time, title, blockDates) {
@@ -3855,7 +4871,7 @@ function hashBooking(date, booking){
   return 'bk-' + Math.abs(hash).toString(36);
 }
 
-// --- render all bookings with modern styling and click expansion ---
+// --- Render All Bookings With Modern Styling and Click Expansion ---
 // ensure consistent admin table styles
 function ensureAdminTableStyles() {
   if (document.getElementById('admin-table-styles')) return;
@@ -3867,7 +4883,7 @@ function ensureAdminTableStyles() {
     .admin-table th, .admin-table td { padding: 8px; word-break: break-word; white-space: normal; vertical-align: top; overflow-wrap: break-word; }
     .admin-table th { text-align: left; font-weight: 600; }
     .admin-table td { min-width: 60px; }
-    .admin-table .actions div { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+    .admin-table .actions div, .admin-table .col-actions div { display:flex; flex-direction:column !important; gap:6px; align-items:flex-start; }
     .admin-table th.col-date, .admin-table td.col-date { min-width: 90px; width: 12%; }
     .admin-table th.col-time, .admin-table td.col-time { min-width: 70px; width: 10%; }
     .admin-table th.col-title, .admin-table td.col-title { min-width: 120px; width: 20%; }
@@ -3888,7 +4904,7 @@ function ensureAdminTableStyles() {
 async function renderAllBookings(){
   await refreshBookingMappings();
   if (false && adminViewMode === 'table') {
-        // --- Table View for All Bookings (block bookings as one row) ---
+        // --- Table View for All Bookings (Block Bookings as One Row) ---
         const allBookingsDiv = document.getElementById('allBookings');
         const bookings = await getBookings();
         const slotsData = await getAvailableSlots();
@@ -4164,13 +5180,13 @@ async function renderAllBookings(){
         const blockBadge = `<span class="block-session-badge">Block Session</span>`;
         const actionsHtml = `${showConfirm ? `<button class="confirm" data-email="${escapeHtml(g.email)}" data-date="${escapeHtml(g.dates[0])}" data-time="${escapeHtml(g.time)}" data-title="${escapeHtml(g.title)}" data-name="${escapeHtml(g.name)}" data-block-dates="${escapeHtml(g.dates.join(','))}" style="margin-right:8px;">Confirm</button>` : ''}<button class='delete' data-is-block='true' data-block-dates='${escapeHtml(g.dates.join(','))}' data-title='${escapeHtml(g.title)}' data-time='${escapeHtml(g.time)}' data-email='${escapeHtml(g.email)}'>Delete</button>`;
         tr.innerHTML = `<td class="col-date">${dateHtml}</td>` +
-                       `<td class="col-time">${escapeHtml(g.time)}</td>` +
-                       `<td class="col-title">${escapeHtml(g.title)}</td>` +
-                       `<td class="col-title">${escapeHtml(type)}</td>` +
-                       `<td class="col-price">${price}</td>` +
-                       `<td class="col-status">${escapeHtml(status)}</td>` +
-                       `<td class="col-block">${blockBadge}</td>` +
-                       `<td class="col-actions"><div style="display:flex;flex-direction:row;gap:6px;align-items:center;">${actionsHtml}</div></td>`;
+                       `<td class=\"col-time\">${escapeHtml(g.time)}</td>` +
+                       `<td class=\"col-title\">${escapeHtml(g.title)}</td>` +
+                       `<td class=\"col-title\">${escapeHtml(type)}</td>` +
+                       `<td class=\"col-price\">${price}</td>` +
+                       `<td class=\"col-status\">${escapeHtml(status)}</td>` +
+                       `<td class=\"col-block\">${blockBadge}</td>` +
+                       `<td class=\"col-actions\"><div class=\"admin-action-stack\" style=\"display:flex;flex-direction:column;gap:6px;align-items:center;\">${actionsHtml}</div></td>`;
       } else {
         const date = g.date;
         const price = formatPrice(g.slotInfo?.price);
@@ -4179,13 +5195,13 @@ async function renderAllBookings(){
         const showConfirm = status !== 'Confirmed';
         const actionsHtml = `${showConfirm ? `<button class="confirm" data-email="${escapeHtml(g.email)}" data-date="${escapeHtml(date)}" data-time="${escapeHtml(g.time)}" data-title="${escapeHtml(g.title)}" data-name="${escapeHtml(g.name)}" style="margin-right:8px;">Confirm</button>` : ''}<button class='delete' data-date='${escapeHtml(date)}' data-index='${g.idx}' data-slot-time='${escapeHtml(g.time)}' data-slot-title='${escapeHtml(g.title)}' data-name='${escapeHtml(g.name)}' data-email='${escapeHtml(g.email)}'>Delete</button>`;
         tr.innerHTML = `<td class="col-date">${escapeHtml(date)}</td>` +
-                       `<td class="col-time">${escapeHtml(g.time)}</td>` +
-                       `<td class="col-title">${escapeHtml(g.title)}</td>` +
-                       `<td class="col-title">${escapeHtml(type)}</td>` +
-                       `<td class="col-price">${price}</td>` +
-                       `<td class="col-status">${escapeHtml(status)}</td>` +
-                       `<td class="col-block"></td>` +
-                       `<td class="col-actions"><div style="display:flex;flex-direction:row;gap:6px;align-items:center;">${actionsHtml}</div></td>`;
+                       `<td class=\"col-time\">${escapeHtml(g.time)}</td>` +
+                       `<td class=\"col-title\">${escapeHtml(g.title)}</td>` +
+                       `<td class=\"col-title\">${escapeHtml(type)}</td>` +
+                       `<td class=\"col-price\">${price}</td>` +
+                       `<td class=\"col-status\">${escapeHtml(status)}</td>` +
+                       `<td class=\"col-block\"></td>` +
+                       `<td class=\"col-actions\"><div class=\"admin-action-stack\" style=\"display:flex;flex-direction:column;gap:6px;align-items:center;\">${actionsHtml}</div></td>`;
       }
       tbody.appendChild(tr);
     });
@@ -4570,7 +5586,7 @@ async function renderAllBookings(){
     const sessionType = slotInfo?.sessionType || 'group';
     const priceDisplay = formatPrice(slotInfo?.price);
     const locationDisplay = slotInfo?.location ? slotInfo.location : '';
-    const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.85rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' • ' : ''}${locationDisplay}</div>` : '';
+    const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.85rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
     const sessionBadge = `<span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-left: 8px; background: ${sessionType==='group'?'#dbeafe':'#fce7f3'}; color: ${sessionType==='group'?'#1e40af':'#be185d'};\">${sessionType}</span>`;
     const blockBadge = slotInfo?.blockId ? '<span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-left: 8px; background: #FFE0B2; color: #E65100;">4-Week Block</span>' : '';
     
@@ -4594,11 +5610,11 @@ async function renderAllBookings(){
       <div class="booking-header">
         <div class="booking-header-info">
           <div style="font-weight: 600; color: #333; font-size: clamp(0.85rem, 2vw, 0.95rem); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            ${isBlockSession ? `<i class="fas fa-link" style="color: #4CAF50; flex-shrink: 0;"></i>` : `<i class="fas fa-clock" style="color: #4CAF50; flex-shrink: 0;"></i>`}
+            ${isBlockSession ? `<i class="fas fa-cube" style="color: #4CAF50; flex-shrink: 0;"></i>` : `<i class="fas fa-clock" style="color: #4CAF50; flex-shrink: 0;"></i>`}
             <strong>${title}</strong> ${sessionBadge} ${blockBadge}
           </div>
           <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
-            ${isBlockSession ? `<strong>Dates:</strong> ${blockDates.map(d => formatDateForDisplay(d)).join(', ')}` : `${formatDateForDisplay(date)} • ${time}`}
+            ${isBlockSession ? `<strong>Dates:</strong> ${blockDates.map(d => formatDateForDisplay(d)).join(', ')}` : `${formatDateForDisplay(date)} &bull; ${time}`}
           </div>
           ${priceLocationInfo}
         </div>
@@ -4618,7 +5634,18 @@ async function renderAllBookings(){
       const {name, email} = bookingGroup;
       const status = getBookingStatus(email, isBlockSession ? blockDates[0] : date, time, title);
       const isConfirmed = status === 'Confirmed';
-      
+
+      // Get expiryTimestamp from booking mapping
+      let expiryDisplay = '';
+      const mapping = findBookingMapping(email, isBlockSession ? blockDates[0] : date, time, title)?.mapping;
+      if (!isConfirmed && mapping && mapping.expiryTimestamp) {
+        const expiryDate = new Date(mapping.expiryTimestamp * 1000);
+        // Format as YYYY-MM-DD HH:mm
+        const pad = n => n.toString().padStart(2, '0');
+        const formatted = `${expiryDate.getFullYear()}-${pad(expiryDate.getMonth()+1)}-${pad(expiryDate.getDate())} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
+        expiryDisplay = `<span style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:inline-block;vertical-align:middle;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</span>`;
+      }
+
       const bookingCard = document.createElement('div');
       bookingCard.style.cssText = `
         padding: 12px 16px;
@@ -4638,17 +5665,32 @@ async function renderAllBookings(){
               <i class="fas fa-envelope"></i>
               ${email}
             </div>
-            <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
-              ${status}
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0; flex-wrap:nowrap;">
+              <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
+                ${status}
+              </div>
+              ${expiryDisplay}
             </div>
           </div>
-          <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
-            <button class="confirm-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 6px 12px; border: none; border-radius: 4px; background: #4CAF50; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Confirm</button>
-            <button class="delete-booking-btn" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 6px 12px; border: none; border-radius: 4px; background: #f44336; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Delete</button>
+          <div style="display: flex; flex-direction: column; gap: 2px; align-items: stretch; flex-shrink: 0;">
+            <button class="confirm-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #4CAF50; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Confirm</button>
+            <button class="edit-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #2196F3; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Edit</button>
+            <button class="delete-booking-btn" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #f44336; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Delete</button>
+          </div>
+          </div>
           </div>
         </div>
       `;
-      
+// Change wrapper to vertical stack
+      const lastBookingCard = bookingsContainer.lastElementChild;
+      if (lastBookingCard) {
+        const actionWrapper = lastBookingCard.querySelector('div[style*="gap: 8px"][style*="align-items: center"][style*="flex-shrink: 0"]');
+        if (actionWrapper) {
+          actionWrapper.style.flexDirection = 'column';
+          actionWrapper.style.alignItems = 'stretch';
+        }
+      }
+
       bookingsContainer.appendChild(bookingCard);
     });
     
@@ -4671,6 +5713,33 @@ async function renderAllBookings(){
 
   // Add event listeners for confirm and delete buttons
   allBookingsDiv.querySelectorAll('.confirm-booking-btn').forEach(btn => {
+      // Add event listeners for edit buttons
+      allBookingsDiv.querySelectorAll('.edit-booking-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          // Show the edit modal
+          const modal = document.getElementById('editBookingModal');
+          modal.style.display = 'flex';
+          document.body.classList.add('modal-open');
+
+          // Autofill fields
+          document.getElementById('editBookingName').value = btn.getAttribute('data-name') || '';
+          document.getElementById('editBookingEmail').value = btn.getAttribute('data-email') || '';
+          // Date, Time, and Title fields removed from modal
+          // Set status dropdown to 'confirmed' or 'pending' (lowercase)
+          const statusText = btn.closest('.all-booking-card')?.querySelector('.booking-status-badge')?.textContent?.trim().toLowerCase() || '';
+          if (statusText === 'confirmed' || statusText === 'pending') {
+            document.getElementById('editBookingStatus').value = statusText;
+          } else {
+            document.getElementById('editBookingStatus').value = '';
+          }
+        });
+        // Close modal logic
+        document.getElementById('closeEditBookingModal').onclick = function() {
+          document.getElementById('editBookingModal').style.display = 'none';
+          document.body.classList.remove('modal-open');
+        };
+      });
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const name = btn.getAttribute('data-name');
@@ -4690,7 +5759,8 @@ async function renderAllBookings(){
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (!confirm('Are you sure you want to delete this booking?')) return;
-      
+
+      const name = btn.getAttribute('data-name') || '';
       const email = btn.getAttribute('data-email');
       const date = btn.getAttribute('data-date');
       const time = btn.getAttribute('data-time');
@@ -4698,40 +5768,50 @@ async function renderAllBookings(){
       const isBlock = btn.getAttribute('data-is-block') === 'true';
       const blockDatesStr = btn.getAttribute('data-block-dates') || '';
       const blockDates = blockDatesStr ? blockDatesStr.split(',') : [];
-      
+
+      console.log('[CANCEL BOOKING] Attempting to delete booking:', {
+        name, email, date, time, title, isBlock, blockDatesStr, blockDates
+      });
       try {
         await refreshBookingMappings();
         const mappingFound = findBookingMapping(email, date, time, title);
         const bookingId = mappingFound ? mappingFound.bookingId : '';
-        
+        console.log('[CANCEL BOOKING] Booking mapping found:', mappingFound);
+        console.log('[CANCEL BOOKING] BookingId:', bookingId);
+
         // Use the backend API to delete the booking (handles block sessions properly)
+        const payload = {
+          name,
+          email,
+          date,
+          time,
+          title,
+          isBlock,
+          blockDates,
+          bookingId
+        };
+        console.log('[CANCEL BOOKING] Sending payload to cancelBooking.php:', payload);
         const res = await fetch(PHP_PATH + 'cancelBooking.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: btn.getAttribute('data-name') || '',
-            email: email,
-            date: date,
-            time: time,
-            title: title,
-            isBlock: isBlock,
-            blockDates: blockDates,
-            bookingId: bookingId
-          })
+          body: JSON.stringify(payload)
         });
-        
+
         if (!res.ok) {
-          const errData = await res.json();
+          let errData = null;
+          try { errData = await res.json(); } catch (err) { errData = {}; }
+          console.error('[CANCEL BOOKING] Backend error response:', errData);
           throw new Error(errData.message || 'Failed to delete booking');
         }
-        
-        await res.json();
+
+        const result = await res.json();
+        console.log('[CANCEL BOOKING] Backend success response:', result);
         await refreshBookingMappings();
         await renderAllBookings();
         await updateSummaryBar();
         showToast('Booking deleted successfully');
       } catch (e) {
-        console.error('Delete error:', e);
+        console.error('[CANCEL BOOKING] Delete error:', e);
         showToast('Error deleting booking: ' + e.message, {error: true});
       }
     });
@@ -4873,7 +5953,7 @@ async function renderWaitlist(){
         const actionsHtml = `<div style="display:flex;flex-direction:row;gap:4px;align-items:stretch;">
           <button class='reserve' data-session='${escapeHtml(sessionKey)}' data-email='${escapeHtml(entry.email||'')}' data-idx='${idx}' style="margin:0;padding:4px 6px;font-size:0.5rem;white-space:nowrap;flex:1;">Offer Spot</button>
           <button class='decline' data-session='${escapeHtml(sessionKey)}' data-email='${escapeHtml(entry.email||'')}' data-idx='${idx}' style="margin:0;padding:4px 6px;font-size:0.5rem;white-space:nowrap;flex:1;">Delete</button>
-        </div>`;
+        </div>`.replace('flex-direction:row','flex-direction:column');
         
         tr.innerHTML = `
           <td class="col-position" style="text-align:center;white-space:nowrap;">${position}</td>
@@ -4962,6 +6042,28 @@ async function renderWaitlist(){
     return;
   }
   
+  // ========== CLEAR ALL DATA BUTTON HANDLER ==========
+  const clearDataBtn = document.getElementById('clearDataBtn');
+  if (clearDataBtn) {
+    clearDataBtn.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to DELETE ALL DATA? This cannot be undone.')) return;
+      clearDataBtn.disabled = true;
+      clearDataBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+      try {
+        const response = await fetch('php/clearAllData.php', { method: 'POST' });
+        const result = await response.json();
+        if (!response.ok || result.status !== 'ok') {
+          throw new Error(result.message || 'Failed to clear data');
+        }
+        showToast('All data cleared!', {error: false});
+        setTimeout(() => { window.location.reload(); }, 1200);
+      } catch (err) {
+        showToast('Error: ' + err.message, {error: true});
+        clearDataBtn.disabled = false;
+        clearDataBtn.innerHTML = '<i class="fas fa-trash"></i> Clear ALL Data';
+      }
+    });
+  }
   // AESTHETIC MODE: Render card-based view (existing code below)
   const waitlistSection = document.getElementById('waitlistSection');
   const emptyWaitlist = document.getElementById('emptyWaitlist');
@@ -4976,8 +6078,13 @@ async function renderWaitlist(){
     expandedWaitlistCards.add(key);
   });
 
-  Promise.all([getWaitlist(), getAvailableSlots(), getBookings()])
-    .then(([waitlistData, slotsData, bookingsData]) => {
+  Promise.all([
+    getWaitlist(),
+    getAvailableSlots(),
+    getBookings(),
+    fetch('php/getOffers.php').then(r => r.json())
+  ])
+    .then(([waitlistData, slotsData, bookingsData, offersData]) => {
       try {
         // Build a map of dates with their sessions
         const sessionMap = {}; // {date: {time-title: {count, people: [], blockDates: [], sessionType, blockId}}}
@@ -5138,11 +6245,27 @@ async function renderWaitlist(){
                 const joinDate = new Date(person.joinedAt);
                 if (!isNaN(joinDate.getTime())) joinedDisplay = formatDateForDisplay(person.joinedAt.split(' ')[0]);
               }
+
+              // Find pending offer for this person/session
+              let offerExpiryHtml = '';
+              if (offersData && typeof offersData === 'object') {
+                const offer = Object.values(offersData).find(o =>
+                  o.email === person.email &&
+                  o.title === title &&
+                  o.time === time &&
+                  o.status === 'pending'
+                );
+                if (offer && offer.expiresAt) {
+                  offerExpiryHtml = `<div style="color:#b45309;font-size:0.85em;margin-top:2px;">Offer expires: <b>${escapeHtml(offer.expiresAt)}</b></div>`;
+                }
+              }
+
               infoDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                   <div>
                     <div class="waitlist-person-name">${person.name}</div>
                     <div class="waitlist-person-email">${person.email}</div>
+                    ${offerExpiryHtml}
                   </div>
                   <div style="text-align: right; font-size: 0.85rem; color: #666;">
                     <div style="font-weight: 600; font-size: 0.9rem; color: #2E7D32;">#${positionDisplay}</div>
@@ -5237,6 +6360,22 @@ function startAutoRefresh(){
     if(isAutoRefreshing) return; // Skip if already refreshing
     isAutoRefreshing=true;
     try {
+      // Call cleanupExpiredOffers.php before refresh
+      try {
+        const res = await fetch('php/cleanupExpiredOffers.php', { method: 'GET' });
+        const txt = await res.text();
+        console.log('CleanupExpiredOffers:', txt);
+      } catch (err) {
+        console.warn('CleanupExpiredOffers error:', err);
+      }
+      // Call removeExpiredPendingBookings.php before refresh
+      try {
+        const res2 = await fetch('php/removeExpiredPendingBookings.php', { method: 'GET' });
+        const txt2 = await res2.text();
+        console.log('RemoveExpiredPendingBookings:', txt2);
+      } catch (err) {
+        console.warn('RemoveExpiredPendingBookings error:', err);
+      }
       console.log('=== AUTO REFRESH DEBUG ===');
       console.log('1. SCANNING DOM BEFORE REFRESH...');
       
@@ -5674,44 +6813,6 @@ if (calendarSyncRange) {
   });
 }
 
-// Clear Data button handler
-const clearDataBtn = document.getElementById('clearDataBtn');
-if(clearDataBtn) {
-  clearDataBtn.addEventListener('click', async () => {
-    if(!confirm('Are you sure? This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.')) return;
-    
-    try {
-      // Clear ALL data
-      await saveAvailableSlots({});
-      await saveBookings({});
-      await saveWaitlist({});
-      await saveBookingMappings({});
-      
-      // Clear player profiles
-      const profileRes = await fetch(PHP_PATH + 'savePlayerProfile.php', { 
-        method: 'POST', 
-        headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify({ action: 'clear_all' })
-      });
-      if (!profileRes.ok) throw new Error('Failed to clear player profiles');
-      
-      // Clear players
-      const playersRes = await fetch(PHP_PATH + 'getPlayers.php?action=clear_all', { method: 'GET' });
-      if (!playersRes.ok) throw new Error('Failed to clear players');
-      
-      showToast('All data cleared successfully');
-      
-      // Refresh the display
-      await renderAllAvailableSlots();
-      await renderAllBookings();
-      await renderWaitlist();
-      await updateSummaryBar();
-    } catch(err) {
-      console.error('Error clearing data:', err);
-      showToast('Error clearing data: ' + err.message, {error: true});
-    }
-  });
-}
 
 // Placeholder function for calendar sync selection
 // This will be implemented with actual calendar generation logic later
@@ -5845,8 +6946,11 @@ function generateCalendarLinksHTML(sessions) {
   sessions.forEach(session => {
     const url = generateGoogleCalendarURL(session);
     const displayDate = formatDateForDisplay(session.date);
-    const sessionType = session.sessionType === 'block' ? '📅' : '🎯';
-    
+    // Use 📅 for block sessions, 🏀 for basketball, or 🎯 for others
+    let sessionType = '🎯';
+    if (session.sessionType === 'block') sessionType = '📅';
+    else if (session.title && /basketball/i.test(session.title)) sessionType = '🏀';
+
     html += `
       <a href="${url}" target="_blank" rel="noopener noreferrer" 
          style="display: flex; flex-direction: column; justify-content: space-between; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 8px; text-decoration: none; color: #333; transition: all 0.2s ease; height: 140px; width: calc(25% - 8px); min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; overflow: hidden; flex-shrink: 0;"

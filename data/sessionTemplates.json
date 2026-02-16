@@ -1,1 +1,24 @@
-[]
+[
+    {
+        "templateId": "template-6991cc82adc3a9.07678531",
+        "name": "Hoops",
+        "type": "block",
+        "attributes": {
+            "sessionType": "group",
+            "location": "Charles Dickens Centre",
+            "price": "10",
+            "capacity": "1"
+        },
+        "formFields": {
+            "title": "Age 11-15",
+            "firstDate": "2026-02-25",
+            "numberOfSessions": "4",
+            "time": "20:30",
+            "duration": "45",
+            "price": "10",
+            "location": "Charles Dickens Centre",
+            "capacity": "1",
+            "sessionType": "group"
+        }
+    }
+]

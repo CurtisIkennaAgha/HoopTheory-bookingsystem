@@ -33,12 +33,7 @@ try {
     $bookingMappings = file_exists($bookingMappingsFile) ? json_decode(file_get_contents($bookingMappingsFile), true) : [];
     if (isset($bookingMappings[$bookingId])) {
       $m = $bookingMappings[$bookingId];
-      // Check expiry
-      if (isset($m['expiryTimestamp']) && time() > $m['expiryTimestamp']) {
-        unset($bookingMappings[$bookingId]);
-        file_put_contents($bookingMappingsFile, json_encode($bookingMappings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        throw new Exception('Booking expired and already removed');
-      }
+      // Expiry check: treat expired bookings as normal cancellations
       $name = $m['name'] ?? $name;
       $email = $m['email'] ?? $email;
       $time = $m['slot'] ?? $time;
@@ -47,6 +42,10 @@ try {
       $blockDates = $m['blockDates'] ?? $blockDates;
       $blockId = $m['blockId'] ?? $blockId;
       $date = $m['date'] ?? $date;
+    }
+    // If bookingId is not found, throw error only if it was never in the system
+    else {
+      throw new Exception('BookingId not found in bookingMappings.json');
     }
   }
   
@@ -218,7 +217,7 @@ try {
 
   echo json_encode([
     'status' => 'ok',
-    'message' => 'Booking cancelled successfully',
+    'message' => 'Expired booking removed',
     'emailResult' => $emailResultDecoded,
     'emailHttpCode' => $httpCode,
     'emailCurlError' => $emailErr,

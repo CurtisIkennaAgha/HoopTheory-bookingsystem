@@ -1,3 +1,41 @@
+/* Set Inter as the default font for all text except where Florida is explicitly set */
+html, body, input, select, textarea, button {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+/* Waitlist label for fully booked block sessions (bottom of card, not a pill) */
+.waitlist-block-label {
+  display: block;
+  margin-top: 14px;
+  font-size: 0.98rem;
+  color: #92400e;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.01em;
+}
+/* Waitlist pill for fully booked sessions */
+.waitlist-pill {
+  display: inline-block;
+  background: #fef9c3;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  margin-left: 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+/* Force block confirmation/details time text to always be black */
+#blockTime {
+  color: #0f172a !important;
+}
+/* Ensure input text is always solid and visible, not faded like placeholder */
+input, input[type="text"], input[type="email"] {
+  color: #222 !important;
+  opacity: 1 !important;
+}
 /* Red outline for fully booked block/session details */
 .fully-booked-outline {
   border: 2.5px solid #ef4444 !important;
@@ -116,13 +154,15 @@
   border-radius: 999px;
   font-size: 0.82rem;
   white-space: nowrap;
-  display: inline-block;
-  text-align: right;
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: 0;
+  position: static;
+  right: unset;
+  top: unset;
+  transform: none;
   z-index: 1;
 }
 /* Make block-confirmation details card visually match session card */
@@ -160,6 +200,7 @@
   width: 100%;
   min-height: 1.5em;
   margin: 0;
+  gap: 8px;
 }
 .block-confirmation .slot-title {
   font-size:1.09rem;
@@ -222,19 +263,18 @@
 /* Flex row for title and spots pill */
 .slot-title-row {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  width: 100%;
   min-height: 1.5em;
   margin: 0;
+  justify-content: flex-start;
+  
 }
 .slot-card-inner {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   margin: 0 auto;
-  width: max-content;
-  min-width: 100%;
   font-size: 1.12em;
 }
   width: 23px !important;
@@ -608,11 +648,12 @@ button:disabled {
 
 /* ================= BLOCK CONFIRMATION SECTION ================= */
 
+
 .block-confirmation {
   margin: 20px 0;
   padding: 18px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #f0fdf4 0%, #e8fef4 100%);
+  background: #fff;
   border: 2px solid #d1fae5;
   border-left: 4px solid #10b981;
 }
@@ -1463,14 +1504,14 @@ body.modal-open-payment {
 .confirmation-dates {
   margin: 12px 0;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.6);
+  background: transparent;
   border-radius: 8px;
 }
 
 .confirmation-dates strong {
   display: block;
   font-size: 0.95rem;
-  color: #065f46;
+  color: #111;
   margin-bottom: 8px;
 }
 
@@ -1652,7 +1693,6 @@ body.modal-open-payment {
   background: #e8fef4;
   color: #065f46;
   border: 1px solid #bbf7d0;
-  min-width: 110px;
   font-weight: 700;
   padding: 6px 10px;
   border-radius: 999px;
@@ -1660,10 +1700,6 @@ body.modal-open-payment {
   white-space: nowrap;
   display: inline-block;
   text-align: right;
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   margin: 0;
   z-index: 1;
 }
@@ -1983,8 +2019,8 @@ body.modal-open-payment {
 
 /* ===== PILL BADGES ===== */
 .pill {
-  display: inline-block;
-  padding: 6px 10px;
+  display: inline;
+  padding: 0;
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;

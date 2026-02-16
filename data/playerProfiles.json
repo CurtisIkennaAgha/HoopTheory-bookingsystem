@@ -1,142 +1,102 @@
 {
-    "9f050407-7a0d-4bf2-8e7e-26462e4c04af": {
+    "9a03cbce-c309-4941-8f09-f422ea00fd37": {
         "name": "Bao Tran",
         "email": "baojellybean@gmail.com",
-        "age": 27,
+        "age": 11,
         "experience": "Local league",
-        "medical": "D",
+        "medical": "Xx",
         "emergency": {
             "name": "D",
             "phone": "07950469559",
-            "relationship": "Bro"
+            "relationship": "X"
         },
         "media_consent": true,
         "media_consent_text": "I, the parent/guardian of Bao Tran, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
         "waiver_acknowledged": true,
         "waiver_text": "I, the parent/guardian of Bao Tran, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
         "registration_complete": true,
-        "profile_id": "9f050407-7a0d-4bf2-8e7e-26462e4c04af",
-        "updated_at": "2026-02-06T06:57:31+01:00",
-        "created_at": "2026-02-06T06:57:31+01:00"
+        "profile_id": "9a03cbce-c309-4941-8f09-f422ea00fd37",
+        "updated_at": "2026-02-15T18:55:40+01:00",
+        "created_at": "2026-02-15T18:55:40+01:00"
     },
-    "10963472-49fe-4c30-becb-154410ec0503": {
-        "name": "Tran Bao",
-        "email": "kobaotran@gmail.com",
-        "age": 66,
-        "experience": "National league",
-        "medical": "B",
-        "emergency": {
-            "name": "H",
-            "phone": "07950469559",
-            "relationship": "Bao"
-        },
-        "media_consent": true,
-        "media_consent_text": "I, the parent/guardian of Tran Bao, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
-        "waiver_acknowledged": true,
-        "waiver_text": "I, the parent/guardian of Tran Bao, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
-        "registration_complete": true,
-        "profile_id": "10963472-49fe-4c30-becb-154410ec0503",
-        "updated_at": "2026-02-06T07:00:52+01:00",
-        "created_at": "2026-02-06T07:00:52+01:00"
-    },
-    "6684f99d-22db-48ce-aed8-48316fd8a1ca": {
+    "81ad7112-7b71-46a5-81c0-5d79250a9062": {
         "name": "Curtis Agha",
         "email": "aghacurtis@gmail.com",
         "age": 23,
         "experience": "Regular player but no team",
-        "medical": "asdcv",
+        "medical": "wqerg",
         "emergency": {
             "name": "Curtis Agha",
             "phone": "07464303036",
-            "relationship": "g"
+            "relationship": "dsf"
         },
         "media_consent": true,
         "media_consent_text": "I, the parent/guardian of Curtis Agha, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
         "waiver_acknowledged": true,
         "waiver_text": "I, the parent/guardian of Curtis Agha, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
         "registration_complete": true,
-        "profile_id": "6684f99d-22db-48ce-aed8-48316fd8a1ca",
-        "updated_at": "2026-02-07T00:04:52+01:00",
-        "created_at": "2026-02-07T00:04:52+01:00"
+        "profile_id": "81ad7112-7b71-46a5-81c0-5d79250a9062",
+        "updated_at": "2026-02-15T19:35:16+01:00",
+        "created_at": "2026-02-15T19:35:16+01:00"
     },
-    "3db7ab2f-47ba-4499-8076-58932d736b92": {
+    "a758a89c-4f19-4045-8b5e-40215a74962e": {
+        "name": "Bao Tran",
+        "email": "kobaotran@gmail.com",
+        "age": 77,
+        "experience": "Local league",
+        "medical": "D",
+        "emergency": {
+            "name": "X",
+            "phone": "07950469559",
+            "relationship": "C"
+        },
+        "media_consent": true,
+        "media_consent_text": "I, the parent/guardian of Bao Tran, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
+        "waiver_acknowledged": true,
+        "waiver_text": "I, the parent/guardian of Bao Tran, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
+        "registration_complete": true,
+        "profile_id": "a758a89c-4f19-4045-8b5e-40215a74962e",
+        "updated_at": "2026-02-16T02:06:41+01:00",
+        "created_at": "2026-02-16T02:06:41+01:00"
+    },
+    "7aad843f-4dd2-46fd-a1a7-23dc5b81e690": {
         "name": "Curtis Aghas",
-        "email": "aghacusrtis@gmail.com",
-        "age": 12,
-        "experience": "Beginner",
-        "medical": "s",
+        "email": "aghacuasrtis@gmail.com",
+        "age": 2,
+        "experience": "Regular player but no team",
+        "medical": "sdf",
         "emergency": {
             "name": "Curtis Agha",
             "phone": "07464303036",
-            "relationship": "x"
+            "relationship": "sdf"
         },
         "media_consent": true,
         "media_consent_text": "I, the parent/guardian of Curtis Aghas, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
         "waiver_acknowledged": true,
         "waiver_text": "I, the parent/guardian of Curtis Aghas, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
         "registration_complete": true,
-        "profile_id": "3db7ab2f-47ba-4499-8076-58932d736b92",
-        "updated_at": "2026-02-10T03:48:16+01:00",
-        "created_at": "2026-02-10T03:48:16+01:00"
+        "profile_id": "7aad843f-4dd2-46fd-a1a7-23dc5b81e690",
+        "updated_at": "2026-02-16T04:26:15+01:00",
+        "created_at": "2026-02-16T04:26:15+01:00"
     },
-    "816ebc26-4eb1-4228-bb4b-5353a98fa7bb": {
-        "name": "werth",
-        "email": "aghacueqwrtis@gmail.com",
+    "11f983a3-88c6-440c-8b39-730b40173e6d": {
+        "name": "Curtis Aghas",
+        "email": "aghsacurtis@gmail.com",
         "age": 12,
-        "experience": "Regular player but no team",
-        "medical": "wre",
-        "emergency": {
-            "name": "e",
-            "phone": "07464303036",
-            "relationship": "k"
-        },
-        "media_consent": true,
-        "media_consent_text": "I, the parent/guardian of werth, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
-        "waiver_acknowledged": true,
-        "waiver_text": "I, the parent/guardian of werth, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
-        "registration_complete": true,
-        "profile_id": "816ebc26-4eb1-4228-bb4b-5353a98fa7bb",
-        "updated_at": "2026-02-10T04:14:19+01:00",
-        "created_at": "2026-02-10T04:14:19+01:00"
-    },
-    "15001932-9cf0-49aa-8e09-53524b058906": {
-        "name": "Curtis Aghasss",
-        "email": "aghacurtssis@gmail.com",
-        "age": 2,
-        "experience": "Regular player but no team",
-        "medical": "d",
+        "experience": "Beginner",
+        "medical": "sdf",
         "emergency": {
             "name": "Curtis Agha",
             "phone": "07464303036",
-            "relationship": "d"
+            "relationship": "g"
         },
         "media_consent": true,
-        "media_consent_text": "I, the parent/guardian of Curtis Aghasss, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
+        "media_consent_text": "I, the parent/guardian of Curtis Aghas, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
         "waiver_acknowledged": true,
-        "waiver_text": "I, the parent/guardian of Curtis Aghasss, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
+        "waiver_text": "I, the parent/guardian of Curtis Aghas, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
         "registration_complete": true,
-        "profile_id": "15001932-9cf0-49aa-8e09-53524b058906",
-        "updated_at": "2026-02-10T04:21:04+01:00",
-        "created_at": "2026-02-10T04:21:04+01:00"
-    },
-    "7a3e6e81-60fa-4077-a6ce-c93cb8161b59": {
-        "name": "Curtis Aghazs",
-        "email": "aghacsadfurtis@gmail.com",
-        "age": 32,
-        "experience": "Regular player but no team",
-        "medical": "s",
-        "emergency": {
-            "name": "Curtis Agha",
-            "phone": "07464303036",
-            "relationship": "s"
-        },
-        "media_consent": true,
-        "media_consent_text": "I, the parent/guardian of Curtis Aghazs, grant permission for Hoop Theory to use photos and videos taken during sessions for promotional purposes, including social media and marketing materials.",
-        "waiver_acknowledged": true,
-        "waiver_text": "I, the parent/guardian of Curtis Aghazs, agree to allow my child to participate in Hoop Theory sessions, understand the inherent risks of sports, and waive any claims against Hoop Theory for injuries incurred.",
-        "registration_complete": true,
-        "profile_id": "7a3e6e81-60fa-4077-a6ce-c93cb8161b59",
-        "updated_at": "2026-02-10T04:27:49+01:00",
-        "created_at": "2026-02-10T04:27:49+01:00"
+        "profile_id": "11f983a3-88c6-440c-8b39-730b40173e6d",
+        "updated_at": "2026-02-16T04:28:02+01:00",
+        "created_at": "2026-02-16T04:28:02+01:00"
     }
 }
