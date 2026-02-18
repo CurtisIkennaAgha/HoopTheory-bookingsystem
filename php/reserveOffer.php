@@ -441,8 +441,9 @@ render:
           <strong style="display:block; font-size:13px; color:#374151; margin-bottom:8px;">Bank Transfer Details</strong>
           <div class="bank-details">
             <div class="detail-row"><span class="label">Account Name:</span><span class="value">Hoop Theory</span></div>
-            <div class="detail-row"><span class="label">Account Number:</span><span class="value" id="accountNumber">12345678</span><button class="copy-btn" id="copyAccountBtn">Copy</button></div>
-            <div class="detail-row"><span class="label">Sort Code:</span><span class="value" id="sortCode">12-34-56</span><button class="copy-btn" id="copySortBtn">Copy</button></div>
+            <div class="detail-row"><span class="label">Account Number:</span><span class="value" id="accountNumber">46244409</span><button class="copy-btn" id="copyAccountBtn">Copy</button></div>
+            <div class="detail-row"><span class="label">Sort Code:</span><span class="value" id="sortCode">569964</span><button class="copy-btn" id="copySortBtn">Copy</button></div>
+                        <div class="detail-row"><span class="label">Account Name:</span><span class="value" id="accountName">Bao Tran</span></div>
             <div class="detail-row"><span class="label">Reference:</span><span class="value" id="paymentReference"><?php echo htmlspecialchars($paymentRef); ?></span><button class="copy-btn" id="copyRefBtn">Copy</button></div>
             <div style="font-size:13px; color:#6b7280; margin-top:8px;">Please pay within 24 hours. Deadline: <strong id="deadlineText"><?php echo htmlspecialchars($deadline); ?></strong></div>
           </div>

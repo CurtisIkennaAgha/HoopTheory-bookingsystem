@@ -436,8 +436,9 @@ try {
 <h3 style='margin:16px 0 8px;'>Bank Payment Details</h3>
 <table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>
 <tr><td style='font-weight:bold;width:150px;'>Account Name</td><td>Hoop Theory</td></tr>
-<tr><td style='font-weight:bold;'>Account Number</td><td>12345678</td></tr>
-<tr><td style='font-weight:bold;'>Sort Code</td><td>12-34-56</td></tr>
+<tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>
+<tr><td style='font-weight:bold;'>Sort Code</td><td>569964</td></tr>
+<tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>
 <tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>
 <tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($paymentDeadline) . "</td></tr>
 </table>

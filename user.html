@@ -166,12 +166,12 @@
         <div class="bank-details">
           <div class="detail-row">
             <span class="label">Account Name:</span>
-            <span class="value">Hoop Theory</span>
+            <span class="value" id="accountName">Bao Tran</span>
           </div>
           <div class="detail-row">
             <span class="label">Account Number:</span>
             <div class="copyable-value">
-              <span id="accountNumber">12345678</span>
+              <span id="accountNumber">46244409</span>
               <button class="copy-btn" id="copyAccountBtn" title="Copy account number">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -183,7 +183,7 @@
           <div class="detail-row">
             <span class="label">Sort Code:</span>
             <div class="copyable-value">
-              <span id="sortCode">12-34-56</span>
+              <span id="sortCode">56-00-64</span>
               <button class="copy-btn" id="copySortBtn" title="Copy sort code">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -263,7 +263,7 @@
 
       <div class="payment-section" style="padding-top:12px;">
         <h3>Need help?</h3>
-        <p style="color:var(--muted); margin:0;">If you have any questions, please don’t hesitate to contact Bao via WhatsApp.</p>
+        <p style="color:var(--muted); margin:0;">If you have any questions, please don't hesitate to contact Bao via WhatsApp.</p>
       </div>
 
       <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:12px;padding-top:12px;">
@@ -1204,7 +1204,7 @@ async function handleDateClick(div, dateStr){
               <div class="slot-header">
                 <div class="slot-title-row">
                   <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
-                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${spots - booked} spots left</span>
+                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${spots - booked}/${spots} Spots Left</span>
                 </div>
                 <div class="slot-actions">
                   <!-- No fully booked pill, replaced by waitlist count below -->
@@ -1213,7 +1213,7 @@ async function handleDateClick(div, dateStr){
               <div class="slot-meta">
                 <div class="slot-time">${slot.time}${slot.endTime ? ` - ${slot.endTime}` : ''} (4-Week Block)</div>
               </div>
-              ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.jpg" type="image/jpeg" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
+              ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
               ${full ? `<div class='waitlist-block-label'>Waitlist Queue: ${waitlistCount}</div>` : ''}
             </div>
           </div>
@@ -1237,11 +1237,12 @@ async function handleDateClick(div, dateStr){
       el.appendChild(bridgeMsg);
       bridgeMsg.addEventListener('click', (event) => {
         event.stopPropagation();
-        document.getElementById('blockSlots').parentElement.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
         el.classList.add('selected');
         selectedSlot = slot;
         selectedDate = dateStr;
         showBookingForm(true);
+        updateWaitlistCount();
       });
     }
 
@@ -1384,7 +1385,7 @@ async function handleDateClick(div, dateStr){
             <div class="slot-header">
               <div class="slot-title-row">
                 <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
-                <span class="pill spots-pill block-first">${spots - booked} spots left</span>
+                <span class="pill spots-pill block-first">${spots - booked}/${spots} Spots Left</span>
                 ${full ? `<span class="waitlist-pill">Waitlist Queue</span>` : ''}
               </div>
               <div class="slot-actions"></div>
@@ -1392,7 +1393,7 @@ async function handleDateClick(div, dateStr){
             <div class="slot-meta">
               <div class="slot-time">${slot.time}</div>
             </div>
-            ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data=\"bank.jpg\" type=\"image/jpeg\" class=\"icon icon--price\"></object></span><span class=\"price-text\">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class=\"icon icon--location\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\"><path d=\"M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"/></svg></span><span class=\"location-text\">${locationDisplay}</span></div>` : ''}</div>` : ''}
+            ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
               ${full ? `<div class='waitlist-block-label'>Waitlist Queue: ${waitlistCount}</div>` : ''}
           </div>
         </div>
@@ -1409,7 +1410,7 @@ async function handleDateClick(div, dateStr){
       const bridgeMsg = document.createElement('div');
       bridgeMsg.className = 'bridge-message';
       bridgeMsg.innerHTML = `
-        <div style=\"cursor: pointer;\">
+        <div style="cursor: pointer;">
           This session has available spaces, but we're prioritising the waitlist. <strong>Don't worry—click here to join the waitlist!</strong>
         </div>
       `;
@@ -1628,10 +1629,10 @@ function showBlockConfirmation(slot, isWaitlist = false) {
   const locationText = slot.location || '';
   let extraHtml = '';
   if (priceText) {
-    extraHtml += `<div class="price-row"><span class="meta-icon"><object data="bank.jpg" type="image/jpeg" class="icon icon--price"></object></span><span class="price-text">${priceText}</span></div>`;
+    extraHtml += `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceText}</span></div>`;
   }
   if (locationText) {
-    extraHtml += `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationText}</span></div>`;
+    extraHtml += `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationText}</span></div>`;
   }
   if (extraEl) extraEl.innerHTML = extraHtml;
 
@@ -1795,6 +1796,9 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   const price = priceVal3 ? `£${!isNaN(priceVal3) ? priceVal3.toFixed(2) : slot.price}` : '£25.00';
 
   // Populate payment details
+  document.getElementById('accountNumber').textContent = '46244409';
+  document.getElementById('sortCode').textContent = '569964';
+  document.getElementById('accountName').textContent = 'Bao Tran';
   document.getElementById('paymentDate').textContent = dateDisplay;
   document.getElementById('paymentTime').textContent = slot.time;
   document.getElementById('paymentTitle').textContent = slot.title;
@@ -2727,6 +2731,7 @@ const handleNameEmailChange = debounce(async () => {
         showBookingEmailConflictModal();
         hidePlayerRegistration(true);
         if (bookBtn) bookBtn.disabled = true;
+        return;
       } else if (_bookingEmailConflictConfirmed) {
         showPlayerRegistration({ name, email });
         emailConflictBanner?.classList.add('hidden');
@@ -2741,6 +2746,7 @@ const handleNameEmailChange = debounce(async () => {
         showBookingNameConflictModal();
         hidePlayerRegistration(true);
         if (bookBtn) bookBtn.disabled = false;
+        return;
       } else if (_bookingNameConflictConfirmed) {
         showPlayerRegistration({ name, email });
         emailConflictBanner?.classList.add('hidden');

@@ -82,8 +82,9 @@ function buildTemporaryReservationHtml($name, $date, $slot, $paymentRef) {
     $html .= "<h3 style='margin:16px 0 8px;'>Bank Payment Details</h3>";
     $html .= "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>";
     $html .= "<tr><td style='font-weight:bold;width:150px;'>Account Name</td><td>Hoop Theory</td></tr>";
-    $html .= "<tr><td style='font-weight:bold;'>Account Number</td><td>12345678</td></tr>";
-    $html .= "<tr><td style='font-weight:bold;'>Sort Code</td><td>12-34-56</td></tr>";
+    $html .= "<tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>";
+    $html .= "<tr><td style='font-weight:bold;'>Sort Code</td><td>569964</td></tr>";
+      $html .= "<tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>";
     $html .= "<tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>";
     $html .= "<tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($deadline) . "</td></tr>";
     $html .= "</table>";

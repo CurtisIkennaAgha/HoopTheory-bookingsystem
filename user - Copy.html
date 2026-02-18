@@ -1226,7 +1226,7 @@ async function handleDateClick(div, dateStr){
               <div class="slot-meta">
                 <div class="slot-time">${slot.time}${slot.endTime ? ` - ${slot.endTime}` : ''} (4-Week Block)</div>
               </div>
-              ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.jpg" type="image/jpeg" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
+              ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
               ${full ? `<div class='waitlist-block-label'>Waitlist: ${waitlistCount}</div>` : ''}
             </div>
           </div>
@@ -1401,7 +1401,7 @@ async function handleDateClick(div, dateStr){
             <div class="slot-meta">
               <div class="slot-time">${slot.time}</div>
             </div>
-            ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data=\"bank.jpg\" type=\"image/jpeg\" class=\"icon icon--price\"></object></span><span class=\"price-text\">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class=\"icon icon--location\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\"><path d=\"M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"/></svg></span><span class=\"location-text\">${locationDisplay}</span></div>` : ''}</div>` : ''}
+            ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data=\"bank.png\" type=\"image/png\" class=\"icon icon--price\"></object></span><span class=\"price-text\">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class=\"icon icon--location\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\"><path d=\"M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"/></svg></span><span class=\"location-text\">${locationDisplay}</span></div>` : ''}</div>` : ''}
             ${full ? `<div class='waitlist-block-label'>Waitlist: ${waitlistCount}</div>` : ''}
           </div>
         </div>
@@ -1634,7 +1634,7 @@ function showBlockConfirmation(slot, isWaitlist = false) {
   const locationText = slot.location || '';
   let extraHtml = '';
   if (priceText) {
-    extraHtml += `<div class="price-row"><span class="meta-icon"><object data="bank.jpg" type="image/jpeg" class="icon icon--price"></object></span><span class="price-text">${priceText}</span></div>`;
+    extraHtml += `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceText}</span></div>`;
   }
   if (locationText) {
     extraHtml += `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationText}</span></div>`;
