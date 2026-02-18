@@ -53,5 +53,40 @@ if ($write === false) {
 	echo json_encode(["status"=>"error","message"=>"Failed to write availableSlots.json", "php_error"=>"Failed to write availableSlots.json in saveSlots.php"]);
 	exit;
 }
+
+// Log activity for each session created
+foreach ($input as $date => $slotArr) {
+	if (is_array($slotArr)) {
+		foreach ($slotArr as $slot) {
+			$payload = [
+				'type' => 'sessioncreated',
+				'action' => 'session_created',
+				'title' => 'Session Created',
+				'message' => 'A new session was created for ' . ($slot['title'] ?? 'Session') . ' on ' . $date . ' at ' . ($slot['time'] ?? ''),
+				'player' => null,
+				'session' => [
+					'date' => $date,
+					'time' => $slot['time'] ?? '',
+					'title' => $slot['title'] ?? '',
+					'sessionType' => $slot['sessionType'] ?? '',
+					'blockId' => $slot['blockId'] ?? null,
+					'location' => $slot['location'] ?? '',
+					'price' => $slot['price'] ?? '',
+					'capacity' => $slot['capacity'] ?? '',
+				],
+				'meta' => []
+			];
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, 'logActivity.php');
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+			curl_exec($ch);
+			curl_close($ch);
+		}
+	}
+}
 echo json_encode(["status"=>"ok", "php_debug"=>"Slots saved successfully"]);
 exit;
