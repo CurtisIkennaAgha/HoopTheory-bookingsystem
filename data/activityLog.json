@@ -1,0 +1,82 @@
+[
+    {
+      "id": "4",
+      "type": "booking",
+      "action": "booking_cancelled",
+      "title": "Booking Cancelled",
+      "message": "A booking was cancelled by the player.",
+      "timestamp": "2026-02-18T12:30:00Z",
+      "player": {
+        "name": "John Smith",
+        "email": "john.smith@example.com",
+        "phones": [],
+        "address": "",
+        "profileId": ""
+      },
+      "session": {
+        "date": "2026-02-22",
+        "time": "19:00",
+        "title": "Open Gym Night",
+        "sessionType": "group",
+        "blockId": null,
+        "location": "Court 2",
+        "price": 10.00,
+        "capacity": 20,
+        "sessionId": "session-999"
+      },
+      "meta": {},
+      "seen": false
+    },
+  {
+    "id": "1",
+    "type": "info",
+    "action": "system_welcome",
+    "title": "Welcome to the Activity Centre",
+    "message": "Notifications about bookings, payments, and system events will appear here.",
+    "timestamp": "2026-02-18T09:00:00Z",
+    "player": null,
+    "session": null,
+    "meta": {},
+    "seen": true
+  },
+  {
+    "id": "2",
+    "type": "booking",
+    "action": "booking_created",
+    "title": "Booking Created",
+    "message": "A new booking was made.",
+    "timestamp": "2026-02-18T10:15:00Z",
+    "player": {
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+        "phones": [],
+        "address": "",
+        "profileId": ""
+    },
+    "session": {
+      "date": "2026-02-20",
+      "time": "18:00",
+      "title": "Basketball Training",
+      "sessionType": "group",
+      "blockId": null,
+      "location": "Main Studio",
+      "price": 15.00,
+      "capacity": 12,
+      "sessionId": "session-456"
+    },
+      "meta": {},
+      "seen": false
+  },
+  {
+    "id": "3",
+    "type": "analytics",
+    "action": "login_success",
+    "title": "Admin Login",
+    "message": "Admin user logged in successfully.",
+    "timestamp": "2026-02-18T08:00:00Z",
+    "player": null,
+    "session": null,
+      "meta": {},
+      "seen": true
+  }
+]

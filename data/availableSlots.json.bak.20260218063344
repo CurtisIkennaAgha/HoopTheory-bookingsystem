@@ -1,0 +1,106 @@
+{
+    "2026-03-02": [
+        {
+            "time": "11:00",
+            "endTime": "11:45",
+            "duration": 45,
+            "title": "11-15 Years Block",
+            "capacity": 1,
+            "sessionType": "group",
+            "price": 10,
+            "location": "Charles Dickens Centre, PO1 4HH",
+            "bookedUsers": [
+                {
+                    "name": "Bao Tran",
+                    "email": "Baojellybean@gmail.com"
+                }
+            ],
+            "blockId": "block_1771387671456_4q0l2qko9",
+            "blockDates": [
+                "2026-03-02",
+                "2026-03-09",
+                "2026-03-16",
+                "2026-03-23"
+            ],
+            "bridgeState": false
+        }
+    ],
+    "2026-03-09": [
+        {
+            "time": "11:00",
+            "endTime": "11:45",
+            "duration": 45,
+            "title": "11-15 Years Block",
+            "capacity": 1,
+            "sessionType": "group",
+            "price": 10,
+            "location": "Charles Dickens Centre, PO1 4HH",
+            "bookedUsers": [
+                {
+                    "name": "Bao Tran",
+                    "email": "Baojellybean@gmail.com"
+                }
+            ],
+            "blockId": "block_1771387671456_4q0l2qko9",
+            "blockDates": [
+                "2026-03-02",
+                "2026-03-09",
+                "2026-03-16",
+                "2026-03-23"
+            ],
+            "bridgeState": false
+        }
+    ],
+    "2026-03-16": [
+        {
+            "time": "11:00",
+            "endTime": "11:45",
+            "duration": 45,
+            "title": "11-15 Years Block",
+            "capacity": 1,
+            "sessionType": "group",
+            "price": 10,
+            "location": "Charles Dickens Centre, PO1 4HH",
+            "bookedUsers": [
+                {
+                    "name": "Bao Tran",
+                    "email": "Baojellybean@gmail.com"
+                }
+            ],
+            "blockId": "block_1771387671456_4q0l2qko9",
+            "blockDates": [
+                "2026-03-02",
+                "2026-03-09",
+                "2026-03-16",
+                "2026-03-23"
+            ],
+            "bridgeState": false
+        }
+    ],
+    "2026-03-23": [
+        {
+            "time": "11:00",
+            "endTime": "11:45",
+            "duration": 45,
+            "title": "11-15 Years Block",
+            "capacity": 1,
+            "sessionType": "group",
+            "price": 10,
+            "location": "Charles Dickens Centre, PO1 4HH",
+            "bookedUsers": [
+                {
+                    "name": "Bao Tran",
+                    "email": "Baojellybean@gmail.com"
+                }
+            ],
+            "blockId": "block_1771387671456_4q0l2qko9",
+            "blockDates": [
+                "2026-03-02",
+                "2026-03-09",
+                "2026-03-16",
+                "2026-03-23"
+            ],
+            "bridgeState": false
+        }
+    ]
+}

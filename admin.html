@@ -1,10 +1,23 @@
+<!-- Activity Modal -->
+<div id="activityCentreModal" class="pt-modal" style="display:none;z-index:13000;" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="pt-modal-overlay" id="activityCentreModalOverlay"></div>
+  <div class="pt-modal-content" role="document" aria-labelledby="activityCentreModalTitle" style="max-width: 400px; background: #fff; color: #222; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); padding: 0; overflow: hidden;">
+    <div style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 16px 20px 12px 20px; border-bottom: 1px solid #e5e7eb;">
+      <h3 id="activityCentreModalTitle" style="margin: 0; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.2px; color: #222;">Activity</h3>
+      <button class="pt-modal-close" id="activityCentreModalClose" aria-label="Close dialog" style="background: none; border: none; color: #222; font-size: 1.5rem; font-family: 'Inter', Arial, sans-serif; cursor: pointer; padding: 0 0 0 16px;">&#215;</button>
+    </div>
+    <div id="activityCentreBody" class="pt-modal-body" style="padding: 18px 0 8px 0; max-height: 320px; overflow-y: auto; background: #fff;">
+      <div style="color:#888; font-size:0.98em; text-align:center; padding: 18px 0 0 0;" id="activityCentreEmpty">Loading notifications...</div>
+    </div>
+  </div>
+</div>
 
 
 <!-- (JS code block removed from top of file; should be inside <script> at the end) -->
 <!-- Edit Booking Modal -->
 <div id="editBookingModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
   <div style="background:#fff; border-radius:10px; max-width:420px; width:95vw; padding:28px 24px 18px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative;">
-    <button id="closeEditBookingModal" style="position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.5rem; color:#888; cursor:pointer;">&times;</button>
+    <button id="closeEditBookingModal" style="position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.5rem; color:#888; font-family: 'Inter', Arial, sans-serif; cursor:pointer;">&#215;</button>
     <h2 style="margin-top:0; font-size:1.25rem; margin-bottom:18px; text-align:center;">Edit Booking</h2>
     <form id="editBookingForm" autocomplete="off">
       <div style="margin-bottom:12px;">
@@ -1448,7 +1461,7 @@ input:focus, select:focus, textarea:focus {
   <div id="adminSettingsModal" class="pt-modal" style="display:none;z-index:13000;" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="pt-modal-overlay" id="adminSettingsModalOverlay"></div>
     <div class="pt-modal-content" role="document" aria-labelledby="adminSettingsModalTitle" style="max-width: 420px;">
-      <button class="pt-modal-close" id="adminSettingsModalClose" aria-label="Close dialog">×</button>
+      <button class="pt-modal-close" id="adminSettingsModalClose" aria-label="Close dialog" style="font-family: 'Inter', Arial, sans-serif;">&#215;</button>
       <h3 id="adminSettingsModalTitle">Booking Expiry Settings</h3>
       <div class="pt-modal-body" style="display:flex;flex-direction:column;gap:16px;">
         <div>
@@ -1533,6 +1546,110 @@ input:focus, select:focus, textarea:focus {
       <button id="openSettingsModal" style="padding: 0px 2px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; flex-shrink: 1; line-height: 0.8; height: 18px;">
         <i class="fas fa-cog" style="flex-shrink: 0; font-size: 0.6rem;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Settings</span>
       </button>
+
+      <!-- NEW BUTTON: Customize as needed -->
+      <button id="activityCentreBtn" style="padding: 0px 2px; background: #111; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 8px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 3px; transition: background 0.2s ease; flex-shrink: 1; line-height: 0.8; height: 18px;">
+        <i class="fas fa-bell" style="flex-shrink: 0; font-size: 0.6rem; color: white;"></i> <span style="overflow: hidden; text-overflow: ellipsis; font-size: 8px;">Activity</span>
+      </button>
+    <script>
+    // Activity Modal logic
+    const activityCentreBtn = document.getElementById('activityCentreBtn');
+    // Add red dot indicator to Activity button if unseen notifications exist
+    function updateActivityCentreIndicator() {
+      fetch('php/getActivityLog.php', { cache: 'no-store' })
+        .then(res => res.json())
+        .then(logs => {
+          const hasUnseen = Array.isArray(logs) && logs.some(entry => entry.seen === false || entry.seen === undefined);
+          let dot = document.getElementById('activityCentreBtnDot');
+          if (hasUnseen) {
+            if (!dot) {
+              dot = document.createElement('span');
+              dot.id = 'activityCentreBtnDot';
+              dot.style.cssText = 'position:absolute;top:-6px;right:-6px;width:13px;height:13px;background:#ef4444;border-radius:50%;display:inline-block;border:2px solid #fff;z-index:10; box-shadow:0 2px 6px rgba(0,0,0,0.12);';
+              activityCentreBtn.style.position = 'relative';
+              activityCentreBtn.appendChild(dot);
+            }
+            dot.style.display = 'inline-block';
+          } else if (dot) {
+            dot.style.display = 'none';
+          }
+        });
+    }
+    // Initial check on page load
+    updateActivityCentreIndicator();
+    const activityCentreModal = document.getElementById('activityCentreModal');
+    const activityCentreModalOverlay = document.getElementById('activityCentreModalOverlay');
+    const activityCentreModalClose = document.getElementById('activityCentreModalClose');
+
+    // Dynamic Activity Log Loader
+    function renderActivityLog(logs) {
+      const activityCentreBody = document.getElementById('activityCentreBody');
+      if (!Array.isArray(logs) || logs.length === 0) {
+        activityCentreBody.innerHTML = '<div style="color:#888; font-size:0.98em; text-align:center; padding: 18px 0 0 0;">No notifications.</div>';
+        return;
+      }
+      activityCentreBody.innerHTML = logs.map(entry => {
+        const date = entry.timestamp ? new Date(entry.timestamp) : null;
+        const timeStr = date ? date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
+        const unseen = entry.seen === false || entry.seen === undefined;
+        return `
+          <div class="notification-item" style="display: flex; align-items: flex-start; gap: 0; padding: 14px 24px; border-bottom: 1px solid #e5e7eb; background: ${unseen ? '#e0e7ef' : '#f1f5f9'};">
+            <div style="flex:1;">
+              <div style="font-weight:${unseen ? '700' : '600'}; font-size:1rem; color:#222;">${entry.title || ''}</div>
+              <div style="font-size:0.93rem; color:#334155; margin-top:2px;">${entry.message || ''}</div>
+              <div style="font-size:0.8rem; color:#64748b; margin-top:4px;">${timeStr}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      // Scroll to latest notification (bottom)
+      setTimeout(() => {
+        activityCentreBody.scrollTop = activityCentreBody.scrollHeight;
+      }, 0);
+    }
+
+    async function loadActivityLog() {
+      const activityCentreBody = document.getElementById('activityCentreBody');
+      if (!activityCentreBody) return;
+      activityCentreBody.innerHTML = '<div style="color:#888; font-size:0.98em; text-align:center; padding: 18px 0 0 0;">Loading notifications...</div>';
+      try {
+        const res = await fetch('php/getActivityLog.php', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to load activity log');
+        const logs = await res.json();
+        renderActivityLog(logs);
+      } catch (e) {
+        activityCentreBody.innerHTML = '<div style="color:#ef4444; font-size:0.98em; text-align:center; padding: 18px 0 0 0;">Error loading notifications.</div>';
+      }
+    }
+
+    if (activityCentreBtn && activityCentreModal) {
+      activityCentreBtn.onclick = () => {
+        activityCentreModal.style.display = 'flex';
+        activityCentreModal.setAttribute('aria-hidden', 'false');
+        loadActivityLog();
+      };
+    }
+    if (activityCentreModalOverlay && activityCentreModal) {
+      activityCentreModalOverlay.onclick = async () => {
+        activityCentreModal.style.display = 'none';
+        activityCentreModal.setAttribute('aria-hidden', 'true');
+        try {
+          await fetch('php/setAllActivitySeen.php', { method: 'POST', cache: 'no-store' });
+        } catch (e) {}
+        updateActivityCentreIndicator();
+      };
+    }
+    if (activityCentreModalClose && activityCentreModal) {
+      activityCentreModalClose.onclick = async () => {
+        activityCentreModal.style.display = 'none';
+        activityCentreModal.setAttribute('aria-hidden', 'true');
+        try {
+          await fetch('php/setAllActivitySeen.php', { method: 'POST', cache: 'no-store' });
+        } catch (e) {}
+        updateActivityCentreIndicator();
+      };
+    }
+    </script>
     </div>
   </div>
 
@@ -2157,7 +2274,7 @@ function openEditProfileModal(playerId, profile) {
   modal.innerHTML = `
     <div class="pt-modal-overlay" id="editProfileModalOverlay"></div>
     <div class="pt-modal-content" role="document" aria-labelledby="editProfileModalTitle" style="max-width: 520px;">
-      <button class="pt-modal-close" id="editProfileModalClose" aria-label="Close dialog">×</button>
+      <button class="pt-modal-close" id="editProfileModalClose" aria-label="Close dialog" style="font-family: 'Inter', Arial, sans-serif;">&#215;</button>
       <h3 id="editProfileModalTitle">Edit Player Profile</h3>
       <form id="editProfileForm" style="display:flex;flex-direction:column;gap:12px;">
         <label>Name<input type="text" name="name" value="${escapeHtml(profile.name || '')}" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;"></label>
@@ -2246,7 +2363,7 @@ function ensurePlayerProfilesSection() {
     <div id="playerModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="pt-modal-overlay" id="playerModalOverlay"></div>
       <div class="pt-modal-content" role="document" aria-labelledby="playerModalTitle">
-        <button class="pt-modal-close" id="playerModalClose" aria-label="Close dialog">×</button>
+        <button class="pt-modal-close" id="playerModalClose" aria-label="Close dialog" style="font-family: 'Inter', Arial, sans-serif;">&#215;</button>
         <h3 id="playerModalTitle">Player profile</h3>
         <div class="pt-modal-body" id="playerModalBody">
           <!-- populated dynamically -->
@@ -2452,7 +2569,7 @@ function ensurePlayerProfilesSection() {
     <div id="syncToCalendarModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="pt-modal-overlay" id="syncToCalendarModalOverlay"></div>
       <div class="pt-modal-content" role="document" aria-labelledby="syncToCalendarModalTitle">
-        <button class="pt-modal-close" id="syncToCalendarModalClose" aria-label="Close dialog">×</button>
+        <button class="pt-modal-close" id="syncToCalendarModalClose" aria-label="Close dialog" style="font-family: 'Inter', Arial, sans-serif;">&#215;</button>
         <h3 id="syncToCalendarModalTitle">Sync to Calendar</h3>
         <div class="pt-modal-body" style="display: flex; flex-direction: column; gap: 16px;">
           <div>
@@ -3810,10 +3927,13 @@ setTimeout(() => {
       // Validate slotsData before saving
       const validDates = Object.keys(slotsData).filter(date => Array.isArray(slotsData[date]) && slotsData[date].length > 0);
       if (validDates.length === 0) {
-        showToast('No valid sessions to save. Please check your input.', {error: true});
+        showToast('No valid sessions to save. Please check your input.', {error:true});
         console.error('[BLOCK SESSION] No valid slots to save:', slotsData);
         return;
       }
+
+      // Persist the new slot to backend
+      await saveAvailableSlots(slotsData);
 
       // Clear form
       document.getElementById('modalSlotTitle').value = '';
@@ -6359,6 +6479,8 @@ async function renderWaitlist(){
             if (isBlock && totalSpots > 0 && bookedSpots === 0) {
               availableSpots = totalSpots;
             }
+            // Clamp to zero to avoid negative spots
+            availableSpots = Math.max(0, availableSpots);
 
             const card = document.createElement('div');
             card.className = 'waitlist-card';
