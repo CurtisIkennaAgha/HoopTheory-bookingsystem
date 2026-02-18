@@ -142,9 +142,7 @@ input, input[type="text"], input[type="email"] {
   color:#0f172a;
   display: block;
   padding-right: 50px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Removed truncation properties for solo session titles */
   max-width: 100%;
 }
 .block-confirmation .pill.spots-pill {
@@ -1621,7 +1619,7 @@ body.modal-open-payment {
 .slot-extra { /* allow wrapping */
   max-height: none;
   overflow: visible;
-  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  display:flex; flex-wrap:wrap; gap:4px; align-items:center;
 }
 
 .slot-actions { display:flex; align-items:center; gap:8px; justify-content:flex-end; }
@@ -1662,10 +1660,8 @@ body.modal-open-payment {
   font-weight:900;
   color:#0f172a;
   display: block;
-  padding-right: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding-right: 140px;
+  /* Removed truncation properties to allow wrapping */
   max-width: 100%;
 }
 
@@ -1683,7 +1679,7 @@ body.modal-open-payment {
 
 .slot-title { font-size:1.09rem; font-weight:900; color:#0f172a; }
 .slot-meta { font-size:1.008rem; color:#6b7280; margin-top:8.96px; }
-.slot-extra { font-size:1.008rem; color:#475569; margin-top:11.2px; }
+.slot-extra { font-size:1.008rem; color:#475569; margin-top:6px; }
 .slot-actions { display:flex; align-items:center; gap:8px; }
 .badge { background:#111827; color:#fff; padding:6px 8px; border-radius:8px; font-size:0.75rem; font-weight:700; }
 
@@ -1710,6 +1706,12 @@ body.modal-open-payment {
 .pill.spots-pill.block-subsequent {
   background: #f0f9ff;
   border-color: #bfdbfe;
+}
+
+/* Force reduced vertical spacing for slot-extra in slot-card */
+.slot-card .slot-extra {
+  margin-top: 0 !important;
+  gap: 0 !important;
 }
 
 /* Selectable circle indicator (bottom-right of slot card) */
@@ -1928,9 +1930,9 @@ body.modal-open-payment {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-left: auto;
-  margin-right: auto;
-  width: max-content;
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
   max-width: 100%;
 }
 

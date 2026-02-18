@@ -1214,7 +1214,7 @@ async function handleDateClick(div, dateStr){
                 <div class="slot-time">${slot.time}${slot.endTime ? ` - ${slot.endTime}` : ''} (4-Week Block)</div>
               </div>
               ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.jpg" type="image/jpeg" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
-              ${full ? `<div class='waitlist-block-label'>Waitlist: ${waitlistCount}</div>` : ''}
+              ${full ? `<div class='waitlist-block-label'>Waitlist Queue: ${waitlistCount}</div>` : ''}
             </div>
           </div>
           <!-- selectable indicator (bottom-right) -->
@@ -1384,8 +1384,7 @@ async function handleDateClick(div, dateStr){
             <div class="slot-header">
               <div class="slot-title-row">
                 <span class="slot-title">${slot.title}</span>
-                ${spots === 1 ? ' <span class="pill session-type">Solo Session</span>' : ''}
-                ${spots > 1 && !full ? `<span class="pill spots-pill block-first">${Math.max(0, (spots - booked))} / ${spots} spots left</span>` : ''}
+                <span class="pill spots-pill block-first">${booked} / ${spots} booked</span>
                 ${full ? `<span class="waitlist-pill">Waitlist Queue</span>` : ''}
               </div>
               <div class="slot-actions"></div>
