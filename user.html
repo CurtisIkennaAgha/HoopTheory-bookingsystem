@@ -1203,8 +1203,8 @@ async function handleDateClick(div, dateStr){
             <div class="block-info">
               <div class="slot-header">
                 <div class="slot-title-row">
-                  <span class="slot-title">${slot.title}</span>
-                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${booked} / ${spots} booked</span>
+                  <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
+                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${spots - booked} spots left</span>
                 </div>
                 <div class="slot-actions">
                   <!-- No fully booked pill, replaced by waitlist count below -->
@@ -1383,8 +1383,8 @@ async function handleDateClick(div, dateStr){
           <div class="block-info">
             <div class="slot-header">
               <div class="slot-title-row">
-                <span class="slot-title">${slot.title}</span>
-                <span class="pill spots-pill block-first">${booked} / ${spots} booked</span>
+                <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
+                <span class="pill spots-pill block-first">${spots - booked} spots left</span>
                 ${full ? `<span class="waitlist-pill">Waitlist Queue</span>` : ''}
               </div>
               <div class="slot-actions"></div>
