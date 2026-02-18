@@ -17,7 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date = $input['date'] ?? '';
     $time = $input['time'] ?? '';
     $title = $input['title'] ?? '';
-    if (!$email || !$date || !$time || !$title) {
+    $blockId = $input['blockId'] ?? null;
+    $blockDates = $input['blockDates'] ?? null;
+    // For block bookings, allow date to be null, require blockId and blockDates
+    $isBlock = $blockId && is_array($blockDates) && count($blockDates) > 0;
+    if (!$email || !$time || !$title || (!$isBlock && !$date) || ($isBlock && (!$blockId || !is_array($blockDates) || count($blockDates) === 0))) {
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
         exit;
     }
@@ -48,7 +52,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         unset($slot);
     }
     // Update bookings.json (legacy string format)
-    if (isset($bookings[$date])) {
+    if ($isBlock && is_array($blockDates)) {
+        foreach ($blockDates as $blockDate) {
+            if (isset($bookings[$blockDate])) {
+                foreach ($bookings[$blockDate] as &$bookingStr) {
+                    // Match by slot, name, and email (ignore old title)
+                    $pattern = '/^' . preg_quote($time, '/') . ' - [^\(]+ \(' . preg_quote($name, '/') . '\) \(' . preg_quote($email, '/') . '\)/';
+                    if (preg_match($pattern, $bookingStr)) {
+                        $bookingStr = "$time - $title ($name) ($email)";
+                        $updated = true;
+                    }
+                }
+                unset($bookingStr);
+            }
+        }
+    } else if (isset($bookings[$date])) {
         foreach ($bookings[$date] as &$bookingStr) {
             // Format: "HH:MM - Title (Name) (Email)"
             if (strpos($bookingStr, "$time - $title ") === 0) {
@@ -61,14 +79,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // Update bookingMappings.json (if mapping exists)
     foreach ($mappings as $key => &$mapping) {
-        if (
-            (isset($mapping['date']) && $mapping['date'] === $date) &&
-            (isset($mapping['slot']) && $mapping['slot'] === $time) &&
-            (isset($mapping['title']) && $mapping['title'] === $title)
+        // Block booking: match by blockId and email (ignore title)
+        if ($isBlock && isset($mapping['blockId']) && $mapping['blockId'] === $blockId && isset($mapping['email']) && $mapping['email'] === $email) {
+            $mapping['name'] = $name;
+            $mapping['email'] = $email;
+            $mapping['status'] = $status;
+            // Also update title, slot, blockDates if provided
+            if ($title) $mapping['title'] = $title;
+            if ($time) $mapping['slot'] = $time;
+            if ($blockDates && is_array($blockDates)) $mapping['blockDates'] = $blockDates;
+            $updated = true;
+        }
+        // Single booking: match by date, slot, title
+        elseif (
+            !$isBlock && isset($mapping['date']) && $mapping['date'] === $date &&
+            isset($mapping['slot']) && $mapping['slot'] === $time &&
+            isset($mapping['title']) && $mapping['title'] === $title &&
+            isset($mapping['email']) && $mapping['email'] === $email
         ) {
             $mapping['name'] = $name;
             $mapping['email'] = $email;
             $mapping['status'] = $status;
+            if ($title) $mapping['title'] = $title;
+            if ($time) $mapping['slot'] = $time;
             $updated = true;
         }
     }

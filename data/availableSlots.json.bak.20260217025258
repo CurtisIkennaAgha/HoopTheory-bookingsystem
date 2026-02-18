@@ -1,21 +1,21 @@
 {
     "2026-02-25": [
         {
-            "time": "20:30",
+            "time": "22:32",
             "endTime": "21:15",
             "duration": 45,
-            "title": "Age 11-167",
-            "capacity": 1,
+            "title": "Age 11-16322",
+            "capacity": 4,
             "sessionType": "group",
-            "price": 10,
-            "location": "Charles Dickens Centre",
+            "price": 100,
+            "location": "Charles Dickens Centres",
             "bookedUsers": [
                 {
                     "name": "Curtis Agha",
                     "email": "aghacurtis@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771289478928_hsp73oi11",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
@@ -30,18 +30,18 @@
             "time": "20:30",
             "endTime": "21:15",
             "duration": 45,
-            "title": "Age 11-167",
-            "capacity": 1,
+            "title": "Age 11-16322",
+            "capacity": 4,
             "sessionType": "group",
-            "price": 10,
-            "location": "Charles Dickens Centre",
+            "price": 100,
+            "location": "Charles Dickens Centres",
             "bookedUsers": [
                 {
                     "name": "Curtis Agha",
                     "email": "aghacurtis@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771289478928_hsp73oi11",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
@@ -56,18 +56,18 @@
             "time": "20:30",
             "endTime": "21:15",
             "duration": 45,
-            "title": "Age 11-167",
-            "capacity": 1,
+            "title": "Age 11-16322",
+            "capacity": 4,
             "sessionType": "group",
-            "price": 10,
-            "location": "Charles Dickens Centre",
+            "price": 100,
+            "location": "Charles Dickens Centres",
             "bookedUsers": [
                 {
                     "name": "Curtis Agha",
                     "email": "aghacurtis@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771289478928_hsp73oi11",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
@@ -82,18 +82,18 @@
             "time": "20:30",
             "endTime": "21:15",
             "duration": 45,
-            "title": "Age 11-167",
-            "capacity": 1,
+            "title": "Age 11-16322",
+            "capacity": 4,
             "sessionType": "group",
-            "price": 10,
-            "location": "Charles Dickens Centre",
+            "price": 100,
+            "location": "Charles Dickens Centres",
             "bookedUsers": [
                 {
                     "name": "Curtis Agha",
                     "email": "aghacurtis@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771289478928_hsp73oi11",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",

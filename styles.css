@@ -138,7 +138,7 @@ input, input[type="text"], input[type="email"] {
   font-weight:900;
   color:#0f172a;
   display: block;
-  padding-right: 130px;
+  padding-right: 50px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1659,7 +1659,7 @@ body.modal-open-payment {
   font-weight:900;
   color:#0f172a;
   display: block;
-  padding-right: 130px; /* 110px pill + 8px gap + ~12px buffer */
+  padding-right: 80px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

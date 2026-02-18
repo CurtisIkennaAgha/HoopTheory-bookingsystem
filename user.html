@@ -494,6 +494,22 @@ let autoRefreshInterval = null;
 let currentBookingData = null; // Track pending booking for cancellation
 let currentBookingId = null; // Track the bookingId for email sending
 let pendingBooking = null; // Temporarily hold booking details while user completes registration
+
+// Store expiry config globally
+let bookingExpirySeconds = 600; // fallback default (10 min)
+
+// Fetch expiry config at startup
+fetch('data/bookingExpiryConfig.json')
+  .then(r => r.json())
+  .then(cfg => {
+    if (cfg && typeof cfg.expirySeconds === 'number') {
+      bookingExpirySeconds = cfg.expirySeconds;
+      console.log('[CONFIG] Loaded bookingExpirySeconds:', bookingExpirySeconds);
+    }
+  })
+  .catch(e => {
+    console.warn('[CONFIG] Could not load bookingExpiryConfig.json, using default expirySeconds=600', e);
+  });
 let _registrationCheckId = 0; // incrementing token to cancel outdated checks
 let _bookingNameConflictConfirmed = false; // booking: track if user confirmed name conflict
 let _bookingEmailConflictConfirmed = false; // booking: track if user confirmed email conflict
@@ -845,7 +861,7 @@ async function dateHasAvailableSlots(dateStr){
         }
       }
       const bookedCount = uniqueEmails.size;
-      return bookedCount < (s.numberOfSpots||1);
+      return bookedCount < (s.capacity||1);
     } else {
       // Single session: derive booked count from bookings.json for this date only
       let booked = 0;
@@ -860,7 +876,7 @@ async function dateHasAvailableSlots(dateStr){
       } else {
         booked = (s.bookedUsers||[]).length;
       }
-      return booked < (s.numberOfSpots||1);
+      return booked < (s.capacity||1);
     }
   });
 }
@@ -935,12 +951,12 @@ async function refreshDateAvailability(initial=false){
           }
         }
         const bookedCount = uniqueEmails.size;
-        const spots = slot.numberOfSpots || 1;
+        const spots = slot.capacity || 1;
         full = bookedCount >= spots;
       } else {
         // Single session: check only this date
         const booked = getBookedCount(slot);
-        const spots = slot.numberOfSpots || 1;
+        const spots = slot.capacity || 1;
         full = booked >= spots;
       }
 
@@ -1075,7 +1091,7 @@ async function handleDateClick(div, dateStr){
     if (window.getWaitlist) {
       window.getWaitlist().then(data => { window.waitlistData = data; });
     }
-    const spots = slot.numberOfSpots || 1;
+    const spots = slot.capacity || 1;
     let booked = 0;
     let full = false;
     
@@ -1188,7 +1204,7 @@ async function handleDateClick(div, dateStr){
               <div class="slot-header">
                 <div class="slot-title-row">
                   <span class="slot-title">${slot.title}</span>
-                  ${!full ? `<span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${Math.max(0, (spots - booked))} / ${spots} spots left</span>` : ''}
+                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${booked} / ${spots} booked</span>
                 </div>
                 <div class="slot-actions">
                   <!-- No fully booked pill, replaced by waitlist count below -->
@@ -1750,20 +1766,19 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   console.log('🔵 BookingId received:', bookingId);
   const modal = document.getElementById('paymentModal');
   console.log('🟠 Modal element:', modal, 'Has hidden class:', modal.classList.contains('hidden'));
-  
+
   // Store bookingId globally for email sending
   currentBookingId = bookingId;
   console.log('🔵 currentBookingId set to:', currentBookingId);
-  
+
   // Generate payment reference in format: FULLNAME-SESSIONNAME
   const fullName = name.toUpperCase().replace(/\s+/g, '');
   const sessionName = slot.title.toUpperCase().replace(/\s+/g, '');
   const paymentRef = `${fullName}-${sessionName}`;
-  
-  // Calculate deadline (24 hours from now)
-  const deadline = new Date();
-  deadline.setHours(deadline.getHours() + 24);
-  const deadlineStr = deadline.toLocaleString('en-GB', { 
+
+  // Calculate deadline (expiry window from now)
+  const deadline = new Date(Date.now() + bookingExpirySeconds * 1000);
+  const deadlineStr = deadline.toLocaleString('en-GB', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
@@ -1771,25 +1786,25 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
     hour: '2-digit',
     minute: '2-digit'
   });
-  
+
   // Format date for display
   const dateDisplay = formatDateForDisplay(date);
-  
+
   // Get price (default to £25 if not specified)
   let priceVal3 = slot.price;
   if (typeof priceVal3 === 'string') priceVal3 = parseFloat(priceVal3);
   const price = priceVal3 ? `£${!isNaN(priceVal3) ? priceVal3.toFixed(2) : slot.price}` : '£25.00';
-  
+
   // Populate payment details
   document.getElementById('paymentDate').textContent = dateDisplay;
   document.getElementById('paymentTime').textContent = slot.time;
   document.getElementById('paymentTitle').textContent = slot.title;
   document.getElementById('paymentPrice').textContent = price;
   document.getElementById('paymentReference').textContent = paymentRef;
-  document.getElementById('paymentDeadline').textContent = deadlineStr;
+  document.getElementById('paymentDeadline').textContent = deadlineStr + ` (expires in ${Math.floor(bookingExpirySeconds/60)} min${bookingExpirySeconds%60!==0?` ${bookingExpirySeconds%60} sec`:''})`;
   document.getElementById('accountNumber').textContent = BANK_DETAILS.accountNumber;
   document.getElementById('sortCode').textContent = BANK_DETAILS.sortCode;
-  
+
   // Store booking data for cancellation
   currentBookingData = {
     slot: slot,
@@ -1801,16 +1816,16 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
     isBlock: !!slot.blockId,
     blockDates: slot.blockDates
   };
-  
+
   // Show modal (using same approach as user guide modal)
   console.log('🟠 About to show modal - before removal. Classes:', modal.className);
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
   console.log('🟠 After removing hidden class:', modal.className);
-  
+
   // Add body class to prevent iOS zoom
   document.body.classList.add('modal-open-payment');
-  
+
   // Ensure the modal content is scrolled to top
   const modalContent = modal.querySelector('.payment-modal-content');
   if (modalContent) {
@@ -2603,7 +2618,7 @@ async function proceedWithBookingAfterProfile(){
 }
 
 // Debounce helper and live registration checking
-const debounce = (fn, wait = 600) => {
+const debounce = (fn, wait = 3000) => {
   let t;
   return (...args) => {
     clearTimeout(t);
@@ -2657,16 +2672,18 @@ const handleNameEmailChange = debounce(async () => {
 
   try {
     const checkResult = await checkPlayerRegistered(name, email);
-    // If another check started since we began, ignore this result
     if (checkId !== _registrationCheckId) {
       console.log('Stale registration check result ignored (checkId', checkId, 'current', _registrationCheckId, ')');
       return;
     }
 
+    // Always initialize existingName and inputName before use
+    const existingName = (checkResult.existingName || '').trim().toLowerCase();
+    const inputName = name.trim().toLowerCase();
+
     console.log('Checking profile for:', name, email, 'found:', !!checkResult.registered);
 
     // Log if name exists with different email
-    // Check for duplicate by both name and email
     const nameEmailMatch = checkResult.nameExists && checkResult.emailExists && existingName === inputName && checkResult.existingEmail && checkResult.existingEmail.toLowerCase() === email.toLowerCase();
     if (nameEmailMatch) {
       console.debug('[DUPLICATE CHECK] Player with this name and email already exists:', name, email);
@@ -2691,23 +2708,20 @@ const handleNameEmailChange = debounce(async () => {
       }
     }
     duplicateBookingBanner?.classList.add('hidden');
-
     note?.classList.add('hidden');
 
-    const existingName = (checkResult.existingName || '').trim().toLowerCase();
-    const inputName = name.trim().toLowerCase();
-
+    // Always hide registration form if player is registered
     if (checkResult.registered) {
-      // Email + name match - hide registration form
       hidePlayerRegistration(true);
       emailConflictBanner?.classList.add('hidden');
       nameConflictBanner?.classList.add('hidden');
       hideBookingEmailConflictModal();
       hideBookingNameConflictModal();
       if (bookBtn) bookBtn.disabled = false;
+      return;
     }
+
     if (checkResult.emailExists && existingName && existingName !== inputName) {
-      // Email exists but with different name - show error banner, hide form, and disable submit
       if (!_bookingEmailConflictConfirmed && !_bookingConflictModalActive) {
         emailConflictBanner?.classList.add('hidden');
         nameConflictBanner?.classList.add('hidden');
@@ -2721,9 +2735,7 @@ const handleNameEmailChange = debounce(async () => {
         hideBookingEmailConflictModal();
         if (bookBtn) bookBtn.disabled = false;
       }
-      // If modal was cancelled, do nothing until user changes details
     } else if (checkResult.nameExists && checkResult.existingEmail && checkResult.existingEmail.toLowerCase() !== email.toLowerCase()) {
-      // Name exists with different email - show warning banner only if not already confirmed
       if (!_bookingNameConflictConfirmed && !_bookingConflictModalActive) {
         nameConflictBanner?.classList.add('hidden');
         emailConflictBanner?.classList.add('hidden');
@@ -2731,16 +2743,13 @@ const handleNameEmailChange = debounce(async () => {
         hidePlayerRegistration(true);
         if (bookBtn) bookBtn.disabled = false;
       } else if (_bookingNameConflictConfirmed) {
-        // Already confirmed, show form
         showPlayerRegistration({ name, email });
         emailConflictBanner?.classList.add('hidden');
         nameConflictBanner?.classList.add('hidden');
         hideBookingNameConflictModal();
         if (bookBtn) bookBtn.disabled = false;
       }
-      // If modal was cancelled, do nothing until user changes details
     } else {
-      // Email not found - show form normally
       showPlayerRegistration({ name, email });
       emailConflictBanner?.classList.add('hidden');
       nameConflictBanner?.classList.add('hidden');
@@ -2752,7 +2761,7 @@ const handleNameEmailChange = debounce(async () => {
     console.error('Registration check failed', err);
     note?.classList.add('hidden');
   }
-}, 600);
+}, 3000);
 
 // Waitlist: live registration checking (same logic as booking form)
 const handleWaitlistNameEmailChange = debounce(async () => {
@@ -2898,7 +2907,7 @@ const handleWaitlistNameEmailChange = debounce(async () => {
   } catch (err) {
     console.error('Waitlist: registration check failed', err);
   }
-}, 600);
+}, 3000);
 
 ['input','change'].forEach(ev => {
   document.getElementById('name').addEventListener(ev, handleNameEmailChange);

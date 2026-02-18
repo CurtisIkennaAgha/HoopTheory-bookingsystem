@@ -1,13 +1,6 @@
 
 
 <!-- (JS code block removed from top of file; should be inside <script> at the end) -->
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Booking System</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
 <!-- Edit Booking Modal -->
 <div id="editBookingModal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.45); align-items:center; justify-content:center;">
   <div style="background:#fff; border-radius:10px; max-width:420px; width:95vw; padding:28px 24px 18px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative;">
@@ -1543,7 +1536,7 @@ input:focus, select:focus, textarea:focus {
     </div>
   </div>
 
-  <button id="openSessionModal" style="margin-top: 12px; margin-bottom: 2px; background: #2a2a2a; color: white; width: 100%; padding: clamp(10px, 3vw, 14px); border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">
+  <button id="openSessionModal" style="margin-top: 12px; margin-bottom: 20px; background: #2a2a2a; color: white; width: 100%; padding: clamp(10px, 3vw, 14px); border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);">
     <i class="fas fa-plus"></i> Create Session
   </button>
 
@@ -2458,7 +2451,7 @@ function ensurePlayerProfilesSection() {
     <!-- Sync to Calendar Modal -->
     <div id="syncToCalendarModal" class="pt-modal" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="pt-modal-overlay" id="syncToCalendarModalOverlay"></div>
-      <div class="pt-modal-content" role="document" aria-labelledby="syncToCalendarModalTitle" style="font-family: 'Segoe UI Symbol', 'Arial Unicode MS', 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI', Arial, sans-serif;">
+      <div class="pt-modal-content" role="document" aria-labelledby="syncToCalendarModalTitle">
         <button class="pt-modal-close" id="syncToCalendarModalClose" aria-label="Close dialog">×</button>
         <h3 id="syncToCalendarModalTitle">Sync to Calendar</h3>
         <div class="pt-modal-body" style="display: flex; flex-direction: column; gap: 16px;">
@@ -3354,7 +3347,26 @@ async function adminSendConfirmation(email, bookingDate, slotTime, slotTitle, na
       showToast(`Email sent to ${email}`);
       await markBookingConfirmed(email, bookingDate, slotTime, slotTitle, blockDatesArray || []);
       await refreshBookingMappings();
+      console.log('[SESSION EDIT][PAYLOAD]', payload);
+      const editRes = await fetch(PHP_PATH + 'saveSlotsEdit.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const editJson = await editRes.json();
+      console.log('[SESSION EDIT][RESPONSE]', editJson);
+      await refreshBookingMappings();
       await renderAllBookings();
+      // Debug slotsData and capacity after reload
+      const slotsDataDebug = await getAvailableSlots();
+      console.group('[SESSION CAPACITY DEBUG]');
+      Object.keys(slotsDataDebug).forEach(date => {
+        slotsDataDebug[date].forEach(slot => {
+          console.log(`[${date}][${slot.time}]`, {
+            title: slot.title,
+            capacity: slot.capacity,
+            bookedUsers: slot.bookedUsers ? slot.bookedUsers.length : 0,
+            blockId: slot.blockId || null
+          });
+        });
+      });
+      console.groupEnd();
       await renderAllAvailableSlots();
       await renderWaitlist();
       await updateSummaryBar();
@@ -3380,26 +3392,22 @@ function calculateEndTime(startTime, durationMinutes) {
 
 // --- Create slot with dynamic duration ---
 document.getElementById('createSlot').onclick = async () => {
-    // ...existing code...
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('SINGLE SESSION CREATION START');
-  if (!selectedDate) { showToast('Select date', { error: true }); console.log('✗ No selectedDate'); return; }
-  const titleInput = document.getElementById('slotTitle');
+  if (!selectedDate) { showToast('Select date', { error: true }); return; }
+  // Try to get the slot title robustly
+  let titleInput = document.getElementById('slotTitle');
   let title = '';
   if (titleInput && titleInput.offsetParent !== null && !titleInput.disabled) {
     title = titleInput.value.trim();
-    console.log('✓ slotTitle found:', title);
   }
   if (!title) {
-    const modalTitleInput = document.getElementById('modalSlotTitle');
+    // Try fallback: modalSlotTitle (if using modal)
+    let modalTitleInput = document.getElementById('modalSlotTitle');
     if (modalTitleInput && modalTitleInput.offsetParent !== null && !modalTitleInput.disabled) {
       title = modalTitleInput.value.trim();
-      console.log('✓ modalSlotTitle fallback:', title);
     }
   }
   if (!title) {
     showToast('Enter slot title (the field may be hidden or not filled)', { error: true });
-    console.log('✗ No slot title');
     return;
   }
   const numberOfSpots = parseInt(document.getElementById('numberOfSpots').value) || 1;
@@ -3408,50 +3416,36 @@ document.getElementById('createSlot').onclick = async () => {
   const duration = parseInt(document.getElementById('sessionDuration').value) || 40;
   const price = parseFloat(document.getElementById('sessionPrice').value) || 0;
   const location = document.getElementById('sessionLocation').value.trim() || '';
-  console.log('✓ Params:', {selectedDate, title, numberOfSpots, sessionType, startTime, duration, price, location});
-  if (!startTime) { showToast('Select start time', { error: true }); console.log('✗ No startTime'); return; }
+  if (!startTime) { showToast('Select start time', { error: true }); return; }
   const endTime = calculateEndTime(startTime, duration);
   const slotsData = await getAvailableSlots();
-  console.log('✓ slotsData before:', JSON.stringify(slotsData[selectedDate]));
   slotsData[selectedDate] = slotsData[selectedDate] || [];
-  if (!Array.isArray(slotsData[selectedDate])) {
-    console.log('✗ slotsData[selectedDate] is not array, resetting');
-    slotsData[selectedDate] = [];
-  }
+  // Check if slot already exists at this time
   if (slotsData[selectedDate].some(s => s.time === startTime)) {
     showToast('A slot already exists at this time', { error: true });
-    console.log('✗ Slot already exists at this time:', startTime);
     return;
   }
-  const newSlot = {
+  // Add new slot
+  slotsData[selectedDate].push({
     time: startTime,
     endTime: endTime,
     duration: duration,
     title: title,
-    numberOfSpots: numberOfSpots,
+    capacity: numberOfSpots,
     sessionType: sessionType,
     price: price,
     location: location,
     bookedUsers: []
-  };
-  console.log('✓ New slot object:', newSlot);
-  slotsData[selectedDate].push(newSlot);
-  console.log('✓ slotsData after:', JSON.stringify(slotsData[selectedDate]));
-  try {
-    const resp = await saveAvailableSlots(slotsData);
-    console.log('✓ saveAvailableSlots response:', resp);
-    showToast(`Slot created: ${startTime}-${endTime}`);
-  } catch (err) {
-    showToast('Failed to save slot: ' + err.message, { error: true });
-    console.log('✗ saveAvailableSlots error:', err);
-  }
+  });
+  await saveAvailableSlots(slotsData);
+  showToast(`Slot created: ${startTime}-${endTime}`);
+  // Clear form
   document.getElementById('sessionStartTime').value = '';
   document.getElementById('sessionDuration').value = '40';
   document.getElementById('sessionPrice').value = '';
   document.getElementById('sessionLocation').value = '';
+  
   renderAllAvailableSlots();
-  console.log('SINGLE SESSION CREATION END');
-  console.log('═══════════════════════════════════════════════════════════');
 };
 
 // --- OLD HANDLERS (kept for reference but disabled since we now use modal) ---
@@ -3479,20 +3473,6 @@ document.getElementById('toggleSingleSession').onclick = () => {
 // --- Cancel Block Session Form ---
 document.getElementById('cancelBlockSession').onclick = () => {
   document.getElementById('blockSessionForm').style.display = 'none';
-  document.querySelectorAll('.slot-card').forEach(card => {
-    card.addEventListener('click', function() {
-      // Find session info from card dataset
-      const booked = parseInt(card.getAttribute('data-booked') || '0', 10);
-      const spots = parseInt(card.getAttribute('data-spots') || '1', 10);
-      if (booked >= spots) {
-        showToast('Session is fully booked. Registration unavailable.', { error: true });
-        return;
-      }
-      document.getElementById('singleSessionForm').style.display = 'block';
-      document.getElementById('blockSessionForm').style.display = 'none';
-      // Optionally populate form fields here
-    });
-  });
   document.getElementById('toggleBlockSession').innerHTML = '<i class="fas fa-plus"></i> Create Block Session (4-Week Series)';
   // Clear form
   document.getElementById('blockTitle').value = '';
@@ -3565,7 +3545,7 @@ document.getElementById('createBlockSession').onclick=async ()=>{
       endTime: endTime,
       duration: duration,
       title: blockTitle,
-      numberOfSpots: numberOfSpots,
+      capacity: numberOfSpots,
       sessionType: sessionType,
       price: price,
       location: location,
@@ -3835,16 +3815,6 @@ setTimeout(() => {
         return;
       }
 
-      // Save to backend
-      try {
-        await saveAvailableSlots(slotsData);
-        showToast('Session saved successfully!');
-      } catch (err) {
-        showToast('Failed to save session: ' + err.message, {error: true});
-        console.error('[SINGLE SESSION] Save error:', err);
-        return;
-      }
-
       // Clear form
       document.getElementById('modalSlotTitle').value = '';
       document.getElementById('modalNumberOfSpots').value = '1';
@@ -3985,30 +3955,42 @@ async function renderAllAvailableSlots(){
         if (slot.blockId && slot.blockDates) {
           if (processedBlockIds.has(slot.blockId)) return;
           processedBlockIds.add(slot.blockId);
-          // Find all dates for this block
           const blockDates = slot.blockDates;
-          // Find earliest date for sorting
-          const firstDate = blockDates[0];
-          // Calculate booked/remaining for the whole block (count unique people signed up)
-          let booked = 0;
-          if (Array.isArray(slot.bookedUsers)) {
-            booked = slot.bookedUsers.length;
-          } else {
-            const people = new Set();
-            blockDates.forEach(d => {
-              (bookingsData[d] || []).forEach(b => {
-                const m = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-                const email = m ? m[4] : null;
-                if (email) people.add(email);
-              });
+          // Find all slots for this blockId across all blockDates
+          let blockSlots = [];
+          blockDates.forEach(bd => {
+            if (slotsData[bd]) {
+              blockSlots = blockSlots.concat(slotsData[bd].filter(s => s.blockId === slot.blockId));
+            }
+          });
+          // Debug: print all blockSlots and their capacity
+          console.log('[BLOCK SLOTS CAPACITY DEBUG]', blockSlots.map(s => ({date: s.blockDates ? s.blockDates[0] : '', capacity: s.capacity})));
+          // Use the maximum capacity among all blockSlots
+          const blockCapacity = blockSlots.length > 0 ? Math.max(...blockSlots.map(s => s.capacity || 1)) : 1;
+          // Calculate booked using bookingMappingsCache
+          const emails = new Set();
+          if (bookingMappingsCache && typeof bookingMappingsCache === 'object') {
+            Object.values(bookingMappingsCache).forEach(mapping => {
+              const mappingTime = (mapping.slot || mapping.time || '').toString().trim();
+              const mappingTitle = (mapping.title || '').toString().trim();
+              const mappingEmail = (mapping.email || '').toString().trim().toLowerCase();
+              const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [mapping.date];
+              if (
+                mappingTime === slot.time &&
+                mappingTitle === slot.title &&
+                mappingDates.some(d => blockDates.includes(d))
+              ) {
+                emails.add(mappingEmail);
+              }
             });
-            booked = people.size;
           }
-          const spots = slot.numberOfSpots || 1;
+          const booked = emails.size;
+          const spots = blockCapacity;
           const status = booked >= spots ? 'Full' : 'Available';
+          console.debug('[BLOCK SPOT DEBUG]', {blockId: slot.blockId, blockDates, time: slot.time, title: slot.title, booked, spots, emails: Array.from(emails)});
           rows.push({
             isBlock: true,
-            date: blockDates.join(', '), // Use raw date string for formatting
+            date: blockDates.join(', '),
             time: `${slot.time} - ${slot.endTime || ''}`,
             title: slot.title,
             type: slot.sessionType || '',
@@ -4020,13 +4002,22 @@ async function renderAllAvailableSlots(){
             remove: () => removeBlockSession(slot.blockId, slot.time, slot.title, blockDates)
           });
         } else if (!slot.blockId) {
-          // Single session
-          const booked = (bookingsData[date]||[]).filter(b => b.includes(slot.time) && b.includes(slot.title)).length;
-          const spots = slot.numberOfSpots || 1;
+          // Single session: count bookings in bookingMappingsCache
+          let booked = 0;
+          if (bookingMappingsCache && typeof bookingMappingsCache === 'object') {
+            booked = Object.values(bookingMappingsCache).filter(mapping => {
+              const mappingTime = (mapping.slot || mapping.time || '').toString().trim();
+              const mappingTitle = (mapping.title || '').toString().trim();
+              const mappingDate = (mapping.date || '').toString().trim();
+              return mappingTime === slot.time && mappingTitle === slot.title && mappingDate === date;
+            }).length;
+          }
+          const spots = slot.capacity || 1;
           const status = booked >= spots ? 'Full' : 'Available';
+          console.debug('[SINGLE SPOT DEBUG]', {date, time: slot.time, title: slot.title, booked, spots});
           rows.push({
             isBlock: false,
-            date: date, // Use raw date string for formatting
+            date: date,
             time: `${slot.time} - ${slot.endTime || ''}`,
             title: slot.title,
             type: slot.sessionType || '',
@@ -4083,25 +4074,51 @@ async function renderAllAvailableSlots(){
     if(slotsData[date] && slotsData[date].length>0){
       slotsData[date].forEach(slot => {
         let booked = 0;
-        if (bookingsData && bookingsData[date]) {
-          booked = bookingsData[date].filter(b => {
-            const parts = b.match(/^(.+?)\s*-\s*(.+?)\s*\(/);
-            const bTime = parts ? parts[1] : null;
-            const titleMatch = b.match(/-\s*(.+?)\s*\(/);
-            const bTitle = titleMatch ? titleMatch[1].trim() : null;
-            return bTime === slot.time && bTitle === slot.title;
-          }).length;
-        } else {
-          booked = (slot.bookedUsers || []).length;
-        }
-        const spots = slot.numberOfSpots || 1;
-        // Show all sessions including full ones (no booked < spots check)
-        if(slot.blockId && slot.blockDates) {
+        if (slot.blockId && slot.blockDates) {
+          // Block session: count unique emails in bookingMappingsCache
+          const emails = new Set();
+          if (bookingMappingsCache && typeof bookingMappingsCache === 'object') {
+            Object.values(bookingMappingsCache).forEach(mapping => {
+              const mappingTime = (mapping.slot || mapping.time || '').toString().trim();
+              const mappingTitle = (mapping.title || '').toString().trim();
+              const mappingEmail = (mapping.email || '').toString().trim().toLowerCase();
+              const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [mapping.date];
+              if (
+                mappingTime === slot.time &&
+                mappingTitle === slot.title &&
+                mappingDates.some(d => slot.blockDates.includes(d))
+              ) {
+                emails.add(mappingEmail);
+              }
+            });
+          }
+          booked = emails.size;
+          // Find all slots for this blockId across all blockDates to get max capacity
+          let blockSlots = [];
+          slot.blockDates.forEach(bd => {
+            if (slotsData[bd]) {
+              blockSlots = blockSlots.concat(slotsData[bd].filter(s => s.blockId === slot.blockId));
+            }
+          });
+          const blockCapacity = blockSlots.length > 0 ? Math.max(...blockSlots.map(s => s.capacity || 1)) : (slot.capacity || 1);
+          console.log('[BLOCK SPOT DEBUG - CARD]', {blockId: slot.blockId, blockDates: slot.blockDates, time: slot.time, title: slot.title, booked, spots: blockCapacity, emails: Array.from(emails)});
           if(!processedBlockIds.has(slot.blockId)) {
             processedBlockIds.add(slot.blockId);
+            // Attach blockCapacity to slot for rendering
+            slot.__blockCapacity = blockCapacity;
             slotArray.push({date: slot.blockDates[0], slot, isBlock: true});
           }
         } else {
+          // Single session: count bookings in bookingMappingsCache
+          if (bookingMappingsCache && typeof bookingMappingsCache === 'object') {
+            booked = Object.values(bookingMappingsCache).filter(mapping => {
+              const mappingTime = (mapping.slot || mapping.time || '').toString().trim();
+              const mappingTitle = (mapping.title || '').toString().trim();
+              const mappingDate = (mapping.date || '').toString().trim();
+              return mappingTime === slot.time && mappingTitle === slot.title && mappingDate === date;
+            }).length;
+          }
+          console.log('[SINGLE SPOT DEBUG - CARD]', {date, time: slot.time, title: slot.title, booked, spots: slot.numberOfSpots || 1});
           slotArray.push({date, slot, isBlock: false});
         }
       });
@@ -4166,19 +4183,45 @@ async function renderAllAvailableSlots(){
     // ...existing code...
     // (no changes to card rendering logic)
     let booked = 0;
-    if (bookingsData && bookingsData[date]) {
-      booked = bookingsData[date].filter(b => {
-        const parts = b.match(/^(.+?)\s*-\s*(.+?)\s*\(/);
-        const bTime = parts ? parts[1] : null;
-        const titleMatch = b.match(/-\s*(.+?)\s*\(/);
-        const bTitle = titleMatch ? titleMatch[1].trim() : null;
-        return bTime === slot.time && bTitle === slot.title;
-      }).length;
+    let spots = isBlock ? (slot.__blockCapacity || slot.capacity || 1) : (slot.capacity || 1);
+    let remaining = 0;
+    if (isBlock) {
+      // For block sessions, always use the booked value from bookingMappingsCache/emails.size
+      // Find the correct booked value from the slotArray (already calculated)
+      // Recalculate here for clarity
+      const emails = new Set();
+      if (bookingMappingsCache && typeof bookingMappingsCache === 'object') {
+        Object.values(bookingMappingsCache).forEach(mapping => {
+          const mappingTime = (mapping.slot || mapping.time || '').toString().trim();
+          const mappingTitle = (mapping.title || '').toString().trim();
+          const mappingEmail = (mapping.email || '').toString().trim().toLowerCase();
+          const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [mapping.date];
+          if (
+            mappingTime === slot.time &&
+            mappingTitle === slot.title &&
+            mappingDates.some(d => (slot.blockDates || []).includes(d))
+          ) {
+            emails.add(mappingEmail);
+          }
+        });
+      }
+      booked = emails.size;
+      spots = slot.__blockCapacity || slot.capacity || 1;
+      remaining = spots - booked;
     } else {
-      booked = (slot.bookedUsers || []).length;
+      if (bookingsData && bookingsData[date]) {
+        booked = bookingsData[date].filter(b => {
+          const parts = b.match(/^(.+?)\s*-\s*(.+?)\s*\(/);
+          const bTime = parts ? parts[1] : null;
+          const titleMatch = b.match(/-\s*(.+?)\s*\(/);
+          const bTitle = titleMatch ? titleMatch[1].trim() : null;
+          return bTime === slot.time && bTitle === slot.title;
+        }).length;
+      } else {
+        booked = (slot.bookedUsers || []).length;
+      }
+      remaining = spots - booked;
     }
-    const spots = slot.numberOfSpots || 1;
-    const remaining = spots - booked;
     const endTime = slot.endTime || '??:??';
     const duration = slot.duration || '40';
     if(isBlock) {
@@ -4186,11 +4229,13 @@ async function renderAllAvailableSlots(){
       const priceDisplay = formatPrice(slot.price);
       const locationDisplay = slot.location ? slot.location : '';
       const priceLocationInfo = priceDisplay || locationDisplay ? `<div style="font-size: 0.8rem; color: #666; margin-top: 6px;">${priceDisplay}${priceDisplay && locationDisplay ? ' &bull; ' : ''}${locationDisplay}</div>` : '';
+      spots = slot.__blockCapacity || slot.capacity || 1;
+      remaining = spots - booked;
       card.innerHTML=`
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <div class="available-slot-date">
-              <i class="fas fa-cube"></i>
+              <i class="fas fa-link"></i>
               4-Week Block
             </div>
             <span class="block-session-badge">Block Session</span>
@@ -4347,6 +4392,91 @@ async function renderAllAvailableSlots(){
                 });
                 const result = await resp.json();
                 if (result.status === 'ok') {
+                  // Log emails of all users signed up to this session (debug)
+                  let emails = [];
+                  if (slot && Array.isArray(slot.bookedUsers)) {
+                    emails = slot.bookedUsers.map(u => u.email).filter(Boolean);
+                    if (emails.length > 0) {
+                      console.log('%c[EDIT SESSION] USERS TO NOTIFY (bookedUsers):', 'color:#b91c1c;font-weight:bold;', emails);
+                    } else {
+                      console.log('%c[EDIT SESSION] No users signed up to this session (bookedUsers is empty)', 'color:#b91c1c;font-weight:bold;');
+                    }
+                  } else {
+                    console.log('%c[EDIT SESSION] No bookedUsers array found on slot', 'color:#b91c1c;font-weight:bold;');
+                  }
+
+                  // PATCH: Update bookingMappings.json for all booked users in block
+                  if (slot && slot.blockId && Array.isArray(slot.bookedUsers) && Array.isArray(payload.blockDates)) {
+                    console.log('[BLOCK EDIT][MAPPING PATCH] Editing block bookingMappings for blockId:', slot.blockId, 'blockDates:', payload.blockDates, 'bookedUsers:', slot.bookedUsers);
+                    for (const user of slot.bookedUsers) {
+                      const editPayload = {
+                        action: 'update',
+                        name: user.name,
+                        email: user.email,
+                        status: slot.status || 'Pending',
+                        date: null, // block bookings have date: null
+                        time: payload.time,
+                        title: payload.title,
+                        blockId: slot.blockId,
+                        blockDates: payload.blockDates
+                      };
+                      console.log('[BLOCK EDIT][MAPPING PATCH] Sending editBooking.php for user:', user.email, 'payload:', editPayload);
+                      const editResp = await fetch('php/editBooking.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(editPayload)
+                      });
+                      let editResult = null;
+                      try {
+                        editResult = await editResp.json();
+                      } catch (e) {
+                        console.warn('[BLOCK EDIT][MAPPING PATCH] Could not parse editBooking.php response for', user.email, e);
+                      }
+                      console.log('[BLOCK EDIT][MAPPING PATCH] editBooking.php result for', user.email, editResult);
+                    }
+                  }
+
+                  // Detect changed fields for email
+                  const changedFields = {};
+                  const fieldList = ['date','title','capacity','sessionType','time','duration','price','location'];
+                  fieldList.forEach(field => {
+                    let oldVal = slot[field];
+                    let newVal = payload[field];
+                    // For blockDates, compare arrays as strings
+                    if (field === 'date' && slot.blockId && Array.isArray(slot.blockDates) && Array.isArray(payload.blockDates)) {
+                      oldVal = slot.blockDates.join(',');
+                      newVal = payload.blockDates.join(',');
+                    }
+                    if (typeof oldVal === 'number' && typeof newVal === 'string') newVal = parseFloat(newVal);
+                    if (typeof oldVal === 'string' && typeof newVal === 'number') oldVal = parseFloat(oldVal);
+                    if (oldVal !== undefined && newVal !== undefined && oldVal !== newVal) {
+                      changedFields[field] = { old: oldVal, new: newVal };
+                    }
+                  });
+                  // Send booking_edited email to each user
+                  if (emails.length > 0 && Object.keys(changedFields).length > 0) {
+                    emails.forEach(email => {
+                      fetch('php/sendEmail.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email,
+                          type: 'booking_edited',
+                          title: payload.title,
+                          slot: payload.time,
+                          location: payload.location,
+                          date: payload.date,
+                          price: payload.price,
+                          changedFields
+                        })
+                      }).then(r => r.json()).then(res => {
+                        console.log('[EDIT SESSION] Sent booking_edited email to', email, res);
+                      }).catch(e => {
+                        console.warn('[EDIT SESSION] Failed to send booking_edited email to', email, e);
+                      });
+                    });
+                  }
+
                   modal.style.display = 'none';
                   // Optionally, refresh slots UI
                   if (typeof renderAllAvailableSlots === 'function') renderAllAvailableSlots();
@@ -4465,12 +4595,10 @@ async function renderAllAvailableSlots(){
       card.innerHTML=`
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <div class="available-slot-date">
-                  ${slot.sessionType === 'solo' ? `<svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="user" class="svg-inline--fa fa-user" width="18" height="18" viewBox="0 0 448 512" style="vertical-align:middle;margin-right:6px;" fill="#43A047"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm89.6 32h-11.7c-22.4 10.2-47.2 16-73.9 16s-51.5-5.8-73.9-16h-11.7C100.3 288 0 388.3 0 512h448c0-123.7-100.3-224-134.4-224z"></path></svg>`
-                    : (slot.sessionType === 'group' && !slot.blockId) ? `<svg width="32" height="18" viewBox="0 0 64 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="5" fill="#43A047"/><circle cx="32" cy="10" r="6" fill="#43A047"/><circle cx="52" cy="12" r="5" fill="#43A047"/><rect x="4" y="19" width="16" height="7" rx="3.5" fill="#43A047"/><rect x="22" y="17" width="20" height="9" rx="4.5" fill="#43A047"/><rect x="44" y="19" width="16" height="7" rx="3.5" fill="#43A047"/></svg>`
-                    : ''}
-                  ${formatDateForDisplay(date)}
-                </div>
+            <div class="available-slot-date">
+              <i class="fas fa-calendar"></i>
+              ${formatDateForDisplay(date)}
+            </div>
             <span style="display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; background: #E3F2FD; color: #1565C0; white-space: nowrap;">Single</span>
           </div>
           <div class="available-slot-times compact">
@@ -4802,22 +4930,20 @@ async function removeBlockSession(blockId, time, title, blockDates) {
   if(!confirm('Remove entire 4-week block? This will also delete all bookings and waitlist entries for this session.')) return;
   try {
     let slotsDataCopy=await getAvailableSlots();
-    let deleted = 0;
-    for(const blockDate of blockDates) {
-      const dateSlots = slotsDataCopy[blockDate];
-      if(dateSlots) {
-        const idx = dateSlots.findIndex(s => s.blockId === blockId && s.time === time && s.title === title);
-        if(idx >= 0) {
-          dateSlots.splice(idx, 1);
-          deleted++;
-          if(dateSlots.length === 0) {
-            delete slotsDataCopy[blockDate];
-          }
-        }
-      }
+    let booked = 0;
+    if (bookingMappingsCache && typeof bookingMappingsCache === 'object') {
+      booked = Object.values(bookingMappingsCache).filter(mapping => {
+        const mappingTime = (mapping.slot || mapping.time || '').toString().trim();
+        const mappingTitle = (mapping.title || '').toString().trim();
+        const mappingDate = (mapping.date || '').toString().trim();
+        return mappingTime === slot.time && mappingTitle === slot.title && mappingDate === date;
+      }).length;
     }
-    await saveAvailableSlots(slotsDataCopy);
-    
+    const spots = slot.numberOfSpots || 1;
+    const remaining = spots - booked;
+    const endTime = slot.endTime || '??:??';
+    const duration = slot.duration || '40';
+    console.log('[SINGLE SPOT DEBUG - CARD]', {date, time: slot.time, title: slot.title, booked, spots});
     // Delete related bookings and waitlist entries
     await deleteSessionBookingsAndWaitlist(blockDates, time, title, blockId);
     
@@ -5432,22 +5558,39 @@ async function renderAllBookings(){
   }
   // console.log('renderAllBookings called');
   const allBookingsDiv=document.getElementById('allBookings');
-  const bookings=await getBookings();
+  const bookingMappings=await getBookingMappings();
   const slotsData=await getAvailableSlots();
-  
+
   let totalBookings=0;
   const bookingArray=[];
   const currentBookingIds=new Set();
   const processedBlockBookings = new Set(); // Track block bookings to avoid duplicates
-  
-  // Collect all bookings with their index info for deletion
-  Object.keys(bookings).forEach(date=>{
-    if(bookings[date] && bookings[date].length>0){
-      bookings[date].forEach((b, index)=>{
+
+  // Collect all bookings from bookingMappings, including block bookings with date=null and blockDates present
+  Object.keys(bookingMappings).forEach(bookingId => {
+    const mapping = bookingMappings[bookingId];
+    // Single booking (date present)
+    if (mapping && mapping.date && mapping.slot && mapping.title && mapping.email) {
+      totalBookings++;
+      currentBookingIds.add(bookingId);
+      bookingArray.push({
+        date: mapping.date,
+        booking: `${mapping.slot} - ${mapping.title} (${mapping.name || ''}) (${mapping.email})`,
+        index: 0, // index not used for mappings
+        bookingId
+      });
+    }
+    // Block booking (date null, blockDates present)
+    else if (mapping && !mapping.date && Array.isArray(mapping.blockDates) && mapping.blockDates.length > 0 && mapping.slot && mapping.title && mapping.email) {
+      mapping.blockDates.forEach(blockDate => {
         totalBookings++;
-        const bookingId=hashBooking(date, b);
-        currentBookingIds.add(bookingId);
-        bookingArray.push({date, booking: b, index, bookingId});
+        currentBookingIds.add(bookingId + '-' + blockDate);
+        bookingArray.push({
+          date: blockDate,
+          booking: `${mapping.slot} - ${mapping.title} (${mapping.name || ''}) (${mapping.email})`,
+          index: 0,
+          bookingId
+        });
       });
     }
   });
@@ -5890,6 +6033,16 @@ async function renderWaitlist(){
           }).length : 0;
         const capacity = slot.numberOfSpots || 1;
         const status = booked >= capacity ? 'Full' : `${capacity - booked} spots`;
+        // DEBUG: Waitlist spot logic
+        console.log('%c[WAITLIST SPOT DEBUG]','color:magenta;font-weight:bold',{
+          date,
+          time: slot.time,
+          title: slot.title,
+          booked,
+          capacity,
+          spotsAvailable: capacity - booked,
+          status
+        });
         sessionInfoMap[key] = {
           title: slot.title,
           capacity: capacity,
@@ -6149,6 +6302,7 @@ async function renderWaitlist(){
         // Create cards for each session with waitlist
         Object.entries(sessionMap).sort((a, b) => new Date(a[0]) - new Date(b[0])).forEach(([date, sessions]) => {
           Object.entries(sessions).forEach(([sessionKey, sessionData]) => {
+
             const {time, title, sessionType, blockDates, blockId, isBlock, people} = sessionData;
             const count = people.length;
 
@@ -6159,26 +6313,66 @@ async function renderWaitlist(){
             // For block sessions, use first date to get capacity
             const lookupDate = (isBlock && blockDates && blockDates.length > 0) ? blockDates[0] : date;
 
-            // Derive booked count from canonical bookings.json when possible
-            if (bookingsData && bookingsData[lookupDate]) {
-              const matches = bookingsData[lookupDate].filter(b => {
-                const parts = b.match(/^(.+?)\s*-\s*(.+?)\s*\(/);
-                const bTime = parts ? parts[1] : null;
-                const titleMatch = b.match(/-\s*(.+?)\s*\(/);
-                const bTitle = titleMatch ? titleMatch[1].trim() : null;
-                return bTime === time && bTitle === title;
-              });
-              bookedSpots = matches.length;
-            }
-
-            // Use slotsData only to get total spots if available
-            if (slotsData[lookupDate]) {
+            if (isBlock && blockId && blockDates && blockDates.length > 0) {
+              // Find any slot across all blockDates with matching blockId and use its bookedUsers
+              let found = false;
+              for (const d of blockDates) {
+                if (slotsData[d]) {
+                  for (const slot of slotsData[d]) {
+                    if (slot.blockId === blockId && Array.isArray(slot.bookedUsers)) {
+                      bookedSpots = slot.bookedUsers.length;
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+                if (found) break;
+              }
+            } else if (slotsData[lookupDate]) {
+              // Single session: use bookedUsers from the slot
               const dateSlots = slotsData[lookupDate];
               const matchingSlot = Object.values(dateSlots).find(slot => slot.time === time && slot.title === title);
-              if (matchingSlot) totalSpots = matchingSlot.numberOfSpots || 0;
+              if (matchingSlot && Array.isArray(matchingSlot.bookedUsers)) bookedSpots = matchingSlot.bookedUsers.length;
             }
 
-            const availableSpots = totalSpots - bookedSpots;
+            // For block sessions, get totalSpots from any slot with matching blockId (use capacity field)
+            if (isBlock && blockId && blockDates && blockDates.length > 0) {
+              // Find any slot across all blockDates with matching blockId and use its capacity
+              let found = false;
+              for (const d of blockDates) {
+                if (slotsData[d]) {
+                  for (const slot of slotsData[d]) {
+                    if (slot.blockId === blockId && slot.capacity) {
+                      totalSpots = slot.capacity;
+                      found = true;
+                      break;
+                    }
+                  }
+                }
+                if (found) break;
+              }
+            } else if (slotsData[lookupDate]) {
+              const dateSlots = slotsData[lookupDate];
+              const matchingSlot = Object.values(dateSlots).find(slot => slot.time === time && slot.title === title);
+              if (matchingSlot) totalSpots = matchingSlot.capacity || matchingSlot.numberOfSpots || 0;
+            }
+            // --- MAGENTA DEBUG LOG: Waitlist spot available logic (Aesthetic Mode) ---
+            console.log('%c[DEBUG][AESTHETIC] Waitlist Spot Logic:', 'color:magenta;font-weight:bold;', {
+              sessionKey,
+              isBlock,
+              blockDates,
+              blockId,
+              lookupDate,
+              bookedSpots,
+              totalSpots,
+              peopleCount: count
+            });
+
+            // For block sessions, if totalSpots is set and bookedSpots is 0, availableSpots should be totalSpots
+            let availableSpots = totalSpots - bookedSpots;
+            if (isBlock && totalSpots > 0 && bookedSpots === 0) {
+              availableSpots = totalSpots;
+            }
 
             const card = document.createElement('div');
             card.className = 'waitlist-card';
@@ -6946,11 +7140,8 @@ function generateCalendarLinksHTML(sessions) {
   sessions.forEach(session => {
     const url = generateGoogleCalendarURL(session);
     const displayDate = formatDateForDisplay(session.date);
-    // Use 📅 for block sessions, 🏀 for basketball, or 🎯 for others
-    let sessionType = '🎯';
-    if (session.sessionType === 'block') sessionType = '📅';
-    else if (session.title && /basketball/i.test(session.title)) sessionType = '🏀';
-
+    const sessionType = session.sessionType === 'block' ? '📅' : '🎯';
+    
     html += `
       <a href="${url}" target="_blank" rel="noopener noreferrer" 
          style="display: flex; flex-direction: column; justify-content: space-between; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 8px; text-decoration: none; color: #333; transition: all 0.2s ease; height: 140px; width: calc(25% - 8px); min-width: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; overflow: hidden; flex-shrink: 0;"

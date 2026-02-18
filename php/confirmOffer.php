@@ -123,6 +123,40 @@ $offer['status'] = 'confirmed';
 $offer['confirmedAt'] = date('Y-m-d H:i:s');
 $offers[$token] = $offer;
 
+// --- Add bookingMappings update logic ---
+$bookingMappingsFile = __DIR__ . '/../data/bookingMappings.json';
+$bookingMappings = file_exists($bookingMappingsFile) ? json_decode(file_get_contents($bookingMappingsFile), true) : [];
+
+// Generate a bookingId (UUID or deterministic string)
+if (function_exists('random_bytes')) {
+    $bookingId = bin2hex(random_bytes(8));
+} else {
+    $bookingId = uniqid('booking_', true);
+}
+
+$price = $offer['price'] ?? '';
+$location = $offer['location'] ?? '';
+
+$bookingMappings[$bookingId] = [
+    'name' => $offer['name'],
+    'email' => $offer['email'],
+    'date' => $date,
+    'slot' => $time,
+    'title' => $title,
+    'isBlock' => !empty($blockDates),
+    'blockId' => $blockId,
+    'blockDates' => $blockDates,
+    'price' => $price,
+    'location' => $location,
+    'status' => 'Confirmed',
+    'confirmedAt' => date('Y-m-d H:i:s'),
+    'createdAt' => date('Y-m-d H:i:s'),
+    'timestamp' => time(),
+    'reservationTimestamp' => time(),
+    // Optionally add expiryTimestamp if needed
+];
+file_put_contents($bookingMappingsFile, json_encode($bookingMappings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
 // Save all changes
 file_put_contents($slotsFile, json_encode($slots, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
 file_put_contents($bookingsFile, json_encode($bookings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);

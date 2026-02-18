@@ -15,11 +15,144 @@ function loadEnv($filePath) {
     }
 }
 loadEnv(__DIR__ . '/.env');
+
 // Debug log for received payload
 $rawInput = file_get_contents('php://input');
 error_log('[sendEmail.php] Raw input: ' . $rawInput);
 $data  = json_decode($rawInput, true);
 error_log('[sendEmail.php] Decoded payload: ' . json_encode($data));
+
+$email = $data['email'] ?? '';
+$slot  = $data['slot'] ?? '';
+$date  = $data['date'] ?? '';
+$name  = $data['name'] ?? 'Guest';
+$title = $data['title'] ?? 'Session';
+$blockDates = $data['blockDates'] ?? []; // Array of dates for block sessions
+$adminMessage = $data['adminMessage'] ?? ''; // Optional message from admin
+$emailType = $data['type'] ?? 'confirmation';
+$paymentRef = $data['paymentRef'] ?? null;
+$paymentDeadline = $data['deadline'] ?? null;
+$price = $data['price'] ?? null;
+$location = $data['location'] ?? null;
+$bookingId = $data['bookingId'] ?? '';
+$waitlistPosition = $data['waitlistPosition'] ?? '';
+
+// If bookingId is not provided, look it up from bookingMappings.json
+if (empty($bookingId) && !empty($email) && !empty($slot) && !empty($title)) {
+    $mappingsFile = __DIR__ . '/../data/bookingMappings.json';
+    if (file_exists($mappingsFile)) {
+        $mappings = json_decode(file_get_contents($mappingsFile), true);
+        if ($mappings) {
+            foreach ($mappings as $bid => $booking) {
+                $dateMatch = $booking['date'] === $date || 
+                            (!empty($blockDates) && $booking['date'] === $blockDates[0]);
+                if ($booking['email'] === $email && 
+                    $booking['slot'] === $slot && 
+                    $booking['title'] === $title &&
+                    $dateMatch) {
+                    $bookingId = $bid;
+                    error_log('Found bookingId from mappings: ' . $bookingId);
+                    break;
+                }
+            }
+        }
+    }
+    if (empty($bookingId)) {
+        error_log('WARNING: No bookingId found for email: ' . $email . ', slot: ' . $slot . ', title: ' . $title);
+    }
+}
+
+error_log('SendEmail - type: ' . $emailType . ', paymentRef: ' . $paymentRef . ', deadline: ' . $paymentDeadline . ', bookingId: ' . $bookingId);
+
+header('Content-Type: application/json');
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'Invalid email',
+        'email' => $email
+    ]);
+    exit;
+}
+if (!$slot || !$date) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'Missing data',
+        'email' => $email
+    ]);
+    exit;
+}
+
+// Handle booking_edited email type
+if ($emailType === 'booking_edited') {
+    error_log('Processing booking_edited email type');
+    $changedFields = $data['changedFields'] ?? [];
+    $fieldLabels = [
+        'price' => 'Price',
+        'location' => 'Location',
+        'time' => 'Time',
+        'date' => 'Date',
+        'title' => 'Session Title',
+        'capacity' => 'Capacity',
+        'sessionType' => 'Session Type',
+        'duration' => 'Duration',
+    ];
+    $changesHtml = '';
+    if (!empty($changedFields) && is_array($changedFields)) {
+        $changesHtml .= "<ul style='margin:10px 0 20px 20px;padding:0;color:#2563eb;font-size:15px;'>";
+        foreach ($changedFields as $field => $change) {
+            $label = $fieldLabels[$field] ?? ucfirst($field);
+            $old = htmlspecialchars($change['old'] ?? '');
+            $new = htmlspecialchars($change['new'] ?? '');
+            $changesHtml .= "<li><strong>$label:</strong> <span style='color:#b91c1c;text-decoration:line-through;'>$old</span> → <span style='color:#059669;font-weight:bold;'>$new</span></li>";
+        }
+        $changesHtml .= "</ul>";
+    } else {
+        $changesHtml = '<p style="color:#b91c1c;">Session details have changed.</p>';
+    }
+
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = getenv('MAIL_HOST');
+        $mail->SMTPAuth   = true;
+        $mail->Username   = getenv('MAIL_USERNAME');
+        $mail->Password   = getenv('MAIL_PASSWORD');
+        $mail->SMTPSecure = 'tls';
+        $mail->Port       = 587;
+        $mail->setFrom(getenv('MAIL_FROM_ADDRESS'), 'Hoop Theory');
+        $mail->addAddress($email);
+        $mail->isHTML(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->Subject = "Session Details Updated – Hoop Theory";
+        $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>"
+            . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
+            . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
+            . "<h1 style='margin:0 0 10px;font-size:24px;color:#2563eb;'>Session Details Changed</h1>"
+            . "<p style='margin:0 0 18px;color:#444;font-size:15px;'>The details for a session you are signed up to have changed. Please review the updated information below:</p>"
+            . $changesHtml
+            . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #2563eb;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'>"
+            . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
+            . "<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Location:</span> " . htmlspecialchars($location) . "</div>"
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Price:</span> £" . htmlspecialchars($price) . "</div>"
+            . "</div></td></tr></table>"
+            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>If you have any questions or can no longer attend, please contact us at <strong>bao@hooptheory.co.uk</strong>.</p>"
+            . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
+            . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
+            . "</td></tr></table></td></tr></table></body></html>";
+        $mail->send();
+        error_log('booking_edited email sent successfully to: ' . $email);
+        echo json_encode(['success' => true, 'email' => $email]);
+    } catch (Exception $e) {
+        error_log('Mailer Error (booking_edited): ' . $mail->ErrorInfo);
+        echo json_encode(['success' => false, 'error' => $mail->ErrorInfo, 'email' => $email]);
+    }
+    exit;
+}
 
 function createGoogleCalendarUrl($date, $startTime, $endTime, $title, $name) {
     [$y,$m,$d] = explode('-', $date);
@@ -36,60 +169,6 @@ function createGoogleCalendarUrl($date, $startTime, $endTime, $title, $name) {
         . '&location=' . urlencode('Hoop Theory');
 }
 
- $data  = json_decode(file_get_contents('php://input'), true);
- error_log('SendEmail START - Full data: ' . json_encode($data));
- $email = $data['email'] ?? '';
- $slot  = $data['slot'] ?? '';
- $date  = $data['date'] ?? '';
- $name  = $data['name'] ?? 'Guest';
- $title = $data['title'] ?? 'Session';
- $blockDates = $data['blockDates'] ?? []; // Array of dates for block sessions
- $adminMessage = $data['adminMessage'] ?? ''; // Optional message from admin
- $emailType = $data['type'] ?? 'confirmation';
- $paymentRef = $data['paymentRef'] ?? null;
- $paymentDeadline = $data['deadline'] ?? null;
- $price = $data['price'] ?? null;
- $location = $data['location'] ?? null;
- $bookingId = $data['bookingId'] ?? '';
- $waitlistPosition = $data['waitlistPosition'] ?? '';
- 
- // If bookingId is not provided, look it up from bookingMappings.json
- if (empty($bookingId) && !empty($email) && !empty($slot) && !empty($title)) {
-     $mappingsFile = __DIR__ . '/../data/bookingMappings.json';
-     if (file_exists($mappingsFile)) {
-         $mappings = json_decode(file_get_contents($mappingsFile), true);
-         if ($mappings) {
-             foreach ($mappings as $bid => $booking) {
-                 $dateMatch = $booking['date'] === $date || 
-                             (!empty($blockDates) && $booking['date'] === $blockDates[0]);
-                 if ($booking['email'] === $email && 
-                     $booking['slot'] === $slot && 
-                     $booking['title'] === $title &&
-                     $dateMatch) {
-                     $bookingId = $bid;
-                     error_log('Found bookingId from mappings: ' . $bookingId);
-                     break;
-                 }
-             }
-         }
-     }
-     if (empty($bookingId)) {
-         error_log('WARNING: No bookingId found for email: ' . $email . ', slot: ' . $slot . ', title: ' . $title);
-     }
- }
- 
- error_log('SendEmail - type: ' . $emailType . ', paymentRef: ' . $paymentRef . ', deadline: ' . $paymentDeadline . ', bookingId: ' . $bookingId);
-
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invalid email',
-        'email' => $email
-    ]);
-    exit;
-}
-if (!$slot || !$date) exit('Missing data');
 // Handle booking_cancellation email type
 if ($emailType === 'booking_cancellation') {
     error_log('Processing booking_cancellation email type');
@@ -228,11 +307,12 @@ If you'd like to rebook or have any questions, feel free to visit our <a href='h
     try {
         $mail->send();
         error_log('Cancellation email sent successfully to: ' . $email);
-        return ['success' => true, 'email' => $email];
+        echo json_encode(['success' => true, 'email' => $email]);
     } catch (Exception $e) {
         error_log('Mailer Error: ' . $mail->ErrorInfo);
-        return ['success' => false, 'error' => $mail->ErrorInfo, 'email' => $email];
+        echo json_encode(['success' => false, 'error' => $mail->ErrorInfo, 'email' => $email]);
     }
+    exit;
 }
 
 // Check if this is a block session
@@ -315,8 +395,17 @@ try {
             error_log('Generated paymentRef: ' . $paymentRef);
         }
         if (!$paymentDeadline) {
-            $paymentDeadline = date('D, j M Y H:i', strtotime('+24 hours'));
-            error_log('Generated deadline: ' . $paymentDeadline);
+            // Load expirySeconds from bookingExpiryConfig.json
+            $expiryConfigFile = __DIR__ . '/../data/bookingExpiryConfig.json';
+            $expirySeconds = 86400; // fallback 24h
+            if (file_exists($expiryConfigFile)) {
+                $expiryConfig = json_decode(file_get_contents($expiryConfigFile), true);
+                if (isset($expiryConfig['expirySeconds'])) {
+                    $expirySeconds = (int)$expiryConfig['expirySeconds'];
+                }
+            }
+            $paymentDeadline = date('D, j M Y, H:i', time() + $expirySeconds);
+            error_log('Generated deadline from config: ' . $paymentDeadline . ' (expirySeconds=' . $expirySeconds . ')');
         }
 
         $mail->Subject = "Booking Reserved – Payment Required";
@@ -544,7 +633,8 @@ Follow us on Instagram
 
     $mail->send();
     echo json_encode(['success' => true, 'message' => 'Email sent']);
-
 } catch (Exception $e) {
-    echo 'Mailer Error: ' . $mail->ErrorInfo;
+    error_log('Mailer Error: ' . $mail->ErrorInfo);
+    echo json_encode(['success' => false, 'error' => $mail->ErrorInfo, 'email' => $email]);
 }
+exit;

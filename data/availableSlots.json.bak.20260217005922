@@ -1,24 +1,28 @@
 {
     "2026-02-25": [
         {
-            "time": "20:30",
-            "endTime": "21:15",
+            "time": "17:50",
+            "endTime": "18:30",
             "duration": 45,
-            "title": "Age 11-167",
+            "title": "16-21 Years Old Block",
             "capacity": 1,
             "sessionType": "group",
             "price": 10,
-            "location": "Charles Dickens Centre",
+            "location": "Portsmouth College",
             "bookedUsers": [
+                {
+                    "name": "Ride fff",
+                    "email": "kobaotran@gmail.com"
+                },
                 {
                     "name": "Curtis Agha",
                     "email": "aghacurtis@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771265782598_uud1eh49g",
             "blockDates": [
                 "2026-02-25",
-                "2026-03-04",
+                "2026-03-06",
                 "2026-03-11",
                 "2026-03-18"
             ],
@@ -27,21 +31,21 @@
     ],
     "2026-03-04": [
         {
-            "time": "20:30",
-            "endTime": "21:15",
+            "time": "17:45",
+            "endTime": "18:30",
             "duration": 45,
-            "title": "Age 11-167",
+            "title": "16-21 Years Old Block",
             "capacity": 1,
             "sessionType": "group",
             "price": 10,
-            "location": "Charles Dickens Centre",
+            "location": "Charles Dickens Centre PO1 4HH",
             "bookedUsers": [
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "name": "Ride fff",
+                    "email": "kobaotran@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771265782598_uud1eh49g",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
@@ -53,21 +57,21 @@
     ],
     "2026-03-11": [
         {
-            "time": "20:30",
-            "endTime": "21:15",
+            "time": "17:45",
+            "endTime": "18:30",
             "duration": 45,
-            "title": "Age 11-167",
+            "title": "16-21 Years Old Block",
             "capacity": 1,
             "sessionType": "group",
             "price": 10,
-            "location": "Charles Dickens Centre",
+            "location": "Portsmouth College",
             "bookedUsers": [
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "name": "Ride fff",
+                    "email": "kobaotran@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771265782598_uud1eh49g",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
@@ -79,21 +83,21 @@
     ],
     "2026-03-18": [
         {
-            "time": "20:30",
-            "endTime": "21:15",
+            "time": "17:45",
+            "endTime": "18:30",
             "duration": 45,
-            "title": "Age 11-167",
+            "title": "16-21 Years Old Block",
             "capacity": 1,
             "sessionType": "group",
             "price": 10,
-            "location": "Charles Dickens Centre",
+            "location": "Portsmouth College",
             "bookedUsers": [
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "name": "Ride fff",
+                    "email": "kobaotran@gmail.com"
                 }
             ],
-            "blockId": "block_1771294148694_h649u3xwl",
+            "blockId": "block_1771265782598_uud1eh49g",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
