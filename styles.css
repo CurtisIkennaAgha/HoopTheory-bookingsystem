@@ -5,7 +5,6 @@
 }
 .price-row, .location-row {
   margin-top: 0 !important;
-  margin-bottom: 0 !important;
   gap: 0 !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
@@ -281,6 +280,7 @@ input, input[type="text"], input[type="email"] {
 .price-row {
   margin-left: -1px;
   margin-right: 3px;
+  margin-bottom: 4px;
 }
 
 .location-row {
@@ -290,6 +290,7 @@ input, input[type="text"], input[type="email"] {
 .slot-extra {
   display: flex !important;
   flex-direction: column !important;
+  column-gap: 4px !important;
 }
 
 
@@ -324,6 +325,7 @@ input, input[type="text"], input[type="email"] {
   object-fit: contain;
   vertical-align: middle;
   margin-right: 3px;
+  margin-bottom: 4px !important;
 }
 /* Flex row for title and spots pill */
 .slot-title-row {
@@ -1699,7 +1701,7 @@ body.modal-open-payment {
 .pill.session-type { background: #eef2ff; color:#3730a3; border:1px solid #c7d2fe; font-weight:700; padding:6px 10px; border-radius:999px; }
 
 /* Session time styling */
-.slot-time { font-size: 0.95rem; color:#374151; font-weight:600; margin-top:4px; }
+.slot-time { font-size: 0.95rem; color:#374151; font-weight:600; margin-top:4px; margin-bottom:6px; }
 
 /* Force icons and text to align the same way */
 .meta-icon { display:inline-flex; align-items:center; gap:8px; color:#475569; }
@@ -1729,8 +1731,7 @@ body.modal-open-payment {
   padding-right: 0;
   /* Removed truncation properties to allow wrapping */
   max-width: 100%;
-  margin-bottom: 0 !important;
-  margin-top: 0 !important;
+  /* margin-bottom and margin-top reset removed to allow natural spacing */
 }
 
 .slot-meta, .slot-extra { word-break: break-word; }
@@ -1743,7 +1744,7 @@ body.modal-open-payment {
   align-items:center;
   justify-content:space-between;
   gap:13.44px;
-  margin-bottom: 0 !important;
+  /* margin-bottom reset removed to allow natural spacing */
 }
 
 .slot-title { font-size:1.05rem; font-weight:600; color:#0f172a; }
