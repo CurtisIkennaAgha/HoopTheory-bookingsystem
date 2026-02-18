@@ -4786,6 +4786,7 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
         log(`Processing date ${date}, bookings:`, bookingsData[date]);
         const originalLength = bookingsData[date].length;
         bookingsData[date] = bookingsData[date].filter(b => {
+          // Match booking string: "time - title (name) (email)" or block session variant
           const match = b.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
           if(!match) {
             log('Could not parse booking:', b);
@@ -4796,8 +4797,16 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
           const bookingEmail = match[4].trim();
           const timeMatch = bookingTime === time;
           const titleMatch = bookingTitle === title;
-          log(`Checking booking "${b}"`, {bookingTime, bookingTitle, bookingEmail, timeMatch, titleMatch});
-          if(timeMatch && titleMatch) {
+          // For block sessions, also check blockId if present in booking string (future-proof)
+          let blockMatch = true;
+          if (blockId) {
+            // If blockId is encoded in booking string, check for it (optional, for future-proofing)
+            blockMatch = b.includes(blockId);
+            // If not present, still allow match (legacy)
+            if (!b.includes('block_')) blockMatch = true;
+          }
+          log(`Checking booking "${b}"`, {bookingTime, bookingTitle, bookingEmail, timeMatch, titleMatch, blockMatch});
+          if(timeMatch && titleMatch && blockMatch) {
             log('🔴 DELETING booking:', b);
             deletedBookings.push(b);
             bookingEmails.push(bookingEmail);
@@ -4813,9 +4822,9 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
       }
     }
 
-    log('💾 Saving updated bookings...');
-    await saveBookings(bookingsData);
-    log('✅ Bookings saved. Deleted bookings:', deletedBookings.length);
+    log('💾 Saving updated bookings (and mappings via saveBookings.php)...');
+    await saveBookings(bookingsData); // This will update both bookings.json and bookingMappings.json
+    log('✅ Bookings and mappings saved. Deleted bookings:', deletedBookings.length);
 
     // Delete session from availableSlots.json
     let slotsData = await getAvailableSlots();
@@ -4847,28 +4856,7 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
     await saveAvailableSlots(slotsData);
     log('✅ Slots saved. Deleted sessions:', deletedSessions);
 
-    // Delete related bookingMappings entries for deleted bookings
-    let mappingsData = await getBookingMappings();
-    log('Current booking mappings count:', Object.keys(mappingsData).length);
-    const deletedMappings = [];
-    for(const [bookingId, mapping] of Object.entries(mappingsData)) {
-      const mappingTime = mapping.slot || mapping.time;
-      const mappingTitle = mapping.title;
-      const mappingEmail = mapping.email;
-      const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [];
-      const dateMatch = dates.some(d => mapping.date === d || mappingDates.includes(d));
-      const timeMatch = mappingTime === time;
-      const titleMatch = mappingTitle === title;
-      const emailMatch = bookingEmails.includes(mappingEmail);
-      if(timeMatch && titleMatch && emailMatch && dateMatch) {
-        log('🔴 DELETING mapping:', bookingId, mapping);
-        deletedMappings.push(bookingId);
-        delete mappingsData[bookingId];
-      }
-    }
-    log('💾 Saving updated mappings...');
-    await saveBookingMappings(mappingsData);
-    log('✅ Mappings saved. Deleted mappings:', deletedMappings.length);
+    // (REMOVED) No need to delete bookingMappings directly; saveBookings.php handles this.
 
     // Delete waitlist entries
     let waitlistData = await getWaitlist();
@@ -4908,14 +4896,12 @@ async function deleteSessionBookingsAndWaitlist(dates, time, title, blockId) {
     log('=== CASCADE DELETE COMPLETE ===');
     log('✅ Summary:', {
       deletedBookings: deletedBookings.length,
-      deletedMappings: deletedMappings.length,
       deletedWaitlist: deletedWaitlist.length,
       deletedSessions,
       dates, time, title, blockId
     });
     return {
       deletedBookings: deletedBookings.length,
-      deletedMappings: deletedMappings.length,
       deletedWaitlist: deletedWaitlist.length,
       deletedSessions
     };

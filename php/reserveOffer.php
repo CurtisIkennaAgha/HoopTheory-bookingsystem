@@ -230,31 +230,7 @@ if (!$slotFound) {
     goto render;
 }
 
-// Add booking entry (same as confirm flow) — this reserves the spot server-side
-// For block sessions: add bookings for ALL dates in the block
-$bookingString = $time . ' - ' . $title . ' (' . $offer['name'] . ') (' . $offer['email'] . ')';
-$datesToBook = [$date];
-if ($blockId && !empty($blockDates)) {
-    $datesToBook = $blockDates;
-    error_log("reserveOffer: Block session booking - adding to " . count($blockDates) . " dates");
-}
-
-foreach ($datesToBook as $bookingDate) {
-    if (!isset($bookings[$bookingDate])) {
-        $bookings[$bookingDate] = [];
-    }
-    // Avoid duplicating booking entries if one already exists (idempotent)
-    $exists = false;
-    foreach ($bookings[$bookingDate] as $b) {
-        if (is_string($b) && trim($b) === $bookingString) { $exists = true; break; }
-    }
-    if (!$exists) {
-        $bookings[$bookingDate][] = $bookingString;
-        error_log("reserveOffer: Added booking for $bookingDate");
-    } else {
-        error_log('reserveOffer: booking string already present for ' . $offer['email'] . ' on ' . $bookingDate);
-    }
-}
+// (REMOVED) Add booking entry directly to bookings.json. This is now handled by saveBookings.php only.
 
 // Remove from waitlist
 // For block sessions: remove from ALL dates in the block
@@ -285,7 +261,7 @@ $offers[$token] = $offer;
 
 // Persist files
 file_put_contents($slotsFile, json_encode($slots, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
-file_put_contents($bookingsFile, json_encode($bookings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
+// (REMOVED) Do not write bookings.json directly; handled by saveBookings.php
 file_put_contents($waitlistFile, json_encode($waitlist, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
 file_put_contents($offersFile, json_encode($offers, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
 
@@ -339,6 +315,41 @@ if ($curlError) {
 }
 if ($httpCode !== 200) {
     error_log('reserveOffer.php - sendEmail returned http code ' . $httpCode . ' response: ' . $response);
+}
+
+
+// --- NEW: Call saveBookings.php to update bookingMappings.json ---
+$saveBookingPayload = [
+    'name' => $offer['name'],
+    'email' => $offer['email'],
+    'slot' => [
+        'title' => $title,
+        'time' => $time,
+        'price' => $slotPrice,
+        'location' => $slotLocation
+    ],
+    'date' => $date,
+    'blockDates' => $blockDates,
+    'blockId' => $blockId,
+    'price' => $slotPrice,
+    'location' => $slotLocation
+];
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']) . '/saveBookings.php');
+curl_setopt($ch2, CURLOPT_POST, true);
+curl_setopt($ch2, CURLOPT_POSTFIELDS, json_encode($saveBookingPayload));
+curl_setopt($ch2, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_TIMEOUT, 5);
+$saveBookingResponse = curl_exec($ch2);
+$saveBookingCurlError = curl_error($ch2);
+$saveBookingHttpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+curl_close($ch2);
+if ($saveBookingCurlError) {
+    error_log('reserveOffer.php - CURL error calling saveBookings.php: ' . $saveBookingCurlError);
+}
+if ($saveBookingHttpCode !== 200) {
+    error_log('reserveOffer.php - saveBookings.php returned http code ' . $saveBookingHttpCode . ' response: ' . $saveBookingResponse);
 }
 
 $isSuccess = true;

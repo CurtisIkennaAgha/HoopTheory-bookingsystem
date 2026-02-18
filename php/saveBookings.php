@@ -289,6 +289,56 @@ try {
       throw new Exception('Failed to write bookings.json');
     }
 
+    // --- Remove bookingMappings for deleted bookings ---
+    $bookingMappingsFile = __DIR__ . '/../data/bookingMappings.json';
+    $bookingMappings = file_exists($bookingMappingsFile) ? json_decode(file_get_contents($bookingMappingsFile), true) : [];
+    // Build a set of all current bookings (date, time, title, email)
+    $currentBookings = [];
+    foreach ($input as $date => $bookingArr) {
+      foreach ($bookingArr as $bstr) {
+        if (preg_match('/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/', $bstr, $m)) {
+          $bTime = trim($m[1]);
+          $bTitle = trim($m[2]);
+          $bName = trim($m[3]);
+          $bEmail = trim($m[4]);
+          $currentBookings[] = [
+            'date' => $date,
+            'time' => $bTime,
+            'title' => $bTitle,
+            'email' => strtolower($bEmail)
+          ];
+        }
+      }
+    }
+    // Remove any mapping that does not have a corresponding booking
+    $newMappings = [];
+    foreach ($bookingMappings as $bookingId => $mapping) {
+      $mappingDate = isset($mapping['date']) ? $mapping['date'] : null;
+      $mappingTime = isset($mapping['slot']) ? $mapping['slot'] : (isset($mapping['time']) ? $mapping['time'] : null);
+      $mappingTitle = isset($mapping['title']) ? $mapping['title'] : null;
+      $mappingEmail = isset($mapping['email']) ? strtolower($mapping['email']) : null;
+      $isBlock = !empty($mapping['blockDates']);
+      $blockDates = $isBlock && is_array($mapping['blockDates']) ? $mapping['blockDates'] : [];
+      $found = false;
+      foreach ($currentBookings as $cb) {
+        $dateMatch = ($cb['date'] === $mappingDate) || ($isBlock && in_array($cb['date'], $blockDates));
+        $timeMatch = $cb['time'] == $mappingTime;
+        $titleMatch = $cb['title'] == $mappingTitle;
+        $emailMatch = $cb['email'] == $mappingEmail;
+        if ($dateMatch && $timeMatch && $titleMatch && $emailMatch) {
+          $found = true;
+          break;
+        }
+      }
+      if ($found) {
+        $newMappings[$bookingId] = $mapping;
+      } else {
+        error_log('[CASCADE DELETE] Removing mapping for deleted booking: ' . $bookingId . ' (' . $mappingEmail . ', ' . $mappingDate . ', ' . $mappingTime . ', ' . $mappingTitle . ')');
+      }
+    }
+    file_put_contents($bookingMappingsFile, json_encode($newMappings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    error_log('BookingMappings synchronized after bulk bookings update.');
+
     // Ensure slots file is canonical after bulk update
     require_once __DIR__ . '/lib_slot_sync.php';
     $syncRes = sync_slots_from_bookings(__DIR__ . '/../data/bookings.json', __DIR__ . '/../data/availableSlots.json', true, true);
