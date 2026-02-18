@@ -142,6 +142,7 @@ if ($emailType === 'booking_edited') {
             . "</div></td></tr></table>"
             . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>If you have any questions or can no longer attend, please contact us at <strong>bao@hooptheory.co.uk</strong>.</p>"
             . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
+            . "<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>"
             . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
             . "</td></tr></table></td></tr></table></body></html>";
         $mail->send();
@@ -290,6 +291,11 @@ If you'd like to rebook or have any questions, feel free to visit our <a href='h
 
 <hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>
 
+
+<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>
+Contact us via WhatsApp: 
+<a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a>
+</p>
 <p style='text-align:center;font-size:12px;color:#999;'>
 © 2026 Hoop Theory · bao@hooptheory.co.uk
 </p>
@@ -437,7 +443,7 @@ try {
 <table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>
 <tr><td style='font-weight:bold;width:150px;'>Account Name</td><td>Hoop Theory</td></tr>
 <tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>
-<tr><td style='font-weight:bold;'>Sort Code</td><td>569964</td></tr>
+<tr><td style='font-weight:bold;'>Sort Code</td><td>560064</td></tr>
 <tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>
 <tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>
 <tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($paymentDeadline) . "</td></tr>
@@ -448,9 +454,7 @@ try {
 <p style='margin:16px 0 8px;color:#333;'>You will also be sent an email with these payment details.</p>
 <p style='margin:0 0 16px;color:#000;font-weight:bold;'>Once payment is received, you will receive a final confirmation email.</p>
 
-<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: This reservation will expire if payment is not received by the deadline above.</p>
-
-<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: please note that refunds will not be issued after your spot has been confirmed.</p>
+<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: This reservation will expire if payment is not received by the deadline above. Additionally, please note that refunds will not be issued after your spot has been confirmed.</p>
 
 <p style='margin:16px 0;text-align:center;padding:15px;background:#f3f4f6;border-radius:6px;border:1px solid #d1d5db;'>
 <a href='https://hooptheory.co.uk/cancel-session.html?bookingId=" . htmlspecialchars($bookingId) . "' style='color:#ef4444;font-weight:bold;text-decoration:underline;'>Can't make this session? Cancel your booking here</a>
@@ -524,7 +528,7 @@ Add to Google Calendar
     if ($emailType === 'waitlist_confirmation') {
         $displayPosition = !empty($waitlistPosition) ? htmlspecialchars((string)$waitlistPosition) : 'N/A';
 
-        $mail->Subject = "Waitlist Request Confirmed";
+        $mail->Subject = "Space Available: $title";
         $mail->Body = "
 <!DOCTYPE html>
 <html>
@@ -588,8 +592,7 @@ Your session is confirmed and we cannot wait to see you.
 $sessionDetailsHtml
 
 <p style='margin:30px 0 20px;font-size:14px;color:#555;line-height:1.6;'>
-We are excited to work with you! If you need to reschedule or have any questions,
-feel free to reach out to us.
+We are excited to work with you! If you have any questiosn dont hesitate to reach out.
 </p>
 ";
 

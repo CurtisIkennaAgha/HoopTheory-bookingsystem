@@ -391,10 +391,6 @@ const PHP_PATH = 'php/';
 const REFRESH_INTERVAL = 5000;
 const dateAvailabilityCache = {};
 
-const BANK_DETAILS = {
-  accountNumber: '12345678',
-  sortCode: '12-34-56'
-};
 
 /* ================= DATE FORMATTING ================= */
 function formatDateForDisplay(dateStr) {
@@ -1063,11 +1059,11 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   document.getElementById('paymentDate').textContent = dateDisplay;
   document.getElementById('paymentTime').textContent = slot.time;
   document.getElementById('paymentTitle').textContent = slot.title;
+
   document.getElementById('paymentPrice').textContent = price;
   document.getElementById('paymentReference').textContent = paymentRef;
   document.getElementById('paymentDeadline').textContent = deadlineStr;
-  document.getElementById('accountNumber').textContent = BANK_DETAILS.accountNumber;
-  document.getElementById('sortCode').textContent = BANK_DETAILS.sortCode;
+  // Bank details are now static in HTML; do not set them via JS.
   
   // Store booking data for cancellation
   currentBookingData = {

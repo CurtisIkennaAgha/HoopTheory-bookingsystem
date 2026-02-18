@@ -2880,12 +2880,18 @@ function renderBlockSessionEditList() {
   const numberOfSessions = parseInt(document.getElementById('blockNumberOfSessions').value) || 4;
   const startTime = document.getElementById('blockStartTime').value;
   const editListContainer = document.getElementById('blockSessionEditListContainer');
-  const editList = document.getElementById('blockSessionEditList');
-  editList.innerHTML = '';
+  const oldEditList = document.getElementById('blockSessionEditList');
+  console.log('%c[Block Preview] Clearing preview rows', 'color: red; font-weight: bold');
+  const newEditList = document.createElement('div');
+  newEditList.id = 'blockSessionEditList';
+  newEditList.style.display = oldEditList.style.display;
+  oldEditList.parentNode.replaceChild(newEditList, oldEditList);
+  const editList = newEditList;
   if (!firstDate || !startTime || numberOfSessions < 1) {
     editListContainer.style.display = 'none';
     return;
   }
+  console.log('%c[Block Preview] Auto-filling preview rows:', 'color: green; font-weight: bold', {firstDate, numberOfSessions, startTime});
   // Generate weekly dates
   let current = new Date(firstDate);
   for (let i = 0; i < numberOfSessions; i++) {
@@ -2894,21 +2900,55 @@ function renderBlockSessionEditList() {
     row.style.display = 'flex';
     row.style.gap = '8px';
     row.style.marginBottom = '6px';
-    row.innerHTML = `
-      <input type="date" class="blockEditDate" value="${dateStr}" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid #bbb; font-size: 1rem;" />
-      <input type="time" class="blockEditTime" value="${startTime}" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid #bbb; font-size: 1rem;" />
-      <span style="color:#888; font-size:0.95em;">#${i+1}</span>
-    `;
+
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.className = 'blockEditDate';
+    dateInput.style.width = '140px';
+    dateInput.style.padding = '6px';
+    dateInput.style.borderRadius = '6px';
+    dateInput.style.border = '1px solid #bbb';
+    dateInput.style.fontSize = '1rem';
+    dateInput.value = dateStr;
+    dateInput.autocomplete = 'off';
+
+    const timeInput = document.createElement('input');
+    timeInput.type = 'time';
+    timeInput.className = 'blockEditTime';
+    timeInput.style.width = '110px';
+    timeInput.style.padding = '6px';
+    timeInput.style.borderRadius = '6px';
+    timeInput.style.border = '1px solid #bbb';
+    timeInput.style.fontSize = '1rem';
+    timeInput.value = startTime;
+    timeInput.autocomplete = 'off';
+
+    const label = document.createElement('span');
+    label.style.color = '#888';
+    label.style.fontSize = '0.95em';
+    label.textContent = `#${i+1}`;
+
+    row.appendChild(dateInput);
+    row.appendChild(timeInput);
+    row.appendChild(label);
     editList.appendChild(row);
     current.setDate(current.getDate() + 7);
   }
   editListContainer.style.display = 'block';
 }
 
-['blockFirstDate','blockNumberOfSessions','blockStartTime'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', renderBlockSessionEditList);
-});
+
+
+
+// Attach listeners and initialize preview after window is fully loaded
+
+window.onload = function() {
+  ['blockFirstDate','blockNumberOfSessions','blockStartTime'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', renderBlockSessionEditList);
+  });
+  renderBlockSessionEditList();
+};
 
 // --- Create Block Session ---
 document.getElementById('createBlockSession').onclick = async () => {

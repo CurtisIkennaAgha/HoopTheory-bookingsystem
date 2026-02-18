@@ -62,21 +62,21 @@
     <div class="legend-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;justify-content:flex-start;">
       <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
         <div class="legend-dot" style="background:#10b981;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-        <span>Session available</span>
+          <span>Session Available</span>
       </div>
       <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
         <div class="legend-dot" style="background:#3b82f6;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-        <span>Subsequent block sessions</span>
+          <span>Subsequent Block Sessions</span>
       </div>
     </div>
     <div class="legend-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;justify-content:flex-start;">
       <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
         <div class="legend-dot" style="background:#ef4444;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-        <span>Session full</span>
+          <span>Join Waitlist</span>
       </div>
       <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
         <div class="legend-dot" style="background:#9ca3af;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-        <span>Session unavailable</span>
+          <span>Session Unavailable</span>
       </div>
     </div>
   </div>
@@ -166,12 +166,12 @@
         <div class="bank-details">
           <div class="detail-row">
             <span class="label">Account Name:</span>
-            <span class="value">Hoop Theory</span>
+            <span class="value" id="accountName">Bao Tran</span>
           </div>
           <div class="detail-row">
             <span class="label">Account Number:</span>
             <div class="copyable-value">
-              <span id="accountNumber">12345678</span>
+              <span id="accountNumber">46244409</span>
               <button class="copy-btn" id="copyAccountBtn" title="Copy account number">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -183,7 +183,7 @@
           <div class="detail-row">
             <span class="label">Sort Code:</span>
             <div class="copyable-value">
-              <span id="sortCode">12-34-56</span>
+              <span id="sortCode">56-00-64</span>
               <button class="copy-btn" id="copySortBtn" title="Copy sort code">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -263,7 +263,7 @@
 
       <div class="payment-section" style="padding-top:12px;">
         <h3>Need help?</h3>
-        <p style="color:var(--muted); margin:0;">If you have any questions, please don’t hesitate to contact Bao via WhatsApp.</p>
+        <p style="color:var(--muted); margin:0;">If you have any questions, please don't hesitate to contact Bao via WhatsApp.</p>
       </div>
 
       <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:12px;padding-top:12px;">
@@ -448,16 +448,11 @@
 
   <!-- WAITLIST FORM (SHOWS WHEN SLOT IS FULLY BOOKED) -->
   <!-- Waitlist Note (required for showBookingForm logic, even if not visible for single sessions) -->
-  <div id="waitlistNote" class="waitlist-note hidden" style="display:none;"></div>
   <div id="waitlistForm" class="waitlist-form hidden">
     <div id="waitlistMessageBanner" class="email-conflict-banner hidden" style="background-color: #fee; border: 1px solid #f55; border-radius: 6px; padding: 12px; margin-bottom: 16px; color: #c00; font-weight: 600;"></div>
     <label>Player's First and Last Name</label>
     <input type="text" id="waitlistName" placeholder="Hoop Theorist" style="color:#888;" autocomplete="off">
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('waitlistName').onblur = handleWaitlistNameEmailChange;
-        document.getElementById('waitlistEmail').onblur = handleWaitlistNameEmailChange;
-      });
+    <!-- handler attachment moved to main script after function definition -->
     </script>
 
     <label>Your Email</label>
@@ -499,6 +494,22 @@ let autoRefreshInterval = null;
 let currentBookingData = null; // Track pending booking for cancellation
 let currentBookingId = null; // Track the bookingId for email sending
 let pendingBooking = null; // Temporarily hold booking details while user completes registration
+
+// Store expiry config globally
+let bookingExpirySeconds = 600; // fallback default (10 min)
+
+// Fetch expiry config at startup
+fetch('data/bookingExpiryConfig.json')
+  .then(r => r.json())
+  .then(cfg => {
+    if (cfg && typeof cfg.expirySeconds === 'number') {
+      bookingExpirySeconds = cfg.expirySeconds;
+      console.log('[CONFIG] Loaded bookingExpirySeconds:', bookingExpirySeconds);
+    }
+  })
+  .catch(e => {
+    console.warn('[CONFIG] Could not load bookingExpiryConfig.json, using default expirySeconds=600', e);
+  });
 let _registrationCheckId = 0; // incrementing token to cancel outdated checks
 let _bookingNameConflictConfirmed = false; // booking: track if user confirmed name conflict
 let _bookingEmailConflictConfirmed = false; // booking: track if user confirmed email conflict
@@ -589,11 +600,11 @@ function formatDateForDisplay(dateStr) {
 }
 
 function formatSelectedDateHeader(dateStr) {
-  // Convert YYYY-MM-DD to "THU 5th FEB 2026" (with ordinal and superscript)
+  // Convert YYYY-MM-DD to "thu 5th feb 2026" (with ordinal as superscript and all lowercase)
   const [year, month, day] = dateStr.split('-');
-  const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-                      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
+                      'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const d = new Date(dateStr);
   const dayNum = parseInt(day);
   const dayName = dayNames[d.getDay()];
@@ -603,7 +614,8 @@ function formatSelectedDateHeader(dateStr) {
   if (dayNum % 10 === 1 && dayNum !== 11) ord = 'st';
   else if (dayNum % 10 === 2 && dayNum !== 12) ord = 'nd';
   else if (dayNum % 10 === 3 && dayNum !== 13) ord = 'rd';
-  return `${dayName} ${dayNum}<span style="font-size:0.7em;vertical-align:baseline;">${ord}</span> ${monthName} ${year}`;
+  ord = ord.toLowerCase();
+  return `${dayName} ${dayNum}<sup style="font-size:0.7em;vertical-align:super;text-transform:lowercase;">${ord}</sup> ${monthName} ${year}`;
 }
 
 /* ================= API ================= */
@@ -749,46 +761,6 @@ async function isPlayerAlreadyOnWaitlist(email, date, slot) {
   }
 }
 
-async function updateWaitlistCount(){
-  const countEl = document.getElementById('waitlistCount');
-  if (!countEl) return;
-  if (!selectedSlot || !selectedDate) {
-    countEl.textContent = '0 people on the waitlist';
-    return;
-  }
-
-  try {
-    const waitlistData = await getWaitlist();
-    
-    // For block sessions, check the first date (where all block waitlist entries are stored)
-    let lookupDate = selectedDate;
-    if (selectedSlot.blockId && selectedSlot.blockDates && selectedSlot.blockDates.length > 0) {
-      lookupDate = selectedSlot.blockDates[0];
-    }
-    
-    const entries = waitlistData[lookupDate] || [];
-    
-    // Filter by time, title, and blockId (if applicable)
-    const count = entries.filter(e => {
-      if (!e) return false;
-      const timeMatch = e.time === selectedSlot.time;
-      const titleMatch = e.title === selectedSlot.title;
-      
-      // For block sessions, match by blockId
-      if (selectedSlot.blockId) {
-        return timeMatch && titleMatch && e.blockId === selectedSlot.blockId;
-      } else {
-        // For single sessions, ensure it's not a block entry
-        return timeMatch && titleMatch && !e.blockId;
-      }
-    }).length;
-    
-    countEl.textContent = `${count} ${count === 1 ? 'person' : 'people'} on the waitlist`;
-  } catch (e) {
-    console.error('Failed to load waitlist count', e);
-    countEl.textContent = 'Waitlist count unavailable';
-  }
-}
 
 /* ================= CALENDAR ================= */
 function buildCalendarSkeleton(){
@@ -812,6 +784,7 @@ function buildCalendarSkeleton(){
   document.getElementById('email').value = '';
   document.getElementById('waitlistName').value = '';
   document.getElementById('waitlistEmail').value = '';
+
 
   const year = currentDisplayDate.getFullYear();
   const month = currentDisplayDate.getMonth();
@@ -888,7 +861,7 @@ async function dateHasAvailableSlots(dateStr){
         }
       }
       const bookedCount = uniqueEmails.size;
-      return bookedCount < (s.numberOfSpots||1);
+      return bookedCount < (s.capacity||1);
     } else {
       // Single session: derive booked count from bookings.json for this date only
       let booked = 0;
@@ -903,7 +876,7 @@ async function dateHasAvailableSlots(dateStr){
       } else {
         booked = (s.bookedUsers||[]).length;
       }
-      return booked < (s.numberOfSpots||1);
+      return booked < (s.capacity||1);
     }
   });
 }
@@ -978,12 +951,12 @@ async function refreshDateAvailability(initial=false){
           }
         }
         const bookedCount = uniqueEmails.size;
-        const spots = slot.numberOfSpots || 1;
+        const spots = slot.capacity || 1;
         full = bookedCount >= spots;
       } else {
         // Single session: check only this date
         const booked = getBookedCount(slot);
-        const spots = slot.numberOfSpots || 1;
+        const spots = slot.capacity || 1;
         full = booked >= spots;
       }
 
@@ -1047,6 +1020,22 @@ async function refreshDateAvailability(initial=false){
 
 /* ================= DATE CLICK ================= */
 async function handleDateClick(div, dateStr){
+    // Always hide registration form and reset its state on date change
+    hidePlayerRegistration(true);
+    const regForm = document.getElementById('playerRegistrationForm');
+    const regHostBooking = document.getElementById('playerRegistrationHostBooking');
+    if (regForm && regHostBooking && regForm.parentElement !== regHostBooking) {
+      regHostBooking.appendChild(regForm);
+    }
+    if (regForm) regForm.classList.add('hidden');
+    const regTitle = document.getElementById('playerRegistrationTitle');
+    if (regTitle) regTitle.classList.add('hidden');
+    // Also reset booking form visibility
+    const bookingForm = document.getElementById('bookingForm');
+    if (bookingForm) {
+      bookingForm.classList.add('hidden');
+      bookingForm.style.display = 'none';
+    }
   console.log('%c[STEP 1: DATE SELECT]%c ' + dateStr, 'color:#10b981;font-weight:bold;', 'color:inherit;');
   slotRenderVersion++;
   const renderVersion = slotRenderVersion;
@@ -1080,13 +1069,11 @@ async function handleDateClick(div, dateStr){
 
   const slotsData = await getAvailableSlots();
   const bookingsData = await getBookings();
-  // Always load waitlist data before rendering slots
-  if (!window.waitlistData) {
-    try {
-      window.waitlistData = await getWaitlist();
-    } catch (e) {
-      window.waitlistData = {};
-    }
+  // Always load waitlist data before rendering slots (force fresh)
+  try {
+    window.waitlistData = await getWaitlist();
+  } catch (e) {
+    window.waitlistData = {};
   }
   
   // Discard this render if a newer one has started
@@ -1104,7 +1091,7 @@ async function handleDateClick(div, dateStr){
     if (window.getWaitlist) {
       window.getWaitlist().then(data => { window.waitlistData = data; });
     }
-    const spots = slot.numberOfSpots || 1;
+    const spots = slot.capacity || 1;
     let booked = 0;
     let full = false;
     
@@ -1216,8 +1203,8 @@ async function handleDateClick(div, dateStr){
             <div class="block-info">
               <div class="slot-header">
                 <div class="slot-title-row">
-                  <span class="slot-title">${slot.title}</span>
-                  ${!full ? `<span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${Math.max(0, (spots - booked))} / ${spots} spots left</span>` : ''}
+                  <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
+                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${spots - booked}/${spots} Spots Left</span>
                 </div>
                 <div class="slot-actions">
                   <!-- No fully booked pill, replaced by waitlist count below -->
@@ -1226,8 +1213,8 @@ async function handleDateClick(div, dateStr){
               <div class="slot-meta">
                 <div class="slot-time">${slot.time}${slot.endTime ? ` - ${slot.endTime}` : ''} (4-Week Block)</div>
               </div>
-              ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
-              ${full ? `<div class='waitlist-block-label'>Waitlist: ${waitlistCount}</div>` : ''}
+              ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
+              ${full ? `<div class='waitlist-block-label'>Waitlist Queue: ${waitlistCount}</div>` : ''}
             </div>
           </div>
           <!-- selectable indicator (bottom-right) -->
@@ -1250,7 +1237,7 @@ async function handleDateClick(div, dateStr){
       el.appendChild(bridgeMsg);
       bridgeMsg.addEventListener('click', (event) => {
         event.stopPropagation();
-        document.getElementById('blockSlots').parentElement.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
         el.classList.add('selected');
         selectedSlot = slot;
         selectedDate = dateStr;
@@ -1269,13 +1256,12 @@ async function handleDateClick(div, dateStr){
         el.classList.add('selected');
         selectedSlot = slot;
         selectedDate = dateStr;
-        updateWaitlistCount();
         showBlockConfirmation(slot, true); // Always show block details in waitlist mode
-        showBookingForm(true); // Show waitlist form only
+        showBookingForm(full); // Show waitlist form if full, registration form if available
         // Improved auto-scroll: show half previous, half new step
         setTimeout(() => {
           const prev = el;
-          const next = document.getElementById('blockConfirmation') || document.getElementById('waitlistNote') || document.getElementById('bookingForm');
+          const next = document.getElementById('blockConfirmation') || document.getElementById('bookingForm');
           if (prev && next) {
             const prevRect = prev.getBoundingClientRect();
             const nextRect = next.getBoundingClientRect();
@@ -1378,10 +1364,17 @@ async function handleDateClick(div, dateStr){
       const norm = (val) => (val ?? '').toString().trim().toLowerCase();
       waitlistCount = entries.filter(entry => {
         if (!entry) return false;
-        const entryTime = norm(entry.time);
-        const entryTitle = norm(entry.title);
-        if (!entryTime || !entryTitle) return false;
-        return entryTime === norm(slot.time) && entryTitle === norm(slot.title);
+        const titleMatch = norm(entry.title) === norm(slot.title);
+        if (slot.blockId) {
+          // For block sessions, match by time, title, and blockId
+          const timeMatch = norm(entry.time) === norm(slot.time);
+          return timeMatch && titleMatch && entry.blockId === slot.blockId;
+        } else {
+          // For single sessions, match by title, time, and blockId must be null/undefined/empty
+          const timeMatch = norm(entry.time) === norm(slot.time);
+          const blockIdMatch = entry.blockId === null || entry.blockId === undefined || entry.blockId === '';
+          return titleMatch && timeMatch && blockIdMatch;
+        }
       }).length;
     }
 
@@ -1391,18 +1384,17 @@ async function handleDateClick(div, dateStr){
           <div class="block-info">
             <div class="slot-header">
               <div class="slot-title-row">
-                <span class="slot-title">${slot.title}</span>
-                ${spots === 1 ? ' <span class="pill session-type">Solo Session</span>' : ''}
-                ${spots > 1 && !full ? `<span class="pill spots-pill block-first">${Math.max(0, (spots - booked))} / ${spots} spots left</span>` : ''}
-                ${full ? `<span class="waitlist-pill">Waitlist: ${waitlistCount}</span>` : ''}
+                <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
+                <span class="pill spots-pill block-first">${spots - booked}/${spots} Spots Left</span>
+                ${full ? `<span class="waitlist-pill">Waitlist Queue</span>` : ''}
               </div>
               <div class="slot-actions"></div>
             </div>
             <div class="slot-meta">
               <div class="slot-time">${slot.time}</div>
             </div>
-            ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data=\"bank.png\" type=\"image/png\" class=\"icon icon--price\"></object></span><span class=\"price-text\">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class=\"icon icon--location\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" aria-hidden=\"true\"><path d=\"M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" fill=\"none\"/></svg></span><span class=\"location-text\">${locationDisplay}</span></div>` : ''}</div>` : ''}
-            ${full ? `<div class='waitlist-block-label'>Waitlist: ${waitlistCount}</div>` : ''}
+            ${priceDisplay || locationDisplay ? `<div class="slot-extra">${priceDisplay ? `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceDisplay}</span></div>` : ''}${locationDisplay ? `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationDisplay}</span></div>` : ''}</div>` : ''}
+              ${full ? `<div class='waitlist-block-label'>Waitlist Queue: ${waitlistCount}</div>` : ''}
           </div>
         </div>
         <!-- selectable indicator (bottom-right) -->
@@ -1418,7 +1410,7 @@ async function handleDateClick(div, dateStr){
       const bridgeMsg = document.createElement('div');
       bridgeMsg.className = 'bridge-message';
       bridgeMsg.innerHTML = `
-        <div style=\"cursor: pointer;\">
+        <div style="cursor: pointer;">
           This session has available spaces, but we're prioritising the waitlist. <strong>Don't worry—click here to join the waitlist!</strong>
         </div>
       `;
@@ -1437,6 +1429,12 @@ async function handleDateClick(div, dateStr){
     // Toggle selection for single session cards (click card or indicator)
     el.onclick = () => {
       console.log(`  → Clicked. inBridgeState=${inBridgeState}`);
+      console.log('[DEBUG] Slot clicked:', slot, 'selectedSlot:', selectedSlot, 'full:', full);
+      if (full) {
+        console.log('[DEBUG] FULLY BOOKED: showBookingForm(true)');
+      } else {
+        console.log('[DEBUG] AVAILABLE: showBookingForm(false)');
+      }
       // Don't allow selection if in bridge state
       if (inBridgeState) {
         console.log(`    → In bridge state, showing waitlist only`);
@@ -1444,12 +1442,10 @@ async function handleDateClick(div, dateStr){
         el.classList.add('selected');
         selectedSlot = slot;
         selectedDate = dateStr;
-        updateWaitlistCount();
         showBookingForm(true); // Show waitlist form only
-        // Always scroll to waitlistNote or waitlistForm for fully booked
-        const waitlistNote = document.getElementById('waitlistNote');
+        // Always scroll to waitlistForm for fully booked
         const waitlistForm = document.getElementById('waitlistForm');
-        (waitlistNote || waitlistForm)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        waitlistForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         return;
       }
 
@@ -1460,15 +1456,14 @@ async function handleDateClick(div, dateStr){
         selectedSlot = slot;
         hideBlockConfirmation();
         // Ensure selectedSlot is set before calling showBookingForm
-        showBookingForm(false); // Always show booking form for available single sessions
+        showBookingForm(full); // Always show booking form for available single sessions
         el.querySelector('.select-indicator')?.setAttribute('aria-pressed','true');
 
         // Auto-scroll to show selected session and next step
         if (full) {
-          // For fully booked, always show waitlistNote or waitlistForm
-          const waitlistNote = document.getElementById('waitlistNote');
+          // For fully booked, always show waitlistForm
           const waitlistForm = document.getElementById('waitlistForm');
-          (waitlistNote || waitlistForm)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          waitlistForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
           const bookingForm = document.getElementById('bookingForm');
           bookingForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1637,7 +1632,7 @@ function showBlockConfirmation(slot, isWaitlist = false) {
     extraHtml += `<div class="price-row"><span class="meta-icon"><object data="bank.png" type="image/png" class="icon icon--price"></object></span><span class="price-text">${priceText}</span></div>`;
   }
   if (locationText) {
-    extraHtml += `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationText}</span></div>`;
+    extraHtml += `<div class="location-row"><span class="meta-icon"><svg class="icon icon--location" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10zM12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span><span class="location-text">${locationText}</span></div>`;
   }
   if (extraEl) extraEl.innerHTML = extraHtml;
 
@@ -1662,7 +1657,6 @@ function hideBlockConfirmation() {
 function showBookingForm(isFullyBooked) {
   const bookingForm = document.getElementById('bookingForm');
   const waitlistForm = document.getElementById('waitlistForm');
-  const waitlistNote = document.getElementById('waitlistNote');
   const waitlistConfirm = document.getElementById('waitlistConfirm');
   const regForm = document.getElementById('playerRegistrationForm');
   const regHostBooking = document.getElementById('playerRegistrationHostBooking');
@@ -1671,9 +1665,24 @@ function showBookingForm(isFullyBooked) {
   const titleEl = document.getElementById('playerRegistrationTitle');
 
   // Defensive: If any required form element is missing, abort to avoid errors
-  if (!bookingForm || !waitlistForm || !waitlistNote || !blockCheckbox) {
-    console.warn('[showBookingForm] Missing one or more required form elements:', { bookingForm, waitlistForm, waitlistNote, blockCheckbox });
+  // blockCheckbox is only required for block sessions, not single sessions
+  if (!bookingForm || !waitlistForm) {
+    console.warn('[showBookingForm] Missing one or more required form elements:', { bookingForm, waitlistForm });
     return;
+  }
+  // For block sessions, check blockCheckbox only if selectedSlot is a block
+  if (selectedSlot && selectedSlot.blockId && !blockCheckbox) {
+    console.warn('[showBookingForm] Missing blockCheckbox for block session:', { blockCheckbox });
+    return;
+  }
+  console.log('[DEBUG] showBookingForm called:', { isFullyBooked, selectedSlot, bookingForm, waitlistForm, blockCheckbox });
+  if (isFullyBooked) {
+    console.log('[DEBUG] showBookingForm: FULLY BOOKED - should show waitlist note/form');
+  } else if (isFullyBooked === false) {
+    console.log('[DEBUG] showBookingForm: AVAILABLE - should show registration form');
+  } else {
+    console.log('[DEBUG] showBookingForm: NULL/UNDEFINED - should hide all forms');
+  }
   // ...existing code...
   
   // If no session selected (both false/undefined), hide both forms
@@ -1686,10 +1695,6 @@ function showBookingForm(isFullyBooked) {
       waitlistForm.classList.add('hidden');
       waitlistForm.style.display = 'none';
     }
-    if (waitlistNote) {
-      waitlistNote.classList.add('hidden');
-      waitlistNote.style.display = 'none';
-    }
     if (waitlistConfirm) waitlistConfirm.checked = false;
     // Remove handler if present
     if (waitlistConfirm) waitlistConfirm.onchange = null;
@@ -1697,87 +1702,56 @@ function showBookingForm(isFullyBooked) {
   }
 
   if (isFullyBooked) {
-    // For fully booked sessions (including block), only show waitlist note and form
+    // For fully booked single slots, immediately show waitlist form and hide everything else
     if (bookingForm) {
       bookingForm.classList.add('hidden');
       bookingForm.style.display = 'none';
     }
     if (titleEl) titleEl.classList.add('hidden');
     if (regForm) regForm.classList.add('hidden');
-
-    // Show waitlist note, but keep waitlist form hidden until checkbox is checked
     if (waitlistForm) {
-      waitlistForm.classList.add('hidden');
-      waitlistForm.style.display = 'none';
+      waitlistForm.classList.remove('hidden');
+      waitlistForm.style.display = '';
+      setTimeout(() => {
+        waitlistForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200);
     }
-    if (waitlistNote) {
-      waitlistNote.classList.remove('hidden');
-      waitlistNote.style.display = '';
-    }
-    if (waitlistConfirm) waitlistConfirm.checked = false;
-    // Assign waitlist checkbox handler only when form is shown
-    if (waitlistConfirm) {
-      waitlistConfirm.onchange = (e) => {
-        const waitlistForm = document.getElementById('waitlistForm');
-        if (waitlistForm && e.target.checked) {
-          waitlistForm.classList.remove('hidden');
-          waitlistForm.style.display = '';
-          setTimeout(() => {
-            waitlistForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }, 200);
-          // Always keep booking/registration form hidden for fully booked block sessions
-          if (bookingForm) {
-            bookingForm.classList.add('hidden');
-            bookingForm.style.display = 'none';
-          }
-          if (regForm) regForm.classList.add('hidden');
-          if (titleEl) titleEl.classList.add('hidden');
-        } else if (waitlistForm) {
-          waitlistForm.classList.add('hidden');
-          waitlistForm.style.display = 'none';
-          hideBlockConfirmation();
-        }
-      };
-    }
-    updateWaitlistCount();
-
+    if (waitlistConfirm) waitlistConfirm.checked = true;
     // Move registration form into waitlist form container
     if (regForm && regHostWaitlist && regForm.parentElement !== regHostWaitlist) {
       regHostWaitlist.appendChild(regForm);
     }
     return;
   }
-    // Check if this is a block session
-    if (selectedSlot && selectedSlot.blockId) {
-      // For block sessions: hide booking form until checkbox is checked
-      bookingForm.classList.add('hidden');
-      bookingForm.style.display = 'none';
-      titleEl?.classList.add('hidden');
-      regForm?.classList.add('hidden');
-      blockCheckbox.checked = false;
-    } else {
-      // For regular single sessions: show booking form immediately
-      bookingForm.classList.remove('hidden');
-      bookingForm.style.display = '';
-      // Always reset registration form and title to visible
-      if (regForm) regForm.classList.remove('hidden');
-      if (regHostBooking) regHostBooking.classList.remove('hidden');
-      if (titleEl) titleEl.classList.remove('hidden');
-      // Move registration form back into booking form container
-      if (regForm && regHostBooking && regForm.parentElement !== regHostBooking) {
-        regHostBooking.appendChild(regForm);
-      }
+  // Check if this is a block session
+  if (selectedSlot && selectedSlot.blockId) {
+    // For block sessions: hide booking form until checkbox is checked
+    bookingForm.classList.add('hidden');
+    bookingForm.style.display = 'none';
+    titleEl?.classList.add('hidden');
+    regForm?.classList.add('hidden');
+    blockCheckbox.checked = false;
+  } else {
+    // For regular single sessions: show booking form immediately
+    bookingForm.classList.remove('hidden');
+    bookingForm.style.display = '';
+    console.log('[DEBUG] bookingForm should now be visible:', bookingForm);
+    // Always reset registration form and title to visible
+    if (regForm) regForm.classList.remove('hidden');
+    if (regHostBooking) regHostBooking.classList.remove('hidden');
+    if (titleEl) titleEl.classList.remove('hidden');
+    // Move registration form back into booking form container
+    if (regForm && regHostBooking && regForm.parentElement !== regHostBooking) {
+      regHostBooking.appendChild(regForm);
     }
-
-    // Hide waitlist form (both class and inline)
-    waitlistForm.classList.add('hidden');
-    waitlistForm.style.display = 'none';
-    waitlistNote.classList.add('hidden');
-    waitlistNote.style.display = 'none';
-    if (waitlistConfirm) waitlistConfirm.checked = false;
-    // Remove handler if present
-    if (waitlistConfirm) waitlistConfirm.onchange = null;
   }
+  // Hide waitlist form (both class and inline)
+  waitlistForm.classList.add('hidden');
+  waitlistForm.style.display = 'none';
+  waitlistNote.style.display = 'none';
+  if (waitlistConfirm) waitlistConfirm.checked = false;
+  // Remove handler if present
+  if (waitlistConfirm) waitlistConfirm.onchange = null;
 }
 
 /* ================= PAYMENT INSTRUCTIONS ================= */
@@ -1792,20 +1766,19 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   console.log('🔵 BookingId received:', bookingId);
   const modal = document.getElementById('paymentModal');
   console.log('🟠 Modal element:', modal, 'Has hidden class:', modal.classList.contains('hidden'));
-  
+
   // Store bookingId globally for email sending
   currentBookingId = bookingId;
   console.log('🔵 currentBookingId set to:', currentBookingId);
-  
+
   // Generate payment reference in format: FULLNAME-SESSIONNAME
   const fullName = name.toUpperCase().replace(/\s+/g, '');
   const sessionName = slot.title.toUpperCase().replace(/\s+/g, '');
   const paymentRef = `${fullName}-${sessionName}`;
-  
-  // Calculate deadline (24 hours from now)
-  const deadline = new Date();
-  deadline.setHours(deadline.getHours() + 24);
-  const deadlineStr = deadline.toLocaleString('en-GB', { 
+
+  // Calculate deadline (expiry window from now)
+  const deadline = new Date(Date.now() + bookingExpirySeconds * 1000);
+  const deadlineStr = deadline.toLocaleString('en-GB', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
@@ -1813,25 +1786,28 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
     hour: '2-digit',
     minute: '2-digit'
   });
-  
+
   // Format date for display
   const dateDisplay = formatDateForDisplay(date);
-  
+
   // Get price (default to £25 if not specified)
   let priceVal3 = slot.price;
   if (typeof priceVal3 === 'string') priceVal3 = parseFloat(priceVal3);
   const price = priceVal3 ? `£${!isNaN(priceVal3) ? priceVal3.toFixed(2) : slot.price}` : '£25.00';
-  
+
   // Populate payment details
+  document.getElementById('accountNumber').textContent = '46244409';
+  document.getElementById('sortCode').textContent = '569964';
+  document.getElementById('accountName').textContent = 'Bao Tran';
   document.getElementById('paymentDate').textContent = dateDisplay;
   document.getElementById('paymentTime').textContent = slot.time;
   document.getElementById('paymentTitle').textContent = slot.title;
   document.getElementById('paymentPrice').textContent = price;
   document.getElementById('paymentReference').textContent = paymentRef;
-  document.getElementById('paymentDeadline').textContent = deadlineStr;
+  document.getElementById('paymentDeadline').textContent = deadlineStr + ` (expires in ${Math.floor(bookingExpirySeconds/60)} min${bookingExpirySeconds%60!==0?` ${bookingExpirySeconds%60} sec`:''})`;
   document.getElementById('accountNumber').textContent = BANK_DETAILS.accountNumber;
   document.getElementById('sortCode').textContent = BANK_DETAILS.sortCode;
-  
+
   // Store booking data for cancellation
   currentBookingData = {
     slot: slot,
@@ -1843,16 +1819,16 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
     isBlock: !!slot.blockId,
     blockDates: slot.blockDates
   };
-  
+
   // Show modal (using same approach as user guide modal)
   console.log('🟠 About to show modal - before removal. Classes:', modal.className);
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
   console.log('🟠 After removing hidden class:', modal.className);
-  
+
   // Add body class to prevent iOS zoom
   document.body.classList.add('modal-open-payment');
-  
+
   // Ensure the modal content is scrolled to top
   const modalContent = modal.querySelector('.payment-modal-content');
   if (modalContent) {
@@ -2645,7 +2621,7 @@ async function proceedWithBookingAfterProfile(){
 }
 
 // Debounce helper and live registration checking
-const debounce = (fn, wait = 600) => {
+const debounce = (fn, wait = 3000) => {
   let t;
   return (...args) => {
     clearTimeout(t);
@@ -2699,16 +2675,18 @@ const handleNameEmailChange = debounce(async () => {
 
   try {
     const checkResult = await checkPlayerRegistered(name, email);
-    // If another check started since we began, ignore this result
     if (checkId !== _registrationCheckId) {
       console.log('Stale registration check result ignored (checkId', checkId, 'current', _registrationCheckId, ')');
       return;
     }
 
+    // Always initialize existingName and inputName before use
+    const existingName = (checkResult.existingName || '').trim().toLowerCase();
+    const inputName = name.trim().toLowerCase();
+
     console.log('Checking profile for:', name, email, 'found:', !!checkResult.registered);
 
     // Log if name exists with different email
-    // Check for duplicate by both name and email
     const nameEmailMatch = checkResult.nameExists && checkResult.emailExists && existingName === inputName && checkResult.existingEmail && checkResult.existingEmail.toLowerCase() === email.toLowerCase();
     if (nameEmailMatch) {
       console.debug('[DUPLICATE CHECK] Player with this name and email already exists:', name, email);
@@ -2733,29 +2711,27 @@ const handleNameEmailChange = debounce(async () => {
       }
     }
     duplicateBookingBanner?.classList.add('hidden');
-
     note?.classList.add('hidden');
 
-    const existingName = (checkResult.existingName || '').trim().toLowerCase();
-    const inputName = name.trim().toLowerCase();
-
+    // Always hide registration form if player is registered
     if (checkResult.registered) {
-      // Email + name match - hide registration form
       hidePlayerRegistration(true);
       emailConflictBanner?.classList.add('hidden');
       nameConflictBanner?.classList.add('hidden');
       hideBookingEmailConflictModal();
       hideBookingNameConflictModal();
       if (bookBtn) bookBtn.disabled = false;
+      return;
     }
+
     if (checkResult.emailExists && existingName && existingName !== inputName) {
-      // Email exists but with different name - show error banner, hide form, and disable submit
       if (!_bookingEmailConflictConfirmed && !_bookingConflictModalActive) {
         emailConflictBanner?.classList.add('hidden');
         nameConflictBanner?.classList.add('hidden');
         showBookingEmailConflictModal();
         hidePlayerRegistration(true);
         if (bookBtn) bookBtn.disabled = true;
+        return;
       } else if (_bookingEmailConflictConfirmed) {
         showPlayerRegistration({ name, email });
         emailConflictBanner?.classList.add('hidden');
@@ -2763,26 +2739,22 @@ const handleNameEmailChange = debounce(async () => {
         hideBookingEmailConflictModal();
         if (bookBtn) bookBtn.disabled = false;
       }
-      // If modal was cancelled, do nothing until user changes details
     } else if (checkResult.nameExists && checkResult.existingEmail && checkResult.existingEmail.toLowerCase() !== email.toLowerCase()) {
-      // Name exists with different email - show warning banner only if not already confirmed
       if (!_bookingNameConflictConfirmed && !_bookingConflictModalActive) {
         nameConflictBanner?.classList.add('hidden');
         emailConflictBanner?.classList.add('hidden');
         showBookingNameConflictModal();
         hidePlayerRegistration(true);
         if (bookBtn) bookBtn.disabled = false;
+        return;
       } else if (_bookingNameConflictConfirmed) {
-        // Already confirmed, show form
         showPlayerRegistration({ name, email });
         emailConflictBanner?.classList.add('hidden');
         nameConflictBanner?.classList.add('hidden');
         hideBookingNameConflictModal();
         if (bookBtn) bookBtn.disabled = false;
       }
-      // If modal was cancelled, do nothing until user changes details
     } else {
-      // Email not found - show form normally
       showPlayerRegistration({ name, email });
       emailConflictBanner?.classList.add('hidden');
       nameConflictBanner?.classList.add('hidden');
@@ -2794,10 +2766,15 @@ const handleNameEmailChange = debounce(async () => {
     console.error('Registration check failed', err);
     note?.classList.add('hidden');
   }
-}, 600);
+}, 3000);
 
 // Waitlist: live registration checking (same logic as booking form)
 const handleWaitlistNameEmailChange = debounce(async () => {
+    // Attach waitlist input handlers after function definition
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('waitlistName').onblur = handleWaitlistNameEmailChange;
+      document.getElementById('waitlistEmail').onblur = handleWaitlistNameEmailChange;
+    });
     // Always clear all banners and modals on input change
     document.getElementById('waitlistEmailConflictBanner')?.classList.add('hidden');
     document.getElementById('waitlistNameConflictBanner')?.classList.add('hidden');
@@ -2935,7 +2912,7 @@ const handleWaitlistNameEmailChange = debounce(async () => {
   } catch (err) {
     console.error('Waitlist: registration check failed', err);
   }
-}, 600);
+}, 3000);
 
 ['input','change'].forEach(ev => {
   document.getElementById('name').addEventListener(ev, handleNameEmailChange);
@@ -3333,11 +3310,12 @@ document.getElementById('waitlistBtn').onclick = async () => {
   // For block sessions, use blockCheckbox; for single, use waitlistConfirm
   let isConfirmed = false;
   const blockCheckbox = document.getElementById('blockCheckbox');
-  const waitlistConfirmEl = document.getElementById('waitlistConfirm');
-  if (blockCheckbox && !blockCheckbox.classList.contains('hidden') && blockCheckbox.offsetParent !== null) {
-    isConfirmed = blockCheckbox.checked;
-  } else if (waitlistConfirmEl) {
-    isConfirmed = waitlistConfirmEl.checked;
+  if (selectedSlot && selectedSlot.blockId) {
+    // Only require confirmation for block sessions
+    isConfirmed = blockCheckbox && blockCheckbox.checked;
+  } else {
+    // For single sessions, skip confirmation check
+    isConfirmed = true;
   }
   // Removed waitlistDuplicateBookingBanner (gray) for duplicate booking; only use waitlistMessageBanner (red)
   const waitlistDuplicateWaitlistBanner = document.getElementById('waitlistDuplicateWaitlistBanner');
@@ -3361,8 +3339,10 @@ document.getElementById('waitlistBtn').onclick = async () => {
     return;
   }
   if (!isConfirmed) {
-    showWaitlistMessage('Please check the confirmation box before joining the waitlist', 'error');
-    return;
+    if (selectedSlot && selectedSlot.blockId) {
+      showWaitlistMessage('Please check the confirmation box before joining the waitlist', 'error');
+      return;
+    }
   }
   
   try {

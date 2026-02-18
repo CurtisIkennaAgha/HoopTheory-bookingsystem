@@ -45,6 +45,123 @@
 <script>
 // ========== ADMIN SETTINGS MODAL (BOOKING EXPIRY CONFIG) ========== 
 document.addEventListener('DOMContentLoaded', function() {
+    // ========== SEND TEST EMAILS BUTTON HANDLER ========== 
+    const sendTestEmailsBtn = document.getElementById('sendTestEmailsBtn');
+    if (sendTestEmailsBtn) {
+      sendTestEmailsBtn.addEventListener('click', async () => {
+        const email = prompt('Enter the email address to send test emails to:');
+        if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+          expirySettingsFeedback.textContent = 'Invalid email address.';
+          expirySettingsFeedback.style.color = '#ef4444';
+          return;
+        }
+        sendTestEmailsBtn.disabled = true;
+        sendTestEmailsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        expirySettingsFeedback.textContent = '';
+        expirySettingsFeedback.style.color = '';
+        const testPayloads = [
+          {
+            type: 'confirmation',
+            email,
+            name: 'Test User',
+            slot: '18:00',
+            date: '2026-02-18',
+            title: 'Test Session',
+            price: '10',
+            location: 'Test Gym',
+            paymentRef: 'TESTUSER-TESTSESSION',
+            deadline: '2026-02-19 18:00',
+            bookingId: 'test-booking-id'
+          },
+          {
+            type: 'temporary_reservation',
+            email,
+            name: 'Test User',
+            slot: '18:00',
+            date: '2026-02-18',
+            title: 'Test Session',
+            price: '10',
+            location: 'Test Gym',
+            paymentRef: 'TESTUSER-TESTSESSION',
+            deadline: '2026-02-19 18:00',
+            bookingId: 'test-booking-id'
+          },
+          {
+            type: 'waitlist_confirmation',
+            email,
+            name: 'Test User',
+            slot: '18:00',
+            date: '2026-02-18',
+            title: 'Test Session',
+            waitlistPosition: 1
+          },
+          {
+            type: 'waitlist_offer',
+            email,
+            name: 'Test User',
+            slot: '18:00',
+            date: '2026-02-18',
+            title: 'Test Session',
+            price: '10',
+            location: 'Test Gym',
+            paymentRef: 'TESTUSER-TESTSESSION',
+            deadline: '2026-02-19 18:00',
+            bookingId: 'test-booking-id'
+          },
+          {
+            type: 'booking_edited',
+            email,
+            name: 'Test User',
+            slot: '18:00',
+            date: '2026-02-18',
+            title: 'Test Session',
+            price: '10',
+            location: 'Test Gym',
+            changedFields: {
+              price: { old: '8', new: '10' },
+              location: { old: 'Old Gym', new: 'Test Gym' }
+            }
+          },
+          {
+            type: 'booking_cancellation',
+            email,
+            name: 'Test User',
+            slot: '18:00',
+            date: '2026-02-18',
+            title: 'Test Session',
+            bookingId: 'test-booking-id'
+          }
+        ];
+        let successCount = 0;
+        let failCount = 0;
+        for (const payload of testPayloads) {
+          try {
+            const res = await fetch('php/sendEmail.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (result.success) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (e) {
+            failCount++;
+          }
+        }
+        sendTestEmailsBtn.disabled = false;
+        sendTestEmailsBtn.innerHTML = '<i class="fas fa-envelope"></i> Send Test Emails';
+        if (successCount > 0) {
+          expirySettingsFeedback.textContent = `Sent ${successCount} test email(s) to ${email}.`;
+          expirySettingsFeedback.style.color = '#22c55e';
+        } else {
+          expirySettingsFeedback.textContent = 'Failed to send test emails.';
+          expirySettingsFeedback.style.color = '#ef4444';
+        }
+      });
+    }
   // Auto-run cleanupExpiredOffers.php to remove expired offers/waitlist entries
   fetch('php/cleanupExpiredOffers.php', { method: 'GET' })
     .then(r => r.text())
@@ -1491,6 +1608,11 @@ input:focus, select:focus, textarea:focus {
             <i class="fas fa-trash"></i> Clear ALL Data
           </button>
           <div style="margin-top:8px;font-size:0.92em;color:#b91c1c;text-align:center;">This will delete ALL sessions, bookings, waitlist entries, player profiles, and players. This cannot be undone.</div>
+        </div>
+        <div style="margin-top:8px;">
+          <button id="sendTestEmailsBtn" style="width:100%;background:#6366f1;color:white;padding:12px 0;border:none;border-radius:8px;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fas fa-envelope"></i> Send Test Emails
+          </button>
         </div>
         <div id="expirySettingsFeedback" style="margin-top:8px;font-size:0.95em;"></div>
       </div>

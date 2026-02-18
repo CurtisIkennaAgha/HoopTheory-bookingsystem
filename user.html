@@ -59,26 +59,24 @@
 
   <!-- Color Legend -->
   <div class="calendar-color-legend" style="display:flex;flex-direction:column;gap:8px;overflow-x:visible;align-items:flex-start;">
-    <div class="legend-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;justify-content:flex-start;">
-      <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
-        <div class="legend-dot" style="background:#10b981;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-          <span>Session Available</span>
+      <div class="legend-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;justify-content:flex-start;">
+        <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+          <div class="legend-dot" style="background:#10b981;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
+            <span>Session Available</span>
+        </div>
+        <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+          <div class="legend-dot" style="background:#9ca3af;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
+            <span>Session Unavailable</span>
+        </div>
+        <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+          <div class="legend-dot" style="background:#ef4444;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
+            <span>Join Waitlist</span>
+        </div>
+        <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+          <div class="legend-dot" style="background:#3b82f6;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
+            <span>Subsequent Block Sessions</span>
+        </div>
       </div>
-      <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
-        <div class="legend-dot" style="background:#3b82f6;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-          <span>Subsequent Block Sessions</span>
-      </div>
-    </div>
-    <div class="legend-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;justify-content:flex-start;">
-      <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
-        <div class="legend-dot" style="background:#ef4444;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-          <span>Join Waitlist</span>
-      </div>
-      <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
-        <div class="legend-dot" style="background:#9ca3af;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-          <span>Session Unavailable</span>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -164,13 +162,13 @@
       <div class="payment-section">
         <h3>Bank Transfer Details</h3>
         <div class="bank-details">
-          <div class="detail-row">
+          <div class="detail-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
             <span class="label">Account Name:</span>
             <span class="value" id="accountName">Bao Tran</span>
           </div>
-          <div class="detail-row">
+          <div class="detail-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
             <span class="label">Account Number:</span>
-            <div class="copyable-value">
+            <div class="copyable-value" style="margin-left:0;">
               <span id="accountNumber">46244409</span>
               <button class="copy-btn" id="copyAccountBtn" title="Copy account number">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -180,9 +178,9 @@
               </button>
             </div>
           </div>
-          <div class="detail-row">
+          <div class="detail-row" style="flex-direction:column;align-items:flex-start;gap:2px;">
             <span class="label">Sort Code:</span>
-            <div class="copyable-value">
+            <div class="copyable-value" style="margin-left:0;">
               <span id="sortCode">56-00-64</span>
               <button class="copy-btn" id="copySortBtn" title="Copy sort code">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -193,8 +191,8 @@
             </div>
           </div>
           <div class="detail-row">
-            <span class="label">Reference:</span>
-            <div class="copyable-value">
+            <div style="width:100%"><span class="label">Reference:</span></div>
+            <div class="copyable-value" style="margin-left:0; margin-top:2px; display:flex; align-items:center; gap:8px;">
               <span id="paymentReference">-</span>
               <button class="copy-btn" id="copyRefBtn" title="Copy payment reference">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -203,7 +201,6 @@
                 </svg>
               </button>
             </div>
-            <p style="font-size: 0.75rem; color: #999; margin: 4px 0 0; font-style: italic;">Format: FULLNAME-SESSIONNAME</p>
           </div>
         </div>
       </div>
@@ -263,7 +260,8 @@
 
       <div class="payment-section" style="padding-top:12px;">
         <h3>Need help?</h3>
-        <p style="color:var(--muted); margin:0;">If you have any questions, please don't hesitate to contact Bao via WhatsApp.</p>
+        <p style="color:var(--muted); margin:0;">If you have any questions, please don't hesitate to contact Bao via WhatsApp.<br>
+        <a href="https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x" target="_blank" style="color:#128C7E;font-weight:bold;text-decoration:underline;">Join WhatsApp Group Chat</a></p>
       </div>
 
       <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:12px;padding-top:12px;">
@@ -524,10 +522,6 @@ const PHP_PATH = 'php/';
 const REFRESH_INTERVAL = 5000;
 const dateAvailabilityCache = {};
 
-const BANK_DETAILS = {
-  accountNumber: '12345678',
-  sortCode: '12-34-56'
-};
 
 /* ================= INLINE MESSAGES ================= */
 function setInlineMessage(el, message, type = 'error') {
@@ -960,17 +954,20 @@ async function refreshDateAvailability(initial=false){
         full = booked >= spots;
       }
 
+      // Only count as available if not bridge state and not full
+      if (!full && !inBridgeState && (isFirstDate || !isBlock)) {
+        hasAvailableSlots = true; // GREEN: available on first date or single session, not bridge
+        allFullyBooked = false;
+      }
       if (inBridgeState) {
         hasBridgeState = true;
         allFullyBooked = false;
-      } else if (!full) {
+      }
+      if (!full && isBlock) {
+        hasBlockSlots = true; // BLUE: block session on non-first date
         allFullyBooked = false;
-        if (isFirstDate || !isBlock) {
-          hasAvailableSlots = true; // GREEN: available on first date or single session
-        } else if (isBlock) {
-          hasBlockSlots = true; // BLUE: block session on non-first date
-        }
-      } else if (full) {
+      }
+      if (full) {
         hasFullyBooked = true;
       }
     }
@@ -989,21 +986,18 @@ async function refreshDateAvailability(initial=false){
     } else {
       div.classList.remove('disabled');
       
-      if (hasBridgeState) {
-        // GREY: At least one session in bridge state
+      // Final hierarchy: green > grey > red > blue
+      if (hasAvailableSlots) {
+        div.classList.add('available');
+        colorStatus = 'green';
+      } else if (hasBridgeState) {
         div.classList.add('bridge');
         colorStatus = 'grey-bridge';
         console.log(`📅 ${dateStr}: BRIDGE STATE`);
-      } else if (allFullyBooked) {
-        // RED: All sessions fully booked
+      } else if (hasFullyBooked || allFullyBooked) {
         div.classList.add('full');
         colorStatus = 'red';
-      } else if (hasAvailableSlots) {
-        // GREEN: At least one available slot on first date or single
-        div.classList.add('available');
-        colorStatus = 'green';
       } else if (hasBlockSlots) {
-        // BLUE: Block sessions available on non-first dates
         div.classList.add('block');
         colorStatus = 'blue';
       }
@@ -1554,8 +1548,9 @@ function showBlockConfirmation(slot, isWaitlist = false) {
             bookingForm.classList.remove('hidden');
             bookingForm.style.display = '';
           }
+          // Registration form stays hidden until registration check
           if (regForm) {
-            regForm.classList.remove('hidden');
+            regForm.classList.add('hidden');
           }
           if (regTitle) {
             regTitle.classList.remove('hidden');
@@ -1563,6 +1558,21 @@ function showBlockConfirmation(slot, isWaitlist = false) {
           setTimeout(() => {
             bookingForm?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 200);
+
+          // Trigger registration check after showing booking form
+          const nameInput = document.getElementById('name');
+          const emailInput = document.getElementById('email');
+          if (nameInput && emailInput) {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            if (name && email) {
+              checkPlayerRegistered(name, email).then((checkResult) => {
+                if (!checkResult.registered) {
+                  showPlayerRegistration({ name, email });
+                }
+              });
+            }
+          }
         } else {
           if (bookingForm) {
             bookingForm.classList.add('hidden');
@@ -1731,18 +1741,23 @@ function showBookingForm(isFullyBooked) {
     titleEl?.classList.add('hidden');
     regForm?.classList.add('hidden');
     blockCheckbox.checked = false;
+    console.log('[DEBUG] showBookingForm: block session, registration form should be hidden');
   } else {
-    // For regular single sessions: show booking form immediately
+    // For regular single sessions: show booking form only (not registration form)
     bookingForm.classList.remove('hidden');
     bookingForm.style.display = '';
     console.log('[DEBUG] bookingForm should now be visible:', bookingForm);
-    // Always reset registration form and title to visible
-    if (regForm) regForm.classList.remove('hidden');
+    // Registration form stays hidden until checkPlayerRegistered result
+    if (regForm) {
+      regForm.classList.add('hidden');
+      console.log('[DEBUG] showBookingForm: registration form forcibly hidden (single session)');
+    }
     if (regHostBooking) regHostBooking.classList.remove('hidden');
     if (titleEl) titleEl.classList.remove('hidden');
     // Move registration form back into booking form container
     if (regForm && regHostBooking && regForm.parentElement !== regHostBooking) {
       regHostBooking.appendChild(regForm);
+      console.log('[DEBUG] showBookingForm: registration form moved to booking host');
     }
   }
   // Hide waitlist form (both class and inline)
@@ -1795,18 +1810,15 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   if (typeof priceVal3 === 'string') priceVal3 = parseFloat(priceVal3);
   const price = priceVal3 ? `£${!isNaN(priceVal3) ? priceVal3.toFixed(2) : slot.price}` : '£25.00';
 
-  // Populate payment details
-  document.getElementById('accountNumber').textContent = '46244409';
-  document.getElementById('sortCode').textContent = '569964';
-  document.getElementById('accountName').textContent = 'Bao Tran';
+  // Populate payment date only (bank details are now static in HTML)
   document.getElementById('paymentDate').textContent = dateDisplay;
   document.getElementById('paymentTime').textContent = slot.time;
   document.getElementById('paymentTitle').textContent = slot.title;
+
   document.getElementById('paymentPrice').textContent = price;
   document.getElementById('paymentReference').textContent = paymentRef;
   document.getElementById('paymentDeadline').textContent = deadlineStr + ` (expires in ${Math.floor(bookingExpirySeconds/60)} min${bookingExpirySeconds%60!==0?` ${bookingExpirySeconds%60} sec`:''})`;
-  document.getElementById('accountNumber').textContent = BANK_DETAILS.accountNumber;
-  document.getElementById('sortCode').textContent = BANK_DETAILS.sortCode;
+  // Bank details are now static in HTML; do not set them via JS.
 
   // Store booking data for cancellation
   currentBookingData = {
