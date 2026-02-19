@@ -83,6 +83,9 @@ if (!$slot || !$date) {
     exit;
 }
 
+// Check if this is a block session (must be set before any handler uses it)
+$isBlockSession = !empty($blockDates) && count($blockDates) > 1;
+
 // Handle booking_edited email type
 if ($emailType === 'booking_edited') {
     error_log('Processing booking_edited email type');
@@ -124,8 +127,9 @@ if ($emailType === 'booking_edited') {
         $mail->addAddress($email);
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
-        $mail->Subject = "Session Details Updated – Hoop Theory";
+        $mail->Subject = "Session Details Changed";
         $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>"
+            . "<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />"
             . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
             . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
             . "<h1 style='margin:0 0 10px;font-size:24px;color:#2563eb;'>Session Details Changed</h1>"
@@ -140,11 +144,13 @@ if ($emailType === 'booking_edited') {
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Location:</span> " . htmlspecialchars($location) . "</div>"
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Price:</span> £" . htmlspecialchars($price) . "</div>"
             . "</div></td></tr></table>"
-            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>If you have any questions or can no longer attend, please contact us at <strong>bao@hooptheory.co.uk</strong>.</p>"
+            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>If you have any questions or can no longer attend, please contact us via WhatsApp.</p>"
             . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
             . "<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>"
             . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
             . "</td></tr></table></td></tr></table></body></html>";
+            $mail->Body .= "<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>"
+                . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>";
         $mail->send();
         error_log('booking_edited email sent successfully to: ' . $email);
         echo json_encode(['success' => true, 'email' => $email]);
@@ -188,6 +194,7 @@ if ($emailType === 'booking_cancellation') {
         $mail->CharSet = 'UTF-8';
         $mail->Subject = "Session Cancelled – Hoop Theory";
         $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>"
+            . "<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />"
             . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
             . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
             . "<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>"
@@ -195,15 +202,27 @@ if ($emailType === 'booking_cancellation') {
             . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #ef4444;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'>"
             . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
             . "<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>"
-            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>"
-            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>"
-            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
-            . "</div></td></tr></table>"
-            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;line-height:1.6;'>If you had made a payment for this booking, please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund.</p>"
-            . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>.</p>"
-            . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
-            . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
-            . "</td></tr></table></td></tr></table></body></html>";
+            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>";
+            $dateRow = "";
+            if ($isBlockSession && !empty($blockDates)) {
+                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> <ul style='margin:8px 0 0 18px;padding:0;'>";
+                foreach ($blockDates as $blockDate) {
+                    $dateRow .= "<li style='color:#555;font-size:14px;'>" . htmlspecialchars($blockDate) . "</li>";
+                }
+                $dateRow .= "</ul></div>";
+            } else {
+                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>";
+            }
+            $mail->Body .= $dateRow;
+            $mail->Body .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
+                . "</div></td></tr></table>"
+                . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>"
+                . "If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/index.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>."
+                . "</p>"
+                . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
+                . "<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>"
+                . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
+                . "</td></tr></table></td></tr></table></body></html>";
         $mail->send();
         error_log('booking_cancellation email sent successfully to: ' . $email);
         echo json_encode(['success' => true, 'email' => $email]);
@@ -237,6 +256,7 @@ if ($emailType === 'cancellation') {
     $mail->Body = "<!DOCTYPE html>
 <html>
 <body style='margin:0;padding:0;background:#f5f5f5;'>
+<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />
 <table width='100%' cellpadding='0' cellspacing='0'>
 <tr>
 <td align='center'>
@@ -260,7 +280,17 @@ Your booking has been successfully cancelled.
 <span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "
 </div>
 <div style='margin:10px 0;'>
-<span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "
+<span style='font-weight:bold;color:#555;'>" . ($isBlockSession && !empty($blockDates) ? "Dates:" : "Date:") . "</span> ";
+    if ($isBlockSession && !empty($blockDates)) {
+        $mail->Body .= "<ul style='margin:8px 0 0 18px;padding:0;'>";
+        foreach ($blockDates as $blockDate) {
+            $mail->Body .= "<li style='color:#555;font-size:14px;'>" . htmlspecialchars($blockDate) . "</li>";
+        }
+        $mail->Body .= "</ul>";
+    } else {
+        $mail->Body .= htmlspecialchars($date);
+    }
+    $mail->Body .= "
 </div>
 <div style='margin:10px 0;'>
 <span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "
@@ -268,13 +298,7 @@ Your booking has been successfully cancelled.
 </div>
 </td>
 </tr>
-</table>
-
-<p style='margin:20px 0 10px;color:#666;font-size:14px;line-height:1.6;'>
-The session spot is now available for other players. If you had made a payment for this booking, 
-please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund.
-</p>";
-
+</table>";
     if (!empty($cancellationReason)) {
         $mail->Body .= "
 <div style='background:#f3f4f6;border-left:4px solid #3b82f6;padding:15px;margin:20px 0;border-radius:6px;font-family:Arial,sans-serif;'>
@@ -286,7 +310,7 @@ please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund.
 
     $mail->Body .= "
 <p style='margin:20px 0 10px;color:#666;font-size:14px;'>
-If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>.
+If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/index.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>.
 </p>
 
 <hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>
@@ -322,7 +346,7 @@ Contact us via WhatsApp:
 }
 
 // Check if this is a block session
-$isBlockSession = !empty($blockDates) && count($blockDates) > 1;
+
 
 $endTime = '00:00';
 $slotsFile = __DIR__ . '/../data/availableSlots.json';
@@ -361,6 +385,7 @@ try {
             error_log('Processing session_deleted email type');
             $mail->Subject = "Session Cancelled – Hoop Theory";
             $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>"
+                . "<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />"
                 . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
                 . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
                 . "<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>"
@@ -370,17 +395,25 @@ try {
                 . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #ef4444;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'>"
                 . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
                 . "<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>"
-                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>"
-                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>"
-                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
+                . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>";
+            $dateRow = "";
+            if ($isBlockSession && !empty($blockDates)) {
+                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> <ul style='margin:8px 0 0 18px;padding:0;'>";
+                foreach ($blockDates as $blockDate) {
+                    $dateRow .= "<li style='color:#555;font-size:14px;'>" . htmlspecialchars($blockDate) . "</li>";
+                }
+                $dateRow .= "</ul></div>";
+            } else {
+                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>";
+            }
+            $mail->Body .= $dateRow;
+            $mail->Body .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
                 . "</div></td></tr></table>"
-                . "<p style='margin:20px 0 10px;color:#666;font-size:14px;line-height:1.6;'>"
-                . "If you had made a payment for this booking, please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund."
-                . "</p>"
                 . "<p style='margin:20px 0 10px;color:#666;font-size:14px;'>"
-                . "If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>."
+                . "If you'd like to rebook or have any questions, feel free to visit our <a href='https://hooptheory.co.uk/index.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>booking page</a>."
                 . "</p>"
                 . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>"
+                . "<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>"
                 . "<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>"
                 . "</td></tr></table></td></tr></table></body></html>";
             try {
@@ -420,54 +453,27 @@ try {
         $displayPrice = $price ? htmlspecialchars((string)$price) : '';
         $displayLocation = $location ? htmlspecialchars((string)$location) : '';
 
-        $mail->Body = "<!DOCTYPE html>
-<html>
-<body style='margin:0;padding:0;background:#f5f5f5;'>
-<table width='100%' cellpadding='0' cellspacing='0'>
-<tr><td align='center'>
-<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>
-<tr><td style='padding:30px;font-family:Arial,sans-serif;color:#000;'>
-<h1 style='margin:0 0 10px;font-size:22px;'>Booking Reserved – Payment Required</h1>
-<p style='margin:0 0 16px;color:#666;'>Hi " . htmlspecialchars($name) . ",</p>
+        // Block session: use orange card with ticks, else use simple table
+        if ($isBlockSession && !empty($blockDates)) {
+            $sessionDetailsHtml = "<table width='100%' cellpadding='0' cellspacing='0' style='background:#fff8f0;border-left:6px solid #ff9800;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'><p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p><p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p><p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p><p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p><table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>";
+            foreach ($blockDates as $blockDate) {
+                $sessionDetailsHtml .= "<tr><td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>
+✓ $blockDate
+</td>
+</tr>
+";
+            }
+            $sessionDetailsHtml .= "</table></td></tr></table>";
+        } else {
+            $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr><tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr><tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
+            $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+            $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
+            $sessionDetailsHtml .= "</table>";
+        }
 
-<h3 style='margin:12px 0 8px;'>Session Details</h3>
-<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:6px;'>
-<tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr>
-<tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr>
-<tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>" .
-($displayLocation ? "<tr><td style='font-weight:bold;'>Location</td><td>$displayLocation</td></tr>" : "") .
-($displayPrice ? "<tr><td style='font-weight:bold;'>Price</td><td>$displayPrice</td></tr>" : "") .
-"</table>
-
-<h3 style='margin:16px 0 8px;'>Bank Payment Details</h3>
-<table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>
-<tr><td style='font-weight:bold;width:150px;'>Account Name</td><td>Hoop Theory</td></tr>
-<tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>
-<tr><td style='font-weight:bold;'>Sort Code</td><td>560064</td></tr>
-<tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>
-<tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>
-<tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($paymentDeadline) . "</td></tr>
-</table>
-
-<p style='margin:12px 0 8px;color:#666;font-size:0.9rem;'><strong>Format for Payment Reference:</strong> FULLNAME-SESSIONNAME</p>
-
-<p style='margin:16px 0 8px;color:#333;'>You will also be sent an email with these payment details.</p>
-<p style='margin:0 0 16px;color:#000;font-weight:bold;'>Once payment is received, you will receive a final confirmation email.</p>
-
-<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: This reservation will expire if payment is not received by the deadline above. Additionally, please note that refunds will not be issued after your spot has been confirmed.</p>
-
-<p style='margin:16px 0;text-align:center;padding:15px;background:#f3f4f6;border-radius:6px;border:1px solid #d1d5db;'>
+        $mail->Body = "<!DOCTYPE html>\n<html>\n<body style='margin:0;padding:0;background:#f5f5f5;'>\n<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />\n<table width='100%' cellpadding='0' cellspacing='0'>\n<tr><td align='center'>\n<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>\n<tr><td style='padding:30px;font-family:Arial,sans-serif;color:#000;'>\n<h1 style='margin:0 0 10px;font-size:22px;'>Booking Reserved – Payment Required</h1>\n<p style='margin:0 0 16px;color:#666;'>Hi " . htmlspecialchars($name) . ",</p>\n\n<div style='margin:24px 0 24px 0;'>\n" . $sessionDetailsHtml . "\n</div>\n\n<h3 style='margin:16px 0 8px;'>Bank Payment Details</h3>\n<table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>\n<tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>\n<tr><td style='font-weight:bold;'>Sort Code</td><td>560064</td></tr>\n<tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>\n<tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>\n<tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($paymentDeadline) . "</td></tr>\n</table>\n\n<p style='margin:0 0 16px;color:#000;font-weight:bold;'>Once payment is received, you will receive a final confirmation email.</p>\n\n<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: This reservation will expire if payment is not received by the deadline above. Additionally, please note that refunds will not be issued after your spot has been confirmed.</p>\n\n<p style='margin:16px 0;text-align:center;padding:15px;background:#f3f4f6;border-radius:6px;border:1px solid #d1d5db;'>
 <a href='https://hooptheory.co.uk/cancel-session.html?bookingId=" . htmlspecialchars($bookingId) . "' style='color:#ef4444;font-weight:bold;text-decoration:underline;'>Can't make this session? Cancel your booking here</a>
-</p>
-
-<hr style='margin:20px 0;border:none;border-top:1px solid #eee;'>
-<p style='font-size:12px;color:#999;text-align:center;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>
-
-</td></tr></table>
-</td></tr></table>
-</body>
-</html>";
-
+</p>\n\n<hr style='margin:20px 0;border:none;border-top:1px solid #eee;'>\n<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>\n<p style='font-size:12px;color:#999;text-align:center;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>\n\n</td></tr></table>\n</td></tr></table>\n</body>\n</html>";
         $mail->send();
         error_log('temporary_reservation email sent successfully to: ' . $email);
         echo json_encode(['success' => true, 'message' => 'Email sent']);
@@ -481,8 +487,8 @@ try {
 <tr>
 <td style='padding:20px;font-family:Arial,sans-serif;'>
 <p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p>
-<p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>$title</p>
-<p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> $slot</p>
+<p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p>
+<p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p>
 <p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p>
 <table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>
 ";
@@ -527,75 +533,32 @@ Add to Google Calendar
 
     if ($emailType === 'waitlist_confirmation') {
         $displayPosition = !empty($waitlistPosition) ? htmlspecialchars((string)$waitlistPosition) : 'N/A';
+        $mail->Subject = "Waitlist Confirmation";
 
-        $mail->Subject = "Space Available: $title";
-        $mail->Body = "
-<!DOCTYPE html>
-<html>
-<body style='margin:0;padding:0;background:#f5f5f5;'>
-<table width='100%' cellpadding='0' cellspacing='0'>
-<tr>
-<td align='center'>
+        // Block session: use orange container with all dates, else use simple table
+        if ($isBlockSession && !empty($blockDates)) {
+            $sessionDetailsHtml = "<table width='100%' cellpadding='0' cellspacing='0' style='background:#fff8f0;border-left:6px solid #ff9800;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'><p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p><p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p><p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p><p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p><table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>";
+            foreach ($blockDates as $blockDate) {
+                $sessionDetailsHtml .= "<tr><td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>✓ $blockDate</td></tr>";
+            }
+            $sessionDetailsHtml .= "</table></td></tr></table>";
+        } else {
+            $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr><tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr><tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
+            $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+            $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
+            $sessionDetailsHtml .= "</table>";
+        }
 
-<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>
-<tr>
-<td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>
-
-<h1 style='margin:0 0 10px;font-size:26px;'>Waitlist Request Confirmed</h1>
-<p style='margin:0 0 16px;color:#666;font-size:14px;'>Hi " . htmlspecialchars($name) . ",</p>
-
-<p style='margin:0 0 10px;color:#333;'>Your waitlist request is confirmed.</p>
-<p style='margin:0 0 10px;color:#333;'>You are currently number <strong>" . $displayPosition . "</strong> on the waitlist.</p>
-<p style='margin:0 0 10px;color:#333;'>If a place becomes available, you will be notified and asked to complete payment within the stated time window. Unpaid offers may be released.</p>
-<p style='margin:0 0 20px;color:#333;font-weight:bold;'>Please note this is not a booking reservation.</p>
-
-$sessionDetailsHtml
-
-<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>
-
-<p style='text-align:center;font-size:12px;color:#999;'>
-© 2026 Hoop Theory · bao@hooptheory.co.uk
-</p>
-
-</td>
-</tr>
-</table>
-
-</td>
-</tr>
-</table>
-</body>
-</html>";
+        $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'><img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' /><table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'><table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>\n\n<h1 style='margin:0 0 10px;font-size:26px;'>Waitlist Request Confirmed</h1><p style='margin:0 0 16px;color:#666;'>Hi " . htmlspecialchars($name) . ",</p><p style='margin:0 0 10px;color:#333;'>Your waitlist request is confirmed.</p><p style='margin:0 0 10px;color:#333;'>You are currently number <strong>" . $displayPosition . "</strong> on the waitlist.</p><p style='margin:0 0 10px;color:#333;'>If a place becomes available, you will be notified and asked to complete payment within the stated time window. Unpaid offers may be released.</p><p style='margin:0 0 20px;color:#333;font-weight:bold;'>Please note this is not a booking reservation.</p>" . $sessionDetailsHtml . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'><p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p><p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p></td></tr></table></td></tr></table></body></html>";
 
         $mail->send();
         echo json_encode(['success' => true, 'message' => 'Email sent']);
         exit;
     }
 
-    $mail->Body = "
-<!DOCTYPE html>
-<html>
-<body style='margin:0;padding:0;background:#f5f5f5;'>
-<table width='100%' cellpadding='0' cellspacing='0'>
-<tr>
-<td align='center'>
-
-<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>
-<tr>
-<td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>
-
-<h1 style='margin:0 0 10px;font-size:26px;'>Thank you for booking, $name!</h1>
-<p style='margin:0 0 30px;color:#666;font-size:14px;'>
-Your session is confirmed and we cannot wait to see you.
-</p>
-
-$sessionDetailsHtml
-
-<p style='margin:30px 0 20px;font-size:14px;color:#555;line-height:1.6;'>
-We are excited to work with you! If you have any questiosn dont hesitate to reach out.
-</p>
-";
-
+    // Confirmation email (default/final)
+    $mail->Subject = 'Booking Confirmed';
+    $mail->Body = "\n<!DOCTYPE html>\n<html>\n<body style='margin:0;padding:0;background:#f5f5f5;'>\n<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />\n<table width='100%' cellpadding='0' cellspacing='0'>\n<tr>\n<td align='center'>\n\n<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>\n<tr>\n<td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>\n\n<h1 style='margin:0 0 10px;font-size:26px;'>Thank you for booking, $name!</h1>\n<p style='margin:0 0 30px;color:#666;font-size:14px;'>\nYour session is confirmed and we cannot wait to see you.\n</p>\n\n$sessionDetailsHtml\n\n<p style='margin:30px 0 20px;font-size:14px;color:#555;line-height:1.6;'>\nWe are excited to work with you! If you have any questiosn dont hesitate to reach out.\n</p>\n";
     // Add admin message if provided
     if (!empty($adminMessage)) {
         $mail->Body .= "
@@ -621,8 +584,8 @@ Follow us on Instagram
 
 <hr style='margin:40px 0;border:none;border-top:1px solid #eee;'>
 
-<p style='text-align:center;font-size:12px;color:#999;'>
-© 2026 Hoop Theory · bao@hooptheory.co.uk
+<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>
+<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>
 </p>
 
 </td>

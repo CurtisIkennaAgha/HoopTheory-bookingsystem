@@ -136,7 +136,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let failCount = 0;
         for (const payload of testPayloads) {
           try {
-            const res = await fetch('php/sendEmail.php', {
+            let endpoint = 'php/sendEmail.php';
+            // For waitlist_offer, use sendOfferEmail.php
+            if (payload.type === 'waitlist_offer') {
+              endpoint = 'php/sendOfferEmail.php';
+            }
+            const res = await fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)

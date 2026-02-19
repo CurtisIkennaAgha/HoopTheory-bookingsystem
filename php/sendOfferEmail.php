@@ -241,6 +241,8 @@ try {
 </body>
 </html>
     ";
+    // Attach branded header image
+    $mail->addEmbeddedImage(__DIR__ . '/../EMAILHEADER.png', 'EMAILHEADER.png');
 
     $mail->send();
     

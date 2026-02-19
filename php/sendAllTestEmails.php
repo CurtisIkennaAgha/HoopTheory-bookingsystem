@@ -156,7 +156,7 @@ function buildCancellationEmailHtml($name, $date, $slot, $title) {
     $html .= "</div>";
     $html .= "</div>";
     $html .= "<p style='color:#666;margin:20px 0;'>The session spot is now available for other players. If you had made a payment for this booking, please contact us at <strong>bao@hooptheory.co.uk</strong> to arrange a refund.</p>";
-    $html .= "<p><a href='https://hooptheory.co.uk/user.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>Return to booking page →</a></p>";
+      $html .= "<p><a href='https://hooptheory.co.uk/index.html' style='color:#667eea;font-weight:bold;text-decoration:none;'>Return to booking page →</a></p>";
     $html .= "</div>";
     return $html;
 }

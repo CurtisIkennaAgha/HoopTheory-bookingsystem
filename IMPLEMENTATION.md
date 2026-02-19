@@ -138,7 +138,7 @@ Sample data provided in data/ folder demonstrating:
    - Updated bookings display with new structure
    - Fixed CSS syntax issues
 
-2. **user.html**
+2. **index.html**
    - Replaced calendar month header with navigation buttons
    - Added month tracking (currentDisplayDate)
    - Rewrote slot display using card components

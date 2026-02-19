@@ -150,9 +150,7 @@ Render updated calendar and slots
 ```
 
 ## File Structure
-
-### Updated Files
-- `admin.html` - New form fields for slot metadata, enhanced bookings display
+ `index.html` - Slot cards, month navigation, capacity display
 - `user.html` - Slot cards, month navigation, capacity display
 - `styles.css` - New styles for slot cards, session badges, disabled states
 - `data/availableSlots.json` - New object structure with slot metadata

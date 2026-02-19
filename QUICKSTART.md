@@ -41,7 +41,7 @@
 
 ### Finding and Booking Sessions
 
-1. **Open user.html**
+1. **Open index.html**
 2. **Navigate Months**:
    - Use ← Previous and Next → buttons to browse dates
    - Check current month/year in the center
