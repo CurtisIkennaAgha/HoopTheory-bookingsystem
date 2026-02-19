@@ -280,8 +280,8 @@ if ($primaryDate) {
 }
 
 // Prepare payment details and send temporary_reservation email (same template used by normal reserve flow)
-$paymentRef = 'HT-' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)),0,6));
-$deadline = date('D, j M Y H:i', strtotime('+24 hours'));
+$paymentRef = strtoupper(str_replace(' ', '', $offer['name'])) . '-' . strtoupper(str_replace(' ', '', $title));
+$deadline = date('D, j M Y H:i', strtotime('+12 hours'));
 
 // Send reservation email via internal endpoint
 $emailPayload = [
@@ -440,12 +440,11 @@ render:
         <div class="payment-section">
           <strong style="display:block; font-size:13px; color:#374151; margin-bottom:8px;">Bank Transfer Details</strong>
           <div class="bank-details">
-            <div class="detail-row"><span class="label">Account Name:</span><span class="value">Hoop Theory</span></div>
             <div class="detail-row"><span class="label">Account Number:</span><span class="value" id="accountNumber">46244409</span><button class="copy-btn" id="copyAccountBtn">Copy</button></div>
-            <div class="detail-row"><span class="label">Sort Code:</span><span class="value" id="sortCode">569964</span><button class="copy-btn" id="copySortBtn">Copy</button></div>
+            <div class="detail-row"><span class="label">Sort Code:</span><span class="value" id="sortCode">560064</span><button class="copy-btn" id="copySortBtn">Copy</button></div>
                         <div class="detail-row"><span class="label">Account Name:</span><span class="value" id="accountName">Bao Tran</span></div>
             <div class="detail-row"><span class="label">Reference:</span><span class="value" id="paymentReference"><?php echo htmlspecialchars($paymentRef); ?></span><button class="copy-btn" id="copyRefBtn">Copy</button></div>
-            <div style="font-size:13px; color:#6b7280; margin-top:8px;">Please pay within 24 hours. Deadline: <strong id="deadlineText"><?php echo htmlspecialchars($deadline); ?></strong></div>
+            <div style="font-size:13px; color:#6b7280; margin-top:8px;">Please pay within 12 hours. Deadline: <strong id="deadlineText"><?php echo htmlspecialchars($deadline); ?></strong></div>
           </div>
         </div>
 

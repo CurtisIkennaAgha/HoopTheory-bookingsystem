@@ -10,9 +10,85 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 
+
+<style>
+  .bank-details .label {
+    display: block;
+    margin-bottom: 2px;
+    margin-right: 60px;
+  }
+</style>
+<style>
+/* Force blockDatesList to always render as a vertical list */
+#blockDatesList {
+  display: block !important;
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+#blockDatesList li {
+  display: block !important;
+  margin-left: 0 !important;
+  color: #000 !important;
+}
+</style>
+<style>
+  .spots-pill--red {
+    background: #ffdada86 !important; /* lighter red */
+    color: #ffbdbd7a !important;
+    border: 1px solid #ff9b9b !important;
+  }
+</style>
+<style>
+  .bank-details .label {
+    display: block;
+    margin-bottom: 2px;
+    margin-right: 60px;
+  }
+</style>
+<style>
+  #loadingOverlay {
+    position: fixed;
+    z-index: 9999;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter';
+    font-size: 1.2rem;
+    color: #ffffff;
+    transition: opacity 0.4s;
+  }
+  #loadingOverlay.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #loadingOverlay .ellipsis {
+  display: inline-block;
+  width: 1.5em;
+}
+#loadingOverlay .ellipsis span {
+  opacity: 0.2;
+  animation: ellipsis-blink 1.8s infinite;
+  font-weight: bold;
+  font-size: 1.3em;
+}
+#loadingOverlay .ellipsis span:nth-child(1) { animation-delay: 0s; }
+#loadingOverlay .ellipsis span:nth-child(2) { animation-delay: 0.45s; }
+#loadingOverlay .ellipsis span:nth-child(3) { animation-delay: 0.9s; }
+@keyframes ellipsis-blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+</style>
 </head>
 
 <body>
+<div id="loadingOverlay">Theorising<span class="ellipsis"><span>.</span><span>.</span><span>.</span></span></div>
 
 <div class="container" id="bookingPage">
 <img src="NewLogo.png" alt="Logo"
@@ -62,19 +138,19 @@
       <div class="legend-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;width:100%;justify-content:flex-start;">
         <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
           <div class="legend-dot" style="background:#10b981;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-            <span>Session Available</span>
+            <span style="margin-right:45px;">Session Available</span>
         </div>
         <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
           <div class="legend-dot" style="background:#9ca3af;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
             <span>Bridge State (Waitlist Priority)</span>
         </div>
         <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
-          <div class="legend-dot" style="background:#ef4444;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
-            <span>Join Waitlist</span>
-        </div>
-        <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
           <div class="legend-dot" style="background:#3b82f6;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
             <span>Subsequent Block Sessions</span>
+        </div>
+        <div class="legend-item" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+          <div class="legend-dot" style="background:#ef4444;width:14px;height:14px;min-width:14px;min-height:14px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.2);"></div>
+            <span>Join Waitlist</span>
         </div>
       </div>
   </div>
@@ -89,6 +165,9 @@
 
 <!-- NORMAL SLOTS (stays removed from here; booking form follows) -->
 <div class="container">
+
+  <!-- Block Session Details heading (conditionally visible) -->
+  <h2 id="blockSessionDetailsTitle" class="available-title block-confirmation-title hidden">Block Session Details</h2>
 
   <!-- BLOCK SESSION CONFIRMATION (APPEARS WHEN BLOCK IS SELECTED) -->
   <h2 id="blockConfirmationTitle" class="available-title block-confirmation-title hidden">Block Session Details</h2>
@@ -140,21 +219,41 @@
       <div class="payment-section">
         <h3>Session Details</h3>
         <div class="session-details">
-          <div class="detail-row">
-            <span class="label">Date:</span>
-            <span class="value" id="paymentDate">-</span>
+          <div id="blockSessionDetails" style="display:none;">
+            <div class="detail-row" style="align-items: flex-start;">
+              <span class="label" style="margin-top:2px;">Block Dates:</span>
+              <div id="blockDatesDisplay" style="margin:0;padding-left:18px;"></div>
+            </div>
+            <div class="detail-row">
+              <span class="label">Time:</span>
+              <span class="value" id="paymentTime">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Session:</span>
+              <span class="value" id="paymentTitle">-</span>
+            </div>
+            <div class="detail-row highlight">
+              <span class="label">Price:</span>
+              <span class="value" id="paymentPrice">-</span>
+            </div>
           </div>
-          <div class="detail-row">
-            <span class="label">Time:</span>
-            <span class="value" id="paymentTime">-</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Session:</span>
-            <span class="value" id="paymentTitle">-</span>
-          </div>
-          <div class="detail-row highlight">
-            <span class="label">Price:</span>
-            <span class="value" id="paymentPrice">-</span>
+          <div id="singleSessionDetails">
+            <div class="detail-row">
+              <span class="label">Date:</span>
+              <span class="value" id="paymentDate">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Time:</span>
+              <span class="value" id="paymentTimeSingle">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Session:</span>
+              <span class="value" id="paymentTitleSingle">-</span>
+            </div>
+            <div class="detail-row highlight">
+              <span class="label">Price:</span>
+              <span class="value" id="paymentPriceSingle">-</span>
+            </div>
           </div>
         </div>
       </div>
@@ -163,46 +262,45 @@
         <h3>Bank Transfer Details</h3>
         <div class="bank-details">
           <div class="detail-row">
-            <span class="label">Account Name:</span>
-            <span class="value" id="accountName">Bao Tran</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Account Number:</span>
-            <div class="copyable-value">
-              <span id="accountNumber">46244409</span>
-              <button class="copy-btn" id="copyAccountBtn" title="Copy account number">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-              </button>
+              <span class="label bank-label">Account Name:</span>
+              <span class="value bank-value" id="accountName">Bao Tran</span>
             </div>
-          </div>
-          <div class="detail-row">
-            <span class="label">Sort Code:</span>
-            <div class="copyable-value">
-              <span id="sortCode">56-00-64</span>
-              <button class="copy-btn" id="copySortBtn" title="Copy sort code">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-              </button>
+            <div class="detail-row bank-compact-row">
+              <span class="label bank-label">Account Number:</span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                <span class="value bank-value" id="accountNumber">46244409</span>
+                <button class="copy-btn" id="copyAccountBtn" title="Copy account number">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  </svg>
+                </button>
+              </span>
             </div>
-          </div>
-          <div class="detail-row">
-            <span class="label">Reference:</span>
-            <div class="copyable-value">
-              <span id="paymentReference">-</span>
-              <button class="copy-btn" id="copyRefBtn" title="Copy payment reference">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-                </svg>
-              </button>
+            <div class="detail-row bank-compact-row">
+              <span class="label bank-label">Sort Code:</span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                <span class="value bank-value" id="sortCode">56-00-64</span>
+                <button class="copy-btn" id="copySortBtn" title="Copy sort code">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  </svg>
+                </button>
+              </span>
             </div>
-            <p style="font-size: 0.75rem; color: #999; margin: 4px 0 0; font-style: italic;">Format: FULLNAME-SESSIONNAME</p>
-          </div>
+            <div class="detail-row bank-compact-row">
+              <span class="label bank-label">Reference:</span>
+              <span style="display:flex;align-items:center;gap:4px;">
+                <span class="value bank-value" id="paymentReference">-</span>
+                <button class="copy-btn" id="copyRefBtn" title="Copy payment reference">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  </svg>
+                </button>
+              </span>
+            </div>
         </div>
       </div>
 
@@ -372,6 +470,10 @@
   <!-- PLAYER REGISTRATION TITLE (OUTSIDE BOOKING FORM) -->
   <h2 id="playerRegistrationTitle" class="available-title player-registration-title hidden">Player Registration</h2>
 
+
+  <!-- BOOKING FORM TITLE (conditionally visible) -->
+  <h2 id="bookingFormTitle" class="available-title booking-form-title hidden">REGISTRATION FORM</h2>
+
   <!-- NORMAL BOOKING FORM (SHOWS WHEN SLOT IS AVAILABLE) -->
   <div id="bookingForm" class="booking-form hidden" style="display: none;">
 
@@ -443,6 +545,9 @@
 
     <button id="bookBtn">Reserve Booking</button>
   </div>
+
+  <!-- WAITLIST FORM TITLE (conditionally visible) -->
+  <h2 id="waitlistFormTitle" class="available-title waitlist-form-title hidden">WAITLIST REGISTRATION </h2>
 
   <!-- WAITLIST FORM (SHOWS WHEN SLOT IS FULLY BOOKED) -->
   <!-- Waitlist Note (required for showBookingForm logic, even if not visible for single sessions) -->
@@ -523,8 +628,9 @@ const REFRESH_INTERVAL = 5000;
 const dateAvailabilityCache = {};
 
 const BANK_DETAILS = {
-  accountNumber: '12345678',
-  sortCode: '12-34-56'
+  accountNumber: '46244409',
+  sortCode: '560064',
+  accountName: 'Bao Tran'
 };
 
 /* ================= INLINE MESSAGES ================= */
@@ -661,7 +767,7 @@ async function isPlayerAlreadyBooked(email, date, slot) {
       
       const alreadyBooked = bookingsOnDate.some(booking => {
         if (!booking || typeof booking !== 'string') return false;
-        const match = booking.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+@[^)]+)\)$/);
+        const match = booking.match(/^(.+?)\s*-\s*(.+?)\s*\(/);
         if (!match) return false;
         const bookingTime = norm(match[1]);
         const bookingTitle = norm(match[2]);
@@ -1203,7 +1309,7 @@ async function handleDateClick(div, dateStr){
               <div class="slot-header">
                 <div class="slot-title-row">
                   <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
-                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}">${spots - booked}/${spots} Spots Left</span>
+                  <span class="pill spots-pill ${isFirstDate ? 'block-first' : 'block-subsequent'}${full ? ' spots-pill--red' : ''}">${spots - booked}/${spots} Spots Left</span>
                 </div>
                 <div class="slot-actions">
                   <!-- No fully booked pill, replaced by waitlist count below -->
@@ -1384,7 +1490,7 @@ async function handleDateClick(div, dateStr){
             <div class="slot-header">
               <div class="slot-title-row">
                 <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
-                <span class="pill spots-pill block-first">${spots - booked}/${spots} Spots Left</span>
+                <span class="pill spots-pill block-first${full ? ' spots-pill--red' : ''}">${spots - booked}/${spots} Spots Left</span>
                 ${full ? `<span class="waitlist-pill">Waitlist Queue</span>` : ''}
               </div>
               <div class="slot-actions"></div>
@@ -1528,18 +1634,22 @@ function showBlockConfirmation(slot, isWaitlist = false) {
     // In waitlist mode, show waitlist form only after checkbox is checked
     if (isWaitlist && checkbox) {
       const waitlistForm = document.getElementById('waitlistForm');
+      const waitlistFormTitle = document.getElementById('waitlistFormTitle');
       waitlistForm.classList.add('hidden');
       waitlistForm.style.display = 'none';
+      if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
       checkbox.onchange = (e) => {
         if (e.target.checked) {
           waitlistForm.classList.remove('hidden');
           waitlistForm.style.display = '';
+          if (waitlistFormTitle) waitlistFormTitle.classList.remove('hidden');
           setTimeout(() => {
             waitlistForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }, 200);
         } else {
           waitlistForm.classList.add('hidden');
           waitlistForm.style.display = 'none';
+          if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
         }
       };
     } else if (checkbox) {
@@ -1553,6 +1663,8 @@ function showBlockConfirmation(slot, isWaitlist = false) {
           if (bookingForm) {
             bookingForm.classList.remove('hidden');
             bookingForm.style.display = '';
+            const bookingFormTitle = document.getElementById('bookingFormTitle');
+            if (bookingFormTitle) bookingFormTitle.classList.remove('hidden');
           }
           if (regForm) {
             regForm.classList.add('hidden'); // Hide registration form until user enters details
@@ -1567,6 +1679,8 @@ function showBlockConfirmation(slot, isWaitlist = false) {
           if (bookingForm) {
             bookingForm.classList.add('hidden');
             bookingForm.style.display = 'none';
+            const bookingFormTitle = document.getElementById('bookingFormTitle');
+            if (bookingFormTitle) bookingFormTitle.classList.add('hidden');
           }
           if (regForm) {
             regForm.classList.add('hidden');
@@ -1614,11 +1728,15 @@ function showBlockConfirmation(slot, isWaitlist = false) {
   }
   // Spots pill logic
   if (spotsPill) {
+    spotsPill.classList.remove('spots-pill--red');
     if (slot.full) {
-      spotsPill.style.display = 'none';
+      spotsPill.style.display = '';
+      spotsPill.textContent = `0 / ${slot.spots} spots left`;
+      spotsPill.classList.add('spots-pill--red');
     } else {
       spotsPill.style.display = '';
       spotsPill.textContent = `${Math.max(0, (slot.spots - slot.booked))} / ${slot.spots} spots left`;
+      spotsPill.classList.remove('spots-pill--red');
     }
   }
   if (fullPill) fullPill.style.display = slot.full ? '' : 'none';
@@ -1644,19 +1762,25 @@ function showBlockConfirmation(slot, isWaitlist = false) {
   }
 
   confirmEl.classList.remove('hidden');
+  const blockSessionDetailsTitle = document.getElementById('blockSessionDetailsTitle');
+  if (blockSessionDetailsTitle) blockSessionDetailsTitle.classList.remove('hidden');
 } 
 function hideBlockConfirmation() {
   const confirmEl = document.getElementById('blockConfirmation');
   const titleEl = document.getElementById('blockConfirmationTitle');
   confirmEl.classList.add('hidden');
   titleEl?.classList.add('hidden');
+  const blockSessionDetailsTitle = document.getElementById('blockSessionDetailsTitle');
+  if (blockSessionDetailsTitle) blockSessionDetailsTitle.classList.add('hidden');
 }
 
 
 /* ================= FORM TOGGLE ================= */
 function showBookingForm(isFullyBooked) {
   const bookingForm = document.getElementById('bookingForm');
+  const bookingFormTitle = document.getElementById('bookingFormTitle');
   const waitlistForm = document.getElementById('waitlistForm');
+  const waitlistFormTitle = document.getElementById('waitlistFormTitle');
   const waitlistConfirm = document.getElementById('waitlistConfirm');
   const regForm = document.getElementById('playerRegistrationForm');
   const regHostBooking = document.getElementById('playerRegistrationHostBooking');
@@ -1685,16 +1809,19 @@ function showBookingForm(isFullyBooked) {
   }
   // ...existing code...
   
-  // If no session selected (both false/undefined), hide both forms
+  // If no session selected (both false/undefined), hide both forms and their titles
   if (isFullyBooked === null || isFullyBooked === undefined) {
     if (bookingForm) {
       bookingForm.classList.add('hidden');
       bookingForm.style.display = 'none';
     }
+    if (bookingFormTitle) bookingFormTitle.classList.add('hidden');
     if (waitlistForm) {
       waitlistForm.classList.add('hidden');
       waitlistForm.style.display = 'none';
     }
+    if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
+    if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
     if (waitlistConfirm) waitlistConfirm.checked = false;
     // Remove handler if present
     if (waitlistConfirm) waitlistConfirm.onchange = null;
@@ -1713,6 +1840,7 @@ function showBookingForm(isFullyBooked) {
       waitlistForm.classList.add('hidden');
       waitlistForm.style.display = 'none';
     }
+    if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
     if (waitlistConfirm) waitlistConfirm.checked = false;
     // Attach handler to block confirmation checkbox to show waitlist form
     const blockCheckbox = document.getElementById('blockCheckbox');
@@ -1722,6 +1850,7 @@ function showBookingForm(isFullyBooked) {
           if (waitlistForm) {
             waitlistForm.classList.remove('hidden');
             waitlistForm.style.display = '';
+            if (waitlistFormTitle) waitlistFormTitle.classList.remove('hidden');
             setTimeout(() => {
               waitlistForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 200);
@@ -1730,6 +1859,7 @@ function showBookingForm(isFullyBooked) {
           if (waitlistForm) {
             waitlistForm.classList.add('hidden');
             waitlistForm.style.display = 'none';
+            if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
           }
         }
       };
@@ -1751,6 +1881,7 @@ function showBookingForm(isFullyBooked) {
     // For regular single sessions: show booking form immediately
     bookingForm.classList.remove('hidden');
     bookingForm.style.display = '';
+    if (bookingFormTitle) bookingFormTitle.classList.remove('hidden');
     console.log('[DEBUG] bookingForm should now be visible:', bookingForm);
     // Always reset registration form and title to visible
     if (regForm) regForm.classList.add('hidden'); // Always hide registration form until user is checked
@@ -1765,6 +1896,7 @@ function showBookingForm(isFullyBooked) {
   // Hide waitlist form (both class and inline)
   waitlistForm.classList.add('hidden');
   waitlistForm.style.display = 'none';
+  if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
   waitlistNote.style.display = 'none';
   if (waitlistConfirm) waitlistConfirm.checked = false;
   // Remove handler if present
@@ -1813,13 +1945,50 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   const price = priceVal3 ? `£${!isNaN(priceVal3) ? priceVal3.toFixed(2) : slot.price}` : '£25.00';
 
   // Populate payment details
-  document.getElementById('accountNumber').textContent = '46244409';
-  document.getElementById('sortCode').textContent = '569964';
-  document.getElementById('accountName').textContent = 'Bao Tran';
-  document.getElementById('paymentDate').textContent = dateDisplay;
-  document.getElementById('paymentTime').textContent = slot.time;
-  document.getElementById('paymentTitle').textContent = slot.title;
-  document.getElementById('paymentPrice').textContent = price;
+  document.getElementById('accountNumber').textContent = BANK_DETAILS.accountNumber;
+  document.getElementById('sortCode').textContent = BANK_DETAILS.sortCode;
+  document.getElementById('accountName').textContent = BANK_DETAILS.accountName;
+  // Block session support
+  console.log('[DEBUG] showPaymentInstructions slot:', slot);
+  console.log('[DEBUG] slot.blockId:', slot.blockId);
+  console.log('[DEBUG] slot.blockDates:', slot.blockDates);
+  if (slot.blockId && Array.isArray(slot.blockDates) && slot.blockDates.length > 1) {
+    document.getElementById('blockSessionDetails').style.display = '';
+    document.getElementById('singleSessionDetails').style.display = 'none';
+    const blockDatesDisplay = document.getElementById('blockDatesDisplay');
+    const formatted = slot.blockDates.map(d => formatDateForDisplay(d)).join(', ');
+    blockDatesDisplay.textContent = formatted;
+    document.getElementById('paymentTime').textContent = slot.time;
+    document.getElementById('paymentTitle').textContent = slot.title;
+    document.getElementById('paymentPrice').textContent = price;
+    // Debug: log DOM and computed style
+    setTimeout(() => {
+      const blockDatesList = document.getElementById('blockDatesList');
+      const lis = blockDatesList ? Array.from(blockDatesList.children) : [];
+      console.log('[RENDER DEBUG] blockDatesList:', blockDatesList);
+      console.log('[RENDER DEBUG] blockDatesList child count:', lis.length);
+      lis.forEach((li, i) => {
+        console.log(`[RENDER DEBUG] li #${i+1}:`, li, 'text:', li.textContent);
+        if (window.getComputedStyle) {
+          const style = window.getComputedStyle(li);
+          console.log(`[RENDER DEBUG] li #${i+1} computed style:`, style.display, style.visibility, style.height, style.marginTop, style.marginBottom);
+        }
+      });
+      if (blockDatesList) {
+        const style = window.getComputedStyle(blockDatesList);
+        console.log('[RENDER DEBUG] blockDatesList computed style:', style.display, style.visibility, style.height, style.marginTop, style.marginBottom);
+      }
+    }, 0);
+    console.log('[DEBUG] Block session modal should now show all dates.');
+  } else {
+    document.getElementById('blockSessionDetails').style.display = 'none';
+    document.getElementById('singleSessionDetails').style.display = '';
+    document.getElementById('paymentDate').textContent = dateDisplay;
+    document.getElementById('paymentTimeSingle').textContent = slot.time;
+    document.getElementById('paymentTitleSingle').textContent = slot.title;
+    document.getElementById('paymentPriceSingle').textContent = price;
+    console.log('[DEBUG] Single session modal shown.');
+  }
   document.getElementById('paymentReference').textContent = paymentRef;
   document.getElementById('paymentDeadline').textContent = deadlineStr + ` (expires in ${Math.floor(bookingExpirySeconds/60)} min${bookingExpirySeconds%60!==0?` ${bookingExpirySeconds%60} sec`:''})`;
   document.getElementById('accountNumber').textContent = BANK_DETAILS.accountNumber;
@@ -3567,6 +3736,7 @@ document.getElementById('blockCheckbox').onchange = (e) => {
     // Hide all forms when unchecked
     bookingForm.classList.add('hidden');
     bookingForm.style.display = 'none';
+    if (bookingFormTitle) bookingFormTitle.classList.add('hidden');
     titleEl?.classList.add('hidden');
     regForm?.classList.add('hidden');
   }
@@ -3589,5 +3759,18 @@ buildCalendarSkeleton();
 document.getElementById('bottomHelpLink')?.addEventListener('click', (e)=>{ e.preventDefault(); openUserGuide(); });
 </script>
 
+<script>
+  window.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      var overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.classList.add('hide');
+        setTimeout(function() {
+          overlay.style.display = 'none';
+        }, 400);
+      }
+    }, 1500);
+  });
+</script>
 </body>
 </html>

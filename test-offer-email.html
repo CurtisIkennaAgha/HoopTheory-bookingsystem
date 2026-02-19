@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Offer Email API</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    label { display: block; margin-top: 12px; }
+    input, button { margin-top: 4px; padding: 6px; font-size: 1em; }
+    #result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Test sendOfferEmail.php</h2>
+  <form id="offerForm">
+    <label>Email: <input type="email" name="email" required value="test@example.com"></label>
+    <label>Name: <input type="text" name="name" required value="Test User"></label>
+    <label>Date: <input type="date" name="date" required></label>
+    <label>Time: <input type="text" name="time" required value="18:00"></label>
+    <label>Title: <input type="text" name="title" required value="Basketball Session"></label>
+    <label>Block Dates (comma-separated YYYY-MM-DD): <input type="text" name="blockDates" placeholder="2026-03-01,2026-03-08,2026-03-15,2026-03-22"></label>
+    <button type="submit">Send Offer Email</button>
+  </form>
+  <div id="result"></div>
+  <script>
+    document.getElementById('offerForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        email: form.email.value,
+        name: form.name.value,
+        date: form.date.value,
+        time: form.time.value,
+        title: form.title.value
+      };
+      // Add blockDates if provided
+      if (form.blockDates.value.trim()) {
+        data.blockDates = form.blockDates.value.split(',').map(s => s.trim());
+      }
+      document.getElementById('result').textContent = 'Sending...';
+      try {
+        const res = await fetch('php/sendOfferEmail.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        document.getElementById('result').textContent = JSON.stringify(json);
+      } catch (err) {
+        document.getElementById('result').textContent = 'Error: ' + err;
+      }
+    };
+  </script>
+</body>
+</html>

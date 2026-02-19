@@ -84,9 +84,10 @@ html, body, input, select, textarea, button {
 /* Waitlist pill for fully booked sessions */
 .waitlist-pill {
   display: inline-block;
-  background: #fef9c3;
-  color: #92400e;
-  border: 1px solid #fde68a;
+  opacity: 0.58;
+  background: #fff1f2;
+  color: #5f393936;
+  border: 1px solid #cafecc;
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 700;
@@ -139,21 +140,32 @@ input, input[type="text"], input[type="email"] {
   gap: 8px !important;
 }
 .block-confirmation .slot-extra {
-  flex-direction: row !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+  gap: 1px !important;
+  margin-top: 1px !important;
 }
 /* Ensure block session details card matches session card layout exactly */
+/* Tighter vertical spacing for block confirmation details */
+/* Remove all vertical spacing for tightest layout */
 .block-confirmation .slot-card-inner {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin: 0 auto;
+  margin: 0 !important;
+  padding: 0 !important;
   width: max-content;
   min-width: 100%;
-  font-size: 1.2rem;
+  font-size: 1.0rem;
   color: var(--primary);
-  margin: 0 0 12px 0;
   letter-spacing: -0.5px;
-  line-height: 1.1;
+  line-height: 1 !important;
+}
+.block-confirmation .slot-card-inner > * {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
 }
   display: flex;
   flex-direction: column;
@@ -177,17 +189,6 @@ input, input[type="text"], input[type="email"] {
   align-items: flex-start !important;
   display: flex;
   flex-direction: row;
-  margin: 0;
-}
-.block-confirmation .slot-extra {
-  width: 100%;
-  text-align: left;
-  align-items: center !important;
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-    gap: 2px !important;
-    column-gap: 2px !important;
   margin: 0;
 }
 .block-confirmation .slot-title-row {
@@ -268,7 +269,7 @@ input, input[type="text"], input[type="email"] {
 }
 .block-confirmation .slot-title {
   font-size: 0.93rem;
-  font-weight: 900;
+  font-weight: 520;
   color: #0f172a;
   display: block;
   padding-right: 130px;
@@ -752,7 +753,7 @@ button:disabled {
 }
 
 .block-confirmation .confirmation-details .slot-time { font-weight:600; margin-top:6px; color:#374151; }
-.block-confirmation .confirmation-details .slot-extra { margin-top:8px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.block-confirmation .confirmation-details .slot-extra { margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; }
 
 /* ================= BOOKING FORM & WAITLIST ================= */
 .booking-form,
@@ -1348,10 +1349,17 @@ body.modal-open-payment {
 }
 
 .session-details,
+
 .bank-details {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.bank-details .detail-row {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
 }
 
 .detail-row {
@@ -1614,7 +1622,7 @@ body.modal-open-payment {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 14px !important;
+  margin-top: 7px !important;
   font-weight: 500;
   cursor: pointer;
   padding: 10px;
