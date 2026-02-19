@@ -455,15 +455,17 @@ try {
 
         // Block session: use orange card with ticks, else use simple table
         if ($isBlockSession && !empty($blockDates)) {
-            $sessionDetailsHtml = "<table width='100%' cellpadding='0' cellspacing='0' style='background:#fff8f0;border-left:6px solid #ff9800;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'><p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p><p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p><p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p><p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p><table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>";
-            foreach ($blockDates as $blockDate) {
-                $sessionDetailsHtml .= "<tr><td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>
-✓ $blockDate
-</td>
-</tr>
-";
+            $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr>";
+            $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Dates</td><td>";
+            foreach ($blockDates as $i => $blockDate) {
+                if ($i > 0) $sessionDetailsHtml .= ", ";
+                $sessionDetailsHtml .= htmlspecialchars($blockDate);
             }
-            $sessionDetailsHtml .= "</table></td></tr></table>";
+            $sessionDetailsHtml .= "</td></tr>";
+            $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
+            $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+            $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
+            $sessionDetailsHtml .= "</table>";
         } else {
             $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr><tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr><tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
             $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
@@ -471,7 +473,7 @@ try {
             $sessionDetailsHtml .= "</table>";
         }
 
-        $mail->Body = "<!DOCTYPE html>\n<html>\n<body style='margin:0;padding:0;background:#f5f5f5;'>\n<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />\n<table width='100%' cellpadding='0' cellspacing='0'>\n<tr><td align='center'>\n<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>\n<tr><td style='padding:30px;font-family:Arial,sans-serif;color:#000;'>\n<h1 style='margin:0 0 10px;font-size:22px;'>Booking Reserved – Payment Required</h1>\n<p style='margin:0 0 16px;color:#666;'>Hi " . htmlspecialchars($name) . ",</p>\n\n<div style='margin:24px 0 24px 0;'>\n" . $sessionDetailsHtml . "\n</div>\n\n<h3 style='margin:16px 0 8px;'>Bank Payment Details</h3>\n<table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>\n<tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>\n<tr><td style='font-weight:bold;'>Sort Code</td><td>560064</td></tr>\n<tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>\n<tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>\n<tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($paymentDeadline) . "</td></tr>\n</table>\n\n<p style='margin:0 0 16px;color:#000;font-weight:bold;'>Once payment is received, you will receive a final confirmation email.</p>\n\n<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: This reservation will expire if payment is not received by the deadline above. Additionally, please note that refunds will not be issued after your spot has been confirmed.</p>\n\n<p style='margin:16px 0;text-align:center;padding:15px;background:#f3f4f6;border-radius:6px;border:1px solid #d1d5db;'>
+        $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'>\n<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />\n<table width='100%' cellpadding='0' cellspacing='0'>\n<tr><td align='center'>\n<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>\n<tr><td style='padding:30px;font-family:Arial,sans-serif;color:#000;'>\n<h1 style='margin:0 0 10px;font-size:22px;'>Booking Reserved – Payment Required</h1>\n<p style='margin:0 0 16px;color:#666;'>Hi " . htmlspecialchars($name) . ",</p>\n\n<div style='margin:24px 0 24px 0;'>\n" . $sessionDetailsHtml . "\n</div>\n\n<h3 style='margin:16px 0 8px;'>Bank Payment Details</h3>\n<table cellpadding='6' cellspacing='0' width='100%' style='background:#fffef6;border:1px solid #f3e8d8;border-radius:6px;'>\n<tr><td style='font-weight:bold;'>Account Number</td><td>46244409</td></tr>\n<tr><td style='font-weight:bold;'>Sort Code</td><td>560064</td></tr>\n<tr><td style='font-weight:bold;'>Account Name</td><td>Bao Tran</td></tr>\n<tr><td style='font-weight:bold;'>Reference</td><td>" . htmlspecialchars($paymentRef) . "</td></tr>\n<tr><td style='font-weight:bold;'>Payment Deadline</td><td>" . htmlspecialchars($paymentDeadline) . "</td></tr>\n</table>\n\n<p style='margin:0 0 16px;color:#000;font-weight:bold;'>Once payment is received, you will receive a final confirmation email.</p>\n\n<p style='margin:12px 0;color:#b91c1c;font-weight:bold;'>Important: This reservation will expire if payment is not received by the deadline above. Additionally, please note that refunds will not be issued after your spot has been confirmed.</p>\n\n<p style='margin:16px 0;text-align:center;padding:15px;background:#f3f4f6;border-radius:6px;border:1px solid #d1d5db;'>
 <a href='https://hooptheory.co.uk/cancel-session.html?bookingId=" . htmlspecialchars($bookingId) . "' style='color:#ef4444;font-weight:bold;text-decoration:underline;'>Can't make this session? Cancel your booking here</a>
 </p>\n\n<hr style='margin:20px 0;border:none;border-top:1px solid #eee;'>\n<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>\n<p style='font-size:12px;color:#999;text-align:center;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>\n\n</td></tr></table>\n</td></tr></table>\n</body>\n</html>";
         $mail->send();
@@ -483,52 +485,22 @@ try {
     // Build session details HTML based on session type
     if ($isBlockSession) {
         $sessionDetailsHtml = "
-<table width='100%' cellpadding='0' cellspacing='0' style='background:#fff8f0;border-left:6px solid #ff9800;border-radius:8px;'>
-<tr>
-<td style='padding:20px;font-family:Arial,sans-serif;'>
-<p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p>
-<p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p>
-<p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p>
-<p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p>
-<table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>
-";
-        foreach ($blockDates as $blockDate) {
-            $sessionDetailsHtml .= "
-<tr>
-<td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>
-✓ $blockDate
-</td>
-</tr>
-";
+<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr>";
+        $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Dates</td><td>";
+        foreach ($blockDates as $i => $blockDate) {
+            if ($i > 0) $sessionDetailsHtml .= ", ";
+            $sessionDetailsHtml .= htmlspecialchars($blockDate);
         }
-        $sessionDetailsHtml .= "
-</table>
-</td>
-</tr>
-</table>
-";
+        $sessionDetailsHtml .= "</td></tr>";
+        $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
+        $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+        $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
+        $sessionDetailsHtml .= "</table>";
     } else {
-        $sessionDetailsHtml = "
-<table width='100%' cellpadding='0' cellspacing='0' style='background:#f0f0f0;border-left:4px solid #000;border-radius:8px;'>
-<tr>
-<td style='padding:20px;font-family:Arial,sans-serif;'>
-<p style='margin:0;font-size:12px;color:#999;font-weight:bold;'>DATE AND TIME</p>
-<p style='margin:8px 0 0;font-size:20px;color:#000;font-weight:bold;'>$slot</p>
-<p style='margin:4px 0 16px;font-size:14px;color:#666;'>$date</p>
-
-<a href='$calendarUrl'
-style='display:inline-block;padding:12px 22px;background:#1a1a1a;color:#ffffff !important;
-text-decoration:none;border-radius:6px;font-size:14px;font-weight:bold;'>
-Add to Google Calendar
-</a>
-</td>
-
-<td align='right' style='padding:20px;'>
-
-</td>
-</tr>
-</table>
-";
+        $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr><tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr><tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
+        $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+        $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
+        $sessionDetailsHtml .= "</table>";
     }
 
     if ($emailType === 'waitlist_confirmation') {
@@ -539,7 +511,11 @@ Add to Google Calendar
         if ($isBlockSession && !empty($blockDates)) {
             $sessionDetailsHtml = "<table width='100%' cellpadding='0' cellspacing='0' style='background:#fff8f0;border-left:6px solid #ff9800;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'><p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p><p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p><p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p><p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p><table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>";
             foreach ($blockDates as $blockDate) {
-                $sessionDetailsHtml .= "<tr><td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>✓ $blockDate</td></tr>";
+                $sessionDetailsHtml .= "<tr><td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>
+✓ $blockDate
+</td>
+</tr>
+";
             }
             $sessionDetailsHtml .= "</table></td></tr></table>";
         } else {

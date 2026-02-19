@@ -6,6 +6,20 @@ $message = '';
 $isSuccess = false;
 $sessionInfo = '';
 
+
+// Minimal preview mode for ?token=test
+if ($token === 'test') {
+    $isSuccess = true;
+    $title = 'Sample Block Session';
+    $formattedDate = '20th February 2026';
+    $time = '19:00';
+    $slotPrice = '£40';
+    $blockDates = ['2026-02-20', '2026-02-27', '2026-03-06', '2026-03-13'];
+    $paymentRef = 'TESTUSER-SAMPLESESSION';
+    $deadline = 'Thu, 20 Feb 2026 19:00';
+    goto render;
+}
+
 if (!$token) {
     $message = 'Invalid token';
     goto render;
@@ -379,39 +393,39 @@ render:
       /* Improved reserved-page overrides: better spacing, contrast and mobile behaviour */
       :root{--accent:#10b981;--muted:#6b7280;--bg:#f5f7fa}
       body{background:linear-gradient(135deg,var(--bg) 0%,#eef2f7 100%);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;padding:env(safe-area-inset-top,28px) env(safe-area-inset-right,20px) env(safe-area-inset-bottom,32px) env(safe-area-inset-left,20px)}
-      .card{max-width:760px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 24px 48px rgba(15,23,42,0.08);overflow:hidden}
+    .card{max-width:760px;margin:4px auto;background:#fff;border-radius:12px;box-shadow:0 12px 24px rgba(15,23,42,0.08);overflow:hidden}
 
       /* Header: increased vertical rhythm and clearer type */
-      .reserved-header{display:flex;flex-direction:column;gap:8px;padding:32px 28px;background:linear-gradient(135deg,var(--accent) 0%,#059669 100%);color:#fff}
-      .reserved-header h2{margin:0;font-size:20px;line-height:1.05}
-      .reserved-header p{margin:0;opacity:0.95;font-size:14px}
+    .reserved-header{display:flex;flex-direction:column;gap:4px;padding:24px 18px;margin-bottom:12px;background:linear-gradient(135deg,var(--accent) 0%,#059669 100%);color:#fff}
+    .reserved-header h2{margin:0;font-size:20px;line-height:1.05}
+    .reserved-header p{margin:0;opacity:0.95;font-size:14px}
 
-      .reserved-body{padding:24px 28px}
+    .reserved-body{padding:18px 18px;margin-bottom:12px}
 
       /* Payment blocks: more space, consistent alignment */
-      .payment-section{padding:18px 0;border-bottom:1px solid #f3f4f6;display:flex;flex-direction:column;gap:14px}
-      .session-details .detail-row,.bank-details .detail-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-radius:6px}
-      .bank-details .value{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;background:#f8faf9;padding:6px 10px;border-radius:6px;border:1px solid #f1f5f9}
+    .payment-section{padding:6px 0;border-bottom:1px solid #f3f4f6;display:flex;flex-direction:column;gap:6px}
+    .session-details .detail-row,.bank-details .detail-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;border-radius:6px}
+    .bank-details .value{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;background:#f8faf9;padding:2px 6px;border-radius:6px;border:1px solid #f1f5f9}
 
       /* Copy button: larger tap target and clearer state */
-      .copy-btn{background:#111827;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .12s,transform .08s;font-weight:600}
+    .copy-btn{background:#111827;color:#fff;border:0;padding:4px 8px;border-radius:8px;cursor:pointer;transition:background .12s,transform .08s;font-weight:600}
       .copy-btn:active{transform:translateY(1px)}
       .copy-btn.copied{background:var(--accent)}
 
-      .next-steps{margin-top:18px;background:#fbfdfb;padding:16px;border-radius:10px;color:var(--muted)}
-      .buttons{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
-      .btn{padding:12px 16px;border-radius:10px;text-decoration:none;display:inline-block}
-      .btn-primary{background:#111827;color:#fff}
-      .btn-secondary{background:transparent;border:1px solid #e5e7eb;color:#374151}
+    .next-steps{margin-top:8px;background:#fbfdfb;padding:6px;border-radius:8px;color:var(--muted)}
+    .buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .btn{padding:6px 10px;border-radius:8px;text-decoration:none;display:inline-block}
+    .btn-primary{background:#111827;color:#fff}
+    .btn-secondary{background:transparent;border:1px solid #e5e7eb;color:#374151}
 
       /* Small screens */
-      @media (max-width:520px){
-        .card{margin:12px;border-radius:12px}
-        .reserved-header{padding:20px}
-        .reserved-body{padding:16px}
-        .payment-section{gap:12px}
-        .bank-details .detail-row{padding:8px 0}
-      }
+            @media (max-width:520px){
+                .card{margin:2px;border-radius:8px}
+                .reserved-header{padding:6px}
+                .reserved-body{padding:4px}
+                .payment-section{gap:4px}
+                .bank-details .detail-row{padding:2px 0}
+            }
     </style>
 </head>
 <body>
@@ -428,7 +442,27 @@ render:
             <div>
               <strong style="display:block; font-size:13px; color:#065f46; text-transform:uppercase;">Session Details</strong>
               <div style="margin-top:8px; font-weight:700; color:#111827; font-size:16px;"><?php echo htmlspecialchars($title); ?></div>
-              <div style="color:#6b7280; margin-top:6px;"><?php echo htmlspecialchars($formattedDate); ?> — <?php echo htmlspecialchars($time); ?></div>
+                            <div style="color:#6b7280; margin-top:6px;">
+                                <?php
+                                    if (!empty($blockDates) && is_array($blockDates) && count($blockDates) > 1) {
+                                        // Show all block dates for block sessions
+                                        $dateStrings = [];
+                                        foreach ($blockDates as $bd) {
+                                            [$y, $m, $d] = explode('-', $bd);
+                                            $mName = $monthNames[(int)$m - 1];
+                                            $dNum = (int)$d;
+                                            $suf = 'th';
+                                            if ($dNum % 10 === 1 && $dNum !== 11) $suf = 'st';
+                                            elseif ($dNum % 10 === 2 && $dNum !== 12) $suf = 'nd';
+                                            elseif ($dNum % 10 === 3 && $dNum !== 13) $suf = 'rd';
+                                            $dateStrings[] = $dNum . $suf . ' ' . $mName . ' ' . $y;
+                                        }
+                                        echo 'Dates: ' . implode(', ', $dateStrings) . ' — ' . htmlspecialchars($time);
+                                    } else {
+                                        echo htmlspecialchars($formattedDate) . ' — ' . htmlspecialchars($time);
+                                    }
+                                ?>
+                            </div>
             </div>
             <div style="text-align:right; min-width:120px;">
               <div style="font-size:12px; color:#6b7280;">Price</div>
@@ -444,7 +478,7 @@ render:
             <div class="detail-row"><span class="label">Sort Code:</span><span class="value" id="sortCode">560064</span><button class="copy-btn" id="copySortBtn">Copy</button></div>
                         <div class="detail-row"><span class="label">Account Name:</span><span class="value" id="accountName">Bao Tran</span></div>
             <div class="detail-row"><span class="label">Reference:</span><span class="value" id="paymentReference"><?php echo htmlspecialchars($paymentRef); ?></span><button class="copy-btn" id="copyRefBtn">Copy</button></div>
-            <div style="font-size:13px; color:#6b7280; margin-top:8px;">Please pay within 12 hours. Deadline: <strong id="deadlineText"><?php echo htmlspecialchars($deadline); ?></strong></div>
+            <div style="font-size:13px; color:#6b7280; margin-top:8px;">Deadline: <strong id="deadlineText"><?php echo htmlspecialchars($deadline); ?></strong></div>
           </div>
         </div>
 
@@ -460,7 +494,6 @@ render:
 
         <div class="buttons">
           <a class="btn btn-primary" href="/">Back to Hoop Theory</a>
-          <a class="btn btn-secondary" href="mailto:bao@hooptheory.co.uk">Contact support</a>
         </div>
 
       <?php else: ?>

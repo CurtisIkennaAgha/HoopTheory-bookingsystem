@@ -4482,13 +4482,13 @@ async function renderAllAvailableSlots(){
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <div class="available-slot-date">
-              <i class="fas fa-link"></i>
+              <i class="fas fa-cube" style="color: #4CAF50; flex-shrink: 0;"></i>
               4-Week Block
             </div>
             <span class="block-session-badge">Block Session</span>
           </div>
           <div class="available-slot-times compact">
-            <div style="font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span></div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><strong style="font-size: 0.9rem; font-weight: 550; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span></div>
           </div>
           <div class="available-slot-times" style="display: none;">
             <div style="font-weight: 600; margin-bottom: 4px;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong></div>
@@ -4843,13 +4843,15 @@ async function renderAllAvailableSlots(){
         <div class="available-slot-info">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <div class="available-slot-date">
-              <i class="fas fa-calendar"></i>
+              ${slot.sessionType === 'group' ?
+                '<i class="fas fa-users" style="color: #4CAF50; flex-shrink: 0;"></i>' :
+                '<i class="fas fa-user" style="color: #4CAF50; flex-shrink: 0;"></i>'}
               ${formatDateForDisplay(date)}
             </div>
             <span style="display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; background: #E3F2FD; color: #1565C0; white-space: nowrap;">Single</span>
           </div>
           <div class="available-slot-times compact">
-            <strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span>
+            <strong style="font-size: 0.9rem; font-weight: 550; color: #000;">${slot.title}</strong> &bull; ${slot.time} &bull; <span style="color: #666;">(${booked}/${spots})</span>
           </div>
           <div class="available-slot-times" style="display: none;">
             <div style="font-weight: 600; margin-bottom: 4px;"><strong style="font-size: 0.95rem; color: #000;">${slot.title}</strong></div>
@@ -5986,7 +5988,11 @@ async function renderAllBookings(){
       <div class="booking-header">
         <div class="booking-header-info">
           <div style="font-weight: 600; color: #333; font-size: clamp(0.85rem, 2vw, 0.95rem); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            ${isBlockSession ? `<i class="fas fa-cube" style="color: #4CAF50; flex-shrink: 0;"></i>` : `<i class="fas fa-clock" style="color: #4CAF50; flex-shrink: 0;"></i>`}
+            ${isBlockSession
+              ? `<i class=\"fas fa-cube\" style=\"color: #4CAF50; flex-shrink: 0;\"></i>`
+              : (sessionType === 'group'
+                ? `<i class=\"fas fa-users\" style=\"color: #4CAF50; flex-shrink: 0;\"></i>`
+                : `<i class=\"fas fa-user\" style=\"color: #4CAF50; flex-shrink: 0;\"></i>`)}
             <strong>${title}</strong> ${sessionBadge} ${blockBadge}
           </div>
           <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
@@ -6019,7 +6025,7 @@ async function renderAllBookings(){
         // Format as YYYY-MM-DD HH:mm
         const pad = n => n.toString().padStart(2, '0');
         const formatted = `${expiryDate.getFullYear()}-${pad(expiryDate.getMonth()+1)}-${pad(expiryDate.getDate())} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
-        expiryDisplay = `<span style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:inline-block;vertical-align:middle;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</span>`;
+        expiryDisplay = `<div style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:block;margin-top:2px;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</div>`;
       }
 
       const bookingCard = document.createElement('div');
@@ -6045,8 +6051,8 @@ async function renderAllBookings(){
               <div style="font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; white-space: nowrap; display: inline-block; ${isConfirmed ? 'background: #C8E6C9; color: #2E7D32;' : 'background: #FFE0B2; color: #E65100;'}">
                 ${status}
               </div>
-              ${expiryDisplay}
             </div>
+            ${expiryDisplay}
           </div>
           <div style="display: flex; flex-direction: column; gap: 2px; align-items: stretch; flex-shrink: 0;">
             <button class="confirm-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #4CAF50; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Confirm</button>
@@ -6629,7 +6635,13 @@ async function renderWaitlist(){
             card.innerHTML = `
               <div class="waitlist-info">
                 <div class="waitlist-date-time">
-                  <i class="fas fa-calendar"></i>
+                  ${isBlock ?
+                    '<i class="fas fa-cube" style="color: #FF9800; flex-shrink: 0;"></i>' :
+                    (sessionType === 'group' ?
+                      '<i class="fas fa-users" style="color: #FF9800; flex-shrink: 0;"></i>' :
+                      '<i class="fas fa-user" style="color: #FF9800; flex-shrink: 0;"></i>'
+                    )
+                  }
                   <strong>${title}</strong> - ${time}${isBlock ? ' (4-Week Block)' : ''}
                 </div>
                 <div style="font-size: 0.75rem; color: #666; margin-top: 4px;">${dateDisplayText}</div>
