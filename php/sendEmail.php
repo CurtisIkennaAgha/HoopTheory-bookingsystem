@@ -139,7 +139,9 @@ if ($emailType === 'booking_edited') {
             . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
             . "<div style='background:white;border-radius:6px;padding:15px;margin:10px 0 0;'>"
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>"
-            . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>"
+            . ($isBlockSession && !empty($blockDates)
+                ? "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> " . implode(', ', array_map('htmlspecialchars', $blockDates)) . "</div>"
+                : "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>")
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Time:</span> " . htmlspecialchars($slot) . "</div>"
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Location:</span> " . htmlspecialchars($location) . "</div>"
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Price:</span> £" . htmlspecialchars($price) . "</div>"
@@ -197,7 +199,7 @@ if ($emailType === 'booking_cancellation') {
             . "<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />"
             . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
             . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
-            . "<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>"
+            . "<h1 style='margin:0 0 10px;font-size:26px;'>Session Cancelled</h1>"
             . "<p style='margin:0 0 30px;color:#666;font-size:14px;'>Your booking for the session below has been cancelled by the administrator.</p>"
             . "<table width='100%' cellpadding='0' cellspacing='0' style='background:#f9f9f9;border-left:4px solid #ef4444;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'>"
             . "<p style='margin:0 0 10px;font-size:12px;color:#666;font-weight:bold;text-transform:uppercase;'>Session Details</p>"
@@ -205,11 +207,7 @@ if ($emailType === 'booking_cancellation') {
             . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>";
             $dateRow = "";
             if ($isBlockSession && !empty($blockDates)) {
-                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> <ul style='margin:8px 0 0 18px;padding:0;'>";
-                foreach ($blockDates as $blockDate) {
-                    $dateRow .= "<li style='color:#555;font-size:14px;'>" . htmlspecialchars($blockDate) . "</li>";
-                }
-                $dateRow .= "</ul></div>";
+                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> " . implode(', ', array_map('htmlspecialchars', $blockDates)) . "</div>";
             } else {
                 $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>";
             }
@@ -388,7 +386,7 @@ try {
                 . "<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />"
                 . "<table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'>"
                 . "<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>"
-                . "<h1 style='margin:0 0 10px;font-size:26px;color:#ef4444;'>Session Cancelled</h1>"
+                . "<h1 style='margin:0 0 10px;font-size:26px;'>Session Cancelled</h1>"
                 . "<p style='margin:0 0 30px;color:#666;font-size:14px;'>"
                 . "We regret to inform you that your booked session has been cancelled by the administrator."
                 . "</p>"
@@ -398,11 +396,7 @@ try {
                 . "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Title:</span> " . htmlspecialchars($title) . "</div>";
             $dateRow = "";
             if ($isBlockSession && !empty($blockDates)) {
-                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> <ul style='margin:8px 0 0 18px;padding:0;'>";
-                foreach ($blockDates as $blockDate) {
-                    $dateRow .= "<li style='color:#555;font-size:14px;'>" . htmlspecialchars($blockDate) . "</li>";
-                }
-                $dateRow .= "</ul></div>";
+                $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Dates:</span> " . implode(', ', array_map('htmlspecialchars', $blockDates)) . "</div>";
             } else {
                 $dateRow .= "<div style='margin:10px 0;'><span style='font-weight:bold;color:#555;'>Date:</span> " . htmlspecialchars($date) . "</div>";
             }
@@ -484,8 +478,7 @@ try {
 
     // Build session details HTML based on session type
     if ($isBlockSession) {
-        $sessionDetailsHtml = "
-<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr>";
+        $sessionDetailsHtml = "\n<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr>";
         $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Dates</td><td>";
         foreach ($blockDates as $i => $blockDate) {
             if ($i > 0) $sessionDetailsHtml .= ", ";
@@ -493,7 +486,7 @@ try {
         }
         $sessionDetailsHtml .= "</td></tr>";
         $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
-        $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+        $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>";
         $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
         $sessionDetailsHtml .= "</table>";
     } else {
@@ -507,23 +500,23 @@ try {
         $displayPosition = !empty($waitlistPosition) ? htmlspecialchars((string)$waitlistPosition) : 'N/A';
         $mail->Subject = "Waitlist Confirmation";
 
-        // Block session: use orange container with all dates, else use simple table
+        // Unified table for all session types
+        $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'>";
+        $sessionDetailsHtml .= "<tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr>";
         if ($isBlockSession && !empty($blockDates)) {
-            $sessionDetailsHtml = "<table width='100%' cellpadding='0' cellspacing='0' style='background:#fff8f0;border-left:6px solid #ff9800;border-radius:8px;'><tr><td style='padding:20px;font-family:Arial,sans-serif;'><p style='margin:0;font-size:12px;color:#e65100;font-weight:bold;text-transform:uppercase;'>4-Week Block Session</p><p style='margin:8px 0 15px;font-size:18px;color:#000;font-weight:bold;'>" . htmlspecialchars($title) . "</p><p style='margin:8px 0 15px;font-size:14px;color:#666;'><strong>Time:</strong> " . htmlspecialchars($slot) . "</p><p style='margin:8px 0 15px;font-size:13px;color:#333;font-weight:bold;'>All Session Dates:</p><table width='100%' cellpadding='0' cellspacing='0' style='background:white;border-radius:6px;overflow:hidden;'>";
-            foreach ($blockDates as $blockDate) {
-                $sessionDetailsHtml .= "<tr><td style='padding:10px 15px;border-bottom:1px solid #ffe0b2;font-family:Arial,sans-serif;color:#333;'>
-✓ $blockDate
-</td>
-</tr>
-";
+            $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Dates</td><td>";
+            foreach ($blockDates as $i => $blockDate) {
+                if ($i > 0) $sessionDetailsHtml .= ", ";
+                $sessionDetailsHtml .= htmlspecialchars($blockDate);
             }
-            $sessionDetailsHtml .= "</table></td></tr></table>";
+            $sessionDetailsHtml .= "</td></tr>";
         } else {
-            $sessionDetailsHtml = "<table cellpadding='6' cellspacing='0' width='100%' style='background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;'><tr><td style='font-weight:bold;width:140px;'>Title</td><td>" . htmlspecialchars($title) . "</td></tr><tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr><tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
-            $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
-            $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
-            $sessionDetailsHtml .= "</table>";
+            $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Date</td><td>" . htmlspecialchars($date) . "</td></tr>";
         }
+        $sessionDetailsHtml .= "<tr><td style='font-weight:bold;'>Time</td><td>" . htmlspecialchars($slot) . "</td></tr>";
+        $sessionDetailsHtml .= ($location ? "<tr><td style='font-weight:bold;'>Location</td><td>" . htmlspecialchars($location) . "</td></tr>" : "");
+        $sessionDetailsHtml .= ($price ? "<tr><td style='font-weight:bold;'>Price</td><td>" . htmlspecialchars($price) . "</td></tr>" : "");
+        $sessionDetailsHtml .= "</table>";
 
         $mail->Body = "<!DOCTYPE html><html><body style='margin:0;padding:0;background:#f5f5f5;'><img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' /><table width='100%' cellpadding='0' cellspacing='0'><tr><td align='center'><table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'><tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>\n\n<h1 style='margin:0 0 10px;font-size:26px;'>Waitlist Request Confirmed</h1><p style='margin:0 0 16px;color:#666;'>Hi " . htmlspecialchars($name) . ",</p><p style='margin:0 0 10px;color:#333;'>Your waitlist request is confirmed.</p><p style='margin:0 0 10px;color:#333;'>You are currently number <strong>" . $displayPosition . "</strong> on the waitlist.</p><p style='margin:0 0 10px;color:#333;'>If a place becomes available, you will be notified and asked to complete payment within the stated time window. Unpaid offers may be released.</p><p style='margin:0 0 20px;color:#333;font-weight:bold;'>Please note this is not a booking reservation.</p>" . $sessionDetailsHtml . "<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'><p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p><p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p></td></tr></table></td></tr></table></body></html>";
 

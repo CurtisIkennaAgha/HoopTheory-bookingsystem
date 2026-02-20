@@ -52,9 +52,12 @@ $name = $data['name'] ?? 'Guest';
 $date = $data['date'] ?? '';
 $time = $data['time'] ?? '';
 $title = $data['title'] ?? 'Session';
+
 $sessionKey = $data['sessionKey'] ?? '';
 $blockDates = $data['blockDates'] ?? []; // Array of dates for block sessions
 $blockId = $data['blockId'] ?? null;
+$price = isset($data['price']) ? $data['price'] : '';
+$location = isset($data['location']) ? $data['location'] : '';
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
@@ -144,30 +147,22 @@ try {
     $confirmUrl = $baseUrl . $phpPath . '/reserveOffer.php?token=' . urlencode($token);
     $declineUrl = $baseUrl . $phpPath . '/declineOffer.php?token=' . urlencode($token);
 
-    // Build session details HTML
-    $sessionDetailsHtml = '';
+    // Unified simple table for all session types
+    $sessionDetailsHtml = '<table cellpadding="6" cellspacing="0" width="100%" style="background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;">';
+    $sessionDetailsHtml .= '<tr><td style="font-weight:bold;width:140px;">Title</td><td>' . htmlspecialchars($title) . '</td></tr>';
     if ($isBlockSession) {
-        $sessionDetailsHtml = '<div style="background: #fff8f0; border-left: 6px solid #ff9800; padding: 20px; border-radius: 8px; margin: 20px 0;">'
-            . '<p style="margin: 0 0 15px 0; font-weight: 600; color: #e65100; text-transform: uppercase; font-size: 12px;">4-Week Block Session</p>'
-            . '<p style="margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: #333;"><i style="color: #ff9800;">📅</i> ' . htmlspecialchars($title) . '</p>'
-            . '<p style="margin: 0 0 15px 0; font-size: 14px; color: #666;"><i style="color: #ff9800;">🕐</i> ' . htmlspecialchars($time) . '</p>'
-            . '<p style="margin: 0 0 15px 0; font-weight: 600; color: #333; font-size: 13px;">All Session Dates:</p>'
-            . '<div style="background: white; border-radius: 6px; overflow: hidden;">';
-        foreach ($blockDates as $blockDate) {
-            $sessionDetailsHtml .= '<div style="padding: 10px 15px; border-bottom: 1px solid #ffe0b2; display: flex; align-items: center; gap: 10px;">'
-                . '<span style="color: #ff9800; font-weight: 600;">✓</span>'
-                . '<span style="color: #333;">' . htmlspecialchars($blockDate) . '</span>'
-                . '</div>';
-        }
-        $sessionDetailsHtml .= '</div></div>';
+        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Dates</td><td>' . implode(', ', array_map('htmlspecialchars', $blockDates)) . '</td></tr>';
     } else {
-        $sessionDetailsHtml = '<div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 6px;">'
-            . '<div style="margin: 0;">'
-            . '<p style="margin: 0 0 8px 0; font-weight: 600; color: #065f46;"><i style="color: #10b981;">📅</i> ' . htmlspecialchars($title) . '</p>'
-            . '<p style="margin: 0 0 8px 0; font-size: 14px; color: #666;"><i style="color: #10b981;">🕐</i> ' . htmlspecialchars($time) . '</p>'
-            . '<p style="margin: 0; font-size: 14px; color: #666;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle; margin-right:6px;"><path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10z" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> ' . htmlspecialchars($date) . '</p>'
-            . '</div></div>';
+        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Date</td><td>' . htmlspecialchars($date) . '</td></tr>';
     }
+    $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Time</td><td>' . htmlspecialchars($time) . '</td></tr>';
+    if ($location !== '') {
+        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Location</td><td>' . htmlspecialchars($location) . '</td></tr>';
+    }
+    if ($price !== '') {
+        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Price</td><td>&pound;' . htmlspecialchars($price) . '</td></tr>';
+    }
+    $sessionDetailsHtml .= '</table>';
 
     // Set the email body ONCE, inside the try block
     $mail->Body = "<!DOCTYPE html>\n<html>\n<body style='margin:0;padding:0;background:#f5f5f5;'>\n<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />\n<table width='100%' cellpadding='0' cellspacing='0'>\n<tr><td align='center'>\n<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>\n<tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>\n<h1 style='margin:0 0 10px;font-size:22px;'>Space Available!</h1>\n<p style='margin:0 0 16px;color:#666;'>Hi <strong>$name</strong>,</p>\n<p style='margin:0 0 16px;color:#333;'>A spot has opened up for the session you were waitlisted for.</p>\n$sessionDetailsHtml\n<p style='margin:0 0 16px;color:#333;'>Would you like to confirm your spot or decline the offer?</p>\n<table class='button-table' width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>\n    <tr>\n        <td class='button-cell' width='50%' style='padding: 10px 8px; text-align: center;'>\n            <a href='$confirmUrl' style='display: inline-block; padding: 14px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; min-width: 140px; box-sizing: border-box;'>Reserve Spot</a>\n        </td>\n        <td class='button-cell' width='50%' style='padding: 10px 8px; text-align: center;'>\n            <a href='$declineUrl' style='display: inline-block; padding: 14px 24px; background: #f44336; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; min-width: 140px; box-sizing: border-box;'>Decline Spot</a>\n        </td>\n    </tr>\n</table>\n<p style='font-size: 12px; color: #666;'>This offer expires in 6 hours. If you don't respond by then, the spot will be offered to the next person on the waitlist.</p>\n<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>\n<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>\n<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>\n</td></tr></table>\n</td></tr></table>\n</body>\n</html>";

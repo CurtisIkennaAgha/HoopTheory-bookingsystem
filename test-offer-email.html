@@ -19,6 +19,8 @@
     <label>Time: <input type="text" name="time" required value="18:00"></label>
     <label>Title: <input type="text" name="title" required value="Basketball Session"></label>
     <label>Block Dates (comma-separated YYYY-MM-DD): <input type="text" name="blockDates" placeholder="2026-03-01,2026-03-08,2026-03-15,2026-03-22"></label>
+    <label>Price (£): <input type="number" name="price" step="0.01" min="0" placeholder="e.g., 15.00"></label>
+    <label>Location: <input type="text" name="location" placeholder="e.g., Main Studio, Room 101"></label>
     <button type="submit">Send Offer Email</button>
   </form>
   <div id="result"></div>
@@ -33,6 +35,13 @@
         time: form.time.value,
         title: form.title.value
       };
+      // Add price and location if provided
+      if (form.price.value.trim() !== '') {
+        data.price = form.price.value;
+      }
+      if (form.location.value.trim() !== '') {
+        data.location = form.location.value;
+      }
       // Add blockDates if provided
       if (form.blockDates.value.trim()) {
         data.blockDates = form.blockDates.value.split(',').map(s => s.trim());

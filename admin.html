@@ -3570,6 +3570,28 @@ async function adminSendConfirmation(email, bookingDate, slotTime, slotTitle, na
   }
   
   try {
+    // Try to get price/location from slot data (single or block)
+    let price = '';
+    let location = '';
+    // Try to find the slot in availableSlots
+    let slotsData = await getAvailableSlots();
+    let slotObj = null;
+    if (blockDatesArray && blockDatesArray.length) {
+      // Block session: try to find the first slot in the block
+      let blockDate = blockDatesArray[0];
+      if (slotsData[blockDate]) {
+        slotObj = slotsData[blockDate].find(s => s.time === slotTime && s.title === slotTitle);
+      }
+    } else {
+      // Single session
+      if (slotsData[bookingDate]) {
+        slotObj = slotsData[bookingDate].find(s => s.time === slotTime && s.title === slotTitle);
+      }
+    }
+    if (slotObj) {
+      price = slotObj.price !== undefined ? slotObj.price : '';
+      location = slotObj.location !== undefined ? slotObj.location : '';
+    }
     const emailBody = { 
       email, 
       slot: slotTime, 
@@ -3577,7 +3599,9 @@ async function adminSendConfirmation(email, bookingDate, slotTime, slotTitle, na
       title: slotTitle, 
       name, 
       adminMessage: additionalMessage || '',
-      bookingId: bookingId
+      bookingId: bookingId,
+      price: price,
+      location: location
     };
     if (blockDatesArray && blockDatesArray.length) emailBody.blockDates = blockDatesArray;
     console.log('🟢 ADMIN SENDCONFIRM: Sending email with body:', emailBody);
@@ -6390,10 +6414,18 @@ async function renderWaitlist(){
           try {
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            // Find slot for price/location
+            let slotsData = await getAvailableSlots();
+            let slotObj = null;
+            if (slotsData[sessionInfo.date]) {
+              slotObj = slotsData[sessionInfo.date].find(s => s.time === sessionInfo.time && s.title === sessionInfo.title);
+            }
+            let price = slotObj && slotObj.price !== undefined ? slotObj.price : '';
+            let location = slotObj && slotObj.location !== undefined ? slotObj.location : '';
             const response = await fetch(PHP_PATH + 'sendOfferEmail.php', {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ email: email, date: sessionInfo.date, time: sessionInfo.time, title: sessionInfo.title, sessionKey: sessionKey, blockDates: [] })
+              body: JSON.stringify({ email: email, date: sessionInfo.date, time: sessionInfo.time, title: sessionInfo.title, sessionKey: sessionKey, blockDates: [], price: price, location: location })
             });
             if (!response.ok) {
               const errorData = await response.json();
@@ -6726,10 +6758,18 @@ async function renderWaitlist(){
                 try {
                   offerBtn.disabled = true;
                   offerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                  // Find slot for price/location
+                  let slotsData = await getAvailableSlots();
+                  let slotObj = null;
+                  if (slotsData[date]) {
+                    slotObj = slotsData[date].find(s => s.time === time && s.title === title);
+                  }
+                  let price = slotObj && slotObj.price !== undefined ? slotObj.price : '';
+                  let location = slotObj && slotObj.location !== undefined ? slotObj.location : '';
                   const response = await fetch(PHP_PATH + 'sendOfferEmail.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email: person.email, name: person.name, date: date, time: time, title: title, sessionKey: sessionKey, blockDates: blockDates })
+                    body: JSON.stringify({ email: person.email, name: person.name, date: date, time: time, title: title, sessionKey: sessionKey, blockDates: blockDates, price: price, location: location })
                   });
                   if (!response.ok) {
                     const errorData = await response.json();

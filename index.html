@@ -1829,45 +1829,42 @@ function showBookingForm(isFullyBooked) {
   }
 
   if (isFullyBooked) {
-    // For fully booked single slots, hide waitlist form initially
-    if (bookingForm) {
-      bookingForm.classList.add('hidden');
-      bookingForm.style.display = 'none';
+    // If block session, show block confirmation (not waitlist form)
+    if (selectedSlot && selectedSlot.blockId) {
+      // Show block confirmation UI (handled elsewhere)
+      hidePlayerRegistration(true);
+      if (bookingForm) {
+        bookingForm.classList.add('hidden');
+        bookingForm.style.display = 'none';
+      }
+      if (waitlistForm) {
+        waitlistForm.classList.add('hidden');
+        waitlistForm.style.display = 'none';
+      }
+      if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
+      if (titleEl) titleEl.classList.add('hidden');
+      if (regForm) regForm.classList.add('hidden');
+      // Block confirmation is shown by showBlockConfirmation()
+      return;
+    } else {
+      // For fully booked single sessions, show waitlist form immediately
+      if (bookingForm) {
+        bookingForm.classList.add('hidden');
+        bookingForm.style.display = 'none';
+      }
+      if (waitlistForm) {
+        waitlistForm.classList.remove('hidden');
+        waitlistForm.style.display = '';
+      }
+      if (waitlistFormTitle) waitlistFormTitle.classList.remove('hidden');
+      if (titleEl) titleEl.classList.add('hidden');
+      if (regForm) regForm.classList.add('hidden');
+      if (waitlistConfirm) waitlistConfirm.checked = true;
+      if (regForm && regHostWaitlist && regForm.parentElement !== regHostWaitlist) {
+        regHostWaitlist.appendChild(regForm);
+      }
+      return;
     }
-    if (titleEl) titleEl.classList.add('hidden');
-    if (regForm) regForm.classList.add('hidden');
-    if (waitlistForm) {
-      waitlistForm.classList.add('hidden');
-      waitlistForm.style.display = 'none';
-    }
-    if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
-    if (waitlistConfirm) waitlistConfirm.checked = false;
-    // Attach handler to block confirmation checkbox to show waitlist form
-    const blockCheckbox = document.getElementById('blockCheckbox');
-    if (blockCheckbox) {
-      blockCheckbox.onchange = (e) => {
-        if (e.target.checked) {
-          if (waitlistForm) {
-            waitlistForm.classList.remove('hidden');
-            waitlistForm.style.display = '';
-            if (waitlistFormTitle) waitlistFormTitle.classList.remove('hidden');
-            setTimeout(() => {
-              waitlistForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 200);
-          }
-        } else {
-          if (waitlistForm) {
-            waitlistForm.classList.add('hidden');
-            waitlistForm.style.display = 'none';
-            if (waitlistFormTitle) waitlistFormTitle.classList.add('hidden');
-          }
-        }
-      };
-    }
-    if (regForm && regHostWaitlist && regForm.parentElement !== regHostWaitlist) {
-      regHostWaitlist.appendChild(regForm);
-    }
-    return;
   }
   // Check if this is a block session
   if (selectedSlot && selectedSlot.blockId) {

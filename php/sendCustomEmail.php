@@ -102,37 +102,33 @@ try {
   $mail->setFrom($env['MAIL_FROM_ADDRESS'] ?? 'noreply@hooptheory.co.uk', $env['MAIL_FROM_NAME'] ?? 'Hoop Theory');
   
   // Build HTML email
+
+  // Use the same header/footer as sendEmail.php
   $htmlBody = <<<HTML
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0;">
-  <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
-    <!-- Header -->
-    <div style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); padding: 30px 20px; text-align: center; color: white;">
-      <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Hoop Theory</h1>
-      <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Message from Admin</p>
-    </div>
+<body style='margin:0;padding:0;background:#f5f5f5;'>
+<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />
+<table width='100%' cellpadding='0' cellspacing='0'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>
+<tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>
 
-    <!-- Content -->
-    <div style="padding: 30px 20px; color: #333; line-height: 1.6;">
-      <div style="white-space: pre-wrap; word-wrap: break-word; background: #f5f5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #4f46e5;">
+<h1 style='margin:0 0 10px;font-size:24px;color:#2563eb;'>Message from Admin</h1>
+<div style='margin:20px 0 30px 0; background:#f5f5f5; padding:18px 20px; border-radius:8px; border-left:4px solid #2563eb; color:#333; font-size:16px; white-space:pre-wrap; word-break:break-word;'>
 HTML;
 
   $htmlBody .= htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
 
   $htmlBody .= <<<HTML
-      </div>
-    </div>
+</div>
 
-    <!-- Footer -->
-    <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee;">
-      <p style="margin: 0;">© 2025 Hoop Theory. All rights reserved.</p>
-    </div>
-  </div>
+<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>
+<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>
+<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>
+
+</td></tr></table>
+</td></tr></table>
 </body>
 </html>
 HTML;
