@@ -38,10 +38,11 @@ try {
     if (is_array($blockDates) && count($blockDates) > 0) {
       $firstDate = $blockDates[0];
       if (isset($waitlist[$firstDate])) {
-        $waitlist[$firstDate] = array_filter($waitlist[$firstDate], function($entry) use ($email, $blockId) {
+        $waitlist[$firstDate] = array_filter($waitlist[$firstDate], function($entry) use ($email, $name, $blockId) {
           $emailMatch = isset($entry['email']) && $entry['email'] === $email;
+          $nameMatch = isset($entry['name']) && $entry['name'] === $name;
           $blockMatch = isset($entry['blockId']) && $entry['blockId'] === $blockId;
-          return !($emailMatch && $blockMatch);
+          return !($emailMatch && $nameMatch && $blockMatch);
         });
         $waitlist[$firstDate] = array_values($waitlist[$firstDate]);
         if (count($waitlist[$firstDate]) === 0) {
@@ -51,10 +52,11 @@ try {
     } else if ($date) {
       // Fallback: if blockDates not provided, try the given date
       if (isset($waitlist[$date])) {
-        $waitlist[$date] = array_filter($waitlist[$date], function($entry) use ($email, $blockId) {
+        $waitlist[$date] = array_filter($waitlist[$date], function($entry) use ($email, $name, $blockId) {
           $emailMatch = isset($entry['email']) && $entry['email'] === $email;
+          $nameMatch = isset($entry['name']) && $entry['name'] === $name;
           $blockMatch = isset($entry['blockId']) && $entry['blockId'] === $blockId;
-          return !($emailMatch && $blockMatch);
+          return !($emailMatch && $nameMatch && $blockMatch);
         });
         $waitlist[$date] = array_values($waitlist[$date]);
         if (count($waitlist[$date]) === 0) {
@@ -65,13 +67,11 @@ try {
   } else if ($date) {
     // Remove the person from the waitlist for this date (single session)
     if (isset($waitlist[$date])) {
-      $waitlist[$date] = array_filter($waitlist[$date], function($entry) use ($email) {
-        return $entry['email'] !== $email;
+      $waitlist[$date] = array_filter($waitlist[$date], function($entry) use ($email, $name) {
+        return !(isset($entry['email']) && $entry['email'] === $email && isset($entry['name']) && $entry['name'] === $name);
       });
-      
       // Reindex array
       $waitlist[$date] = array_values($waitlist[$date]);
-      
       // Remove date if no more entries
       if (count($waitlist[$date]) === 0) {
         unset($waitlist[$date]);

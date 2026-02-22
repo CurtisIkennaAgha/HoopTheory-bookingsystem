@@ -556,11 +556,9 @@ button:disabled {
   background: none !important;
   border: none !important;
   font-weight: 500;
-  font-size: 0.93rem;
-  color: #222;
+  font-size: clamp(0.72rem, 2.5vw, 0.78rem);
   margin: 0 0 2px 0;
-  font-family: 'Inter', Arial, sans-serif;
-  font-weight: 410;
+  font-family: 'Inter';
   letter-spacing: 0.01em;
   line-height: 1.2;
 }
@@ -578,7 +576,7 @@ button:disabled {
   background: none !important;
   border: none !important;
   font-weight: 500;
-  font-size: 0.78rem;
+  font-size: clamp(0.72rem, 2.5vw, 0.78rem);
   text-decoration: underline;
   cursor: pointer;
   width: auto !important;
@@ -1732,14 +1730,17 @@ body.modal-open-payment {
 /* Clamp titles to two lines to avoid overflow while keeping uniform height */
 .slot-title {
     line-height: normal;
-  font-size:0.9rem;
-  font-weight:500;
-  color:#0f172a;
-  flex: 1 1 auto;
-  padding-right: 0;
-  /* Removed truncation properties to allow wrapping */
-  max-width: 100%;
-  /* margin-bottom and margin-top reset removed to allow natural spacing */
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #0f172a;
+    flex: 1 1 auto;
+    padding-right: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+    /* margin-bottom and margin-top reset removed to allow natural spacing */
 }
 
 .slot-meta, .slot-extra { word-break: break-word; }

@@ -1,10 +1,41 @@
 <?php
 header('Content-Type: text/html; charset=utf-8');
 
+
 $token = $_GET['token'] ?? '';
 $message = '';
 $isSuccess = false;
 $sessionInfo = '';
+
+// TEST MODE: If token is 'test', show page with placeholder info
+if ($token === 'test') {
+    $isSuccess = true;
+    $offer = [
+        'title' => 'Test Block Session Title',
+        'date' => '2026-03-23',
+        'status' => 'declined',
+        'email' => 'testuser@example.com',
+        'time' => '18:00',
+        'expiresAt' => date('Y-m-d H:i:s', strtotime('+1 day')),
+        'blockDates' => [
+            '2026-03-23',
+            '2026-03-30',
+            '2026-04-06',
+            '2026-04-13'
+        ]
+    ];
+    [$year, $month, $day] = explode('-', $offer['date']);
+    $monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    $dayNum = (int)$day;
+    $monthName = $monthNames[(int)$month - 1];
+    $suffix = 'th';
+    if ($dayNum % 10 === 1 && $dayNum !== 11) $suffix = 'st';
+    elseif ($dayNum % 10 === 2 && $dayNum !== 12) $suffix = 'nd';
+    elseif ($dayNum % 10 === 3 && $dayNum !== 13) $suffix = 'rd';
+    $formattedDate = "{$dayNum}{$suffix} {$monthName} {$year}";
+    $sessionInfo = htmlspecialchars($offer['title']) . ' on ' . $formattedDate;
+    goto render;
+}
 
 if (!$token) {
     $message = 'Invalid token';
@@ -306,14 +337,38 @@ render:
             <div class="header <?php echo $isSuccess ? 'success' : 'error'; ?>">
                 <span class="icon"><?php echo $isSuccess ? '↩️' : '✕'; ?></span>
                 <h1><?php echo $isSuccess ? 'Spot Declined' : 'Oops'; ?></h1>
-                <p><?php echo $isSuccess ? 'We\'ve noted your preference' : 'Unable to process your request'; ?></p>
+                <p><?php echo $isSuccess ? '' : 'Unable to process your request'; ?></p>
             </div>
             
             <div class="content">
                 <?php if ($isSuccess): ?>
                     <div class="session-details">
                         <strong>Session Details</strong>
-                        <p><?php echo $sessionInfo; ?></p>
+                        <ul style="list-style:none;padding:0;margin:0;">
+                            <li><b>Title:&nbsp;&nbsp;</b> <?php echo htmlspecialchars($offer['title']); ?></li>
+                            <li><b>Date:&nbsp;&nbsp;</b> 
+                                <?php
+                                if (isset($offer['blockDates']) && is_array($offer['blockDates']) && count($offer['blockDates']) > 0) {
+                                    $monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                    $datesOut = [];
+                                    foreach ($offer['blockDates'] as $blockDate) {
+                                        [$year, $month, $day] = explode('-', $blockDate);
+                                        $dayNum = (int)$day;
+                                        $monthName = $monthNames[(int)$month - 1];
+                                        $suffix = 'th';
+                                        if ($dayNum % 10 === 1 && $dayNum !== 11) $suffix = 'st';
+                                        elseif ($dayNum % 10 === 2 && $dayNum !== 12) $suffix = 'nd';
+                                        elseif ($dayNum % 10 === 3 && $dayNum !== 13) $suffix = 'rd';
+                                        $datesOut[] = "$dayNum$suffix $monthName $year";
+                                    }
+                                    echo implode(', ', $datesOut);
+                                } else {
+                                    echo $formattedDate ?? $sessionInfo;
+                                }
+                                ?>
+                            </li>
+                            <li><b>Time:&nbsp;&nbsp;</b> <?php echo htmlspecialchars($offer['time']); ?></li>
+                        </ul>
                     </div>
                     
                     <div class="message">
@@ -326,7 +381,6 @@ render:
                             <li>You've been removed from the waitlist</li>
                             <li>The spot will be offered to the next person</li>
                             <li>You can still book other sessions</li>
-                            <li>Interested later? Just book again!</li>
                         </ul>
                     </div>
                 <?php else: ?>
@@ -334,20 +388,19 @@ render:
                         <?php echo htmlspecialchars($message); ?>
                     </div>
                     <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
-                        If you believe this is an error or have questions about your booking, please contact us at <strong>bao@hooptheory.co.uk</strong>.
+                        If you believe this is an error or have questions about your booking, please contact us <strong><a href="https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x" target="_blank">via WhatsApp</a></strong>.
                     </p>
                 <?php endif; ?>
                 
                 <div class="buttons">
                     <a href="https://hooptheory.co.uk" class="btn btn-primary">Back to Hoop Theory</a>
-                    <a href="mailto:bao@hooptheory.co.uk" class="btn btn-secondary">Contact Support</a>
+                    <a href="https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x" class="btn btn-secondary">Contact Us Via WhatsApp</a>
                 </div>
             </div>
             
             <div class="footer">
-                <div class="logo">Hoop Theory</div>
-                <p>Basketball Court Booking System</p>
-            </div>
+                <p>&copy; 2023 Hoop Theory. All rights reserved.</p>
+            </div>  
         </div>
     </div>
 </body>

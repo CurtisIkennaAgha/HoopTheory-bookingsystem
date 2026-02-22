@@ -254,11 +254,31 @@ try {
     
     // Add user to tracking
     addUserToTracking($name, $email);
-    
+
+    // Log activity
+    $logPayload = [
+      'type' => 'booking',
+      'action' => 'create',
+      'title' => 'Booking Created',
+      'message' => "Booking for $name ($email) on $primaryDate, $slotTitle, $slotTime.",
+      'player' => [ 'name' => $name, 'email' => $email ],
+      'session' => [ 'date' => $primaryDate, 'title' => $slotTitle, 'time' => $slotTime ],
+      'meta' => [ 'bookingId' => $bookingId, 'blockId' => $blockId, 'blockDates' => $blockDates ]
+    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://hooptheory.co.uk/php/logActivity.php');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($logPayload));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+    $logResponse = curl_exec($ch);
+    curl_close($ch);
+
     // NOTE: Email is NOT sent here. It will be sent after user closes payment popup.
     // The bookingId will be included in the email data.
     error_log('Booking created - bookingId: ' . $bookingId . ', email will be sent after payment popup closes. Email: ' . $email);
-    
+
     // Also return expirySeconds used for this booking
     $configFile = __DIR__ . '/../data/bookingExpiryConfig.json';
     $expirySeconds = 40;

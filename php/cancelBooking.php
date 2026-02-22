@@ -41,7 +41,9 @@ try {
       $isBlock = !empty($m['isBlock']);
       $blockDates = $m['blockDates'] ?? $blockDates;
       $blockId = $m['blockId'] ?? $blockId;
-      $date = $m['date'] ?? $date;
+      if (!empty($m['date'])) {
+        $date = $m['date'];
+      }
     }
     // If bookingId is not found, throw error only if it was never in the system
     else {
@@ -57,25 +59,35 @@ try {
   $bookings = file_exists($bookingsFile) ? json_decode(file_get_contents($bookingsFile), true) : [];
   $slots = file_exists($slotsFile) ? json_decode(file_get_contents($slotsFile), true) : [];
   
-  // Helper to match booking entries regardless of name formatting
-  $matchesBooking = function($entry) use ($time, $title, $email) {
-    $entryTime = '';
-    $entryTitle = '';
-    $entryEmail = '';
-    if (preg_match('/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/', $entry, $m)) {
-      $entryTime = $m[1];
-      $entryTitle = $m[2];
-      $entryEmail = $m[4];
+  // Deterministic matcher: parses and compares all fields exactly
+  $matchesBooking = function($entry) use ($time, $title, $email, $name) {
+    // Remove the last two parentheses groups (name + email) from the end
+    $mainPart = preg_replace('/\s*\([^()]*\)\s*\([^()]*\)\s*$/', '', $entry);
+    // Parse time and title from main part
+    $mainParts = explode(' - ', $mainPart, 2);
+    if (count($mainParts) !== 2) {
+      return false; // Malformed entry
     }
-    if ($entryTime !== '' && $entryTitle !== '' && $entryEmail !== '') {
-      return (strcasecmp(trim($entryTime), trim($time)) === 0)
-        && (strcasecmp(trim($entryTitle), trim($title)) === 0)
-        && (strcasecmp(trim($entryEmail), trim($email)) === 0);
+    $entryTime = trim($mainParts[0]);
+    $entryTitle = trim($mainParts[1]);
+    // Extract all parentheses groups
+    $groups = [];
+    if (preg_match_all('/\(([^)]+)\)/', $entry, $matches)) {
+      $groups = $matches[1];
     }
-    // Fallback: match by substring for time/title/email
-    return (stripos($entry, $time) !== false)
-      && (stripos($entry, $title) !== false)
-      && (stripos($entry, $email) !== false);
+    if (count($groups) < 2) {
+      return false; // Malformed entry
+    }
+    // Always use the last two groups for name and email
+    $entryName = trim($groups[count($groups)-2]);
+    $entryEmail = trim($groups[count($groups)-1]);
+    // Compare all four fields exactly (case-insensitive for name/email)
+    return (
+      $entryTime === $time &&
+      $entryTitle === $title &&
+      strcasecmp($entryName, $name) === 0 &&
+      strcasecmp($entryEmail, $email) === 0
+    );
   };
   
   // Handle block booking cancellation
@@ -94,13 +106,13 @@ try {
       
       // Remove from bookedUsers in slots
       if (isset($slots[$blockDate])) {
-        foreach ($slots[$blockDate] as &$slot) {
-          if ($slot['time'] === $time && $slot['title'] === $title) {
-            if (isset($slot['bookedUsers'])) {
-              $slot['bookedUsers'] = array_filter($slot['bookedUsers'], function($user) use ($email) {
-                return $user['email'] !== $email;
+        foreach ($slots[$blockDate] as &$slotEntry) {
+          if ($slotEntry['time'] === $time && $slotEntry['title'] === $title) {
+            if (isset($slotEntry['bookedUsers'])) {
+              $slotEntry['bookedUsers'] = array_filter($slotEntry['bookedUsers'], function($user) use ($email, $name) {
+                return !($user['email'] === $email && isset($user['name']) && $user['name'] === $name);
               });
-              $slot['bookedUsers'] = array_values($slot['bookedUsers']);
+              $slotEntry['bookedUsers'] = array_values($slotEntry['bookedUsers']);
             }
           }
         }
@@ -122,13 +134,13 @@ try {
     
     // Remove from bookedUsers in slots
     if (isset($slots[$date])) {
-      foreach ($slots[$date] as &$slot) {
-        if ($slot['time'] === $time && $slot['title'] === $title) {
-          if (isset($slot['bookedUsers'])) {
-            $slot['bookedUsers'] = array_filter($slot['bookedUsers'], function($user) use ($email) {
-              return $user['email'] !== $email;
+      foreach ($slots[$date] as &$slotEntry) {
+        if ($slotEntry['time'] === $time && $slotEntry['title'] === $title) {
+          if (isset($slotEntry['bookedUsers'])) {
+            $slotEntry['bookedUsers'] = array_filter($slotEntry['bookedUsers'], function($user) use ($email, $name) {
+              return !($user['email'] === $email && isset($user['name']) && $user['name'] === $name);
             });
-            $slot['bookedUsers'] = array_values($slot['bookedUsers']);
+            $slotEntry['bookedUsers'] = array_values($slotEntry['bookedUsers']);
           }
         }
       }
@@ -175,6 +187,16 @@ try {
   // Send cancellation email to user
   // Use HTTP URL for sendEmail.php as in other scripts
   $sendEmailUrl = 'https://hooptheory.co.uk/php/sendEmail.php';
+  // Safely fetch slot data for email payload after sync
+  $slotData = null;
+  if (isset($slots[$date])) {
+    foreach ($slots[$date] as $s) {
+      if ($s['time'] === $time && $s['title'] === $title) {
+        $slotData = $s;
+        break;
+      }
+    }
+  }
   $emailPayload = [
     'email' => $email,
     'slot' => $time,
@@ -183,7 +205,9 @@ try {
     'name' => $name,
     'blockDates' => $blockDates,
     'type' => 'booking_cancellation',
-    'bookingId' => $bookingId
+    'bookingId' => $bookingId,
+    'location' => isset($slotData) && isset($slotData['location']) ? $slotData['location'] : '',
+    'price' => isset($slotData) && isset($slotData['price']) ? $slotData['price'] : '',
   ];
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $sendEmailUrl);

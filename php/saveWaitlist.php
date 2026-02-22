@@ -126,15 +126,17 @@ try {
     // Check if this user already on waitlist for this block
     $alreadyOnWaitlist = false;
     foreach ($waitlist[$firstDate] as $existing) {
-      if (($existing['email'] ?? '') === $email && 
-          ($existing['blockId'] ?? null) === $blockId &&
-          ($existing['time'] ?? '') === $slotTime &&
-          ($existing['title'] ?? '') === $slotTitle) {
+      $emailMatch = ($existing['email'] ?? '') === $email;
+      $nameMatch = ($existing['name'] ?? '') === $name;
+      $blockIdMatch = ($existing['blockId'] ?? null) === $blockId;
+      $timeMatch = ($existing['time'] ?? '') === $slotTime;
+      $titleMatch = ($existing['title'] ?? '') === $slotTitle;
+      // Only consider as duplicate if name, email, and blockId all match (plus time/title)
+      if ($emailMatch && $nameMatch && $blockIdMatch && $timeMatch && $titleMatch) {
         $alreadyOnWaitlist = true;
         break;
       }
     }
-    
     if ($alreadyOnWaitlist) {
       throw new Exception('Already on waitlist for this block session');
     }
@@ -188,7 +190,7 @@ try {
     $seen = [];
     $deduped = [];
     foreach ($entries as $entry) {
-      $key = strtolower(trim(($entry['email'] ?? '') . '|' . ($entry['time'] ?? '') . '|' . ($entry['title'] ?? '') . '|' . ($entry['blockId'] ?? '')));
+      $key = strtolower(trim(($entry['email'] ?? '') . '|' . ($entry['name'] ?? '') . '|' . ($entry['time'] ?? '') . '|' . ($entry['title'] ?? '') . '|' . ($entry['blockId'] ?? '')));
       if (isset($seen[$key])) continue;
       $seen[$key] = true;
       $deduped[] = $entry;

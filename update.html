@@ -1,3 +1,7 @@
+<!-- This is a development copy of index.html for testing updates before going live. -->
+<!-- Copy of index.html as of 2026-02-21 -->
+
+<!-- ...existing code from index.html will be here... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -749,15 +753,17 @@ async function isPlayerAlreadyBooked(email, date, slot) {
   if (!email || !date || !slot) return false;
 
   const norm = (val) => (val ?? '').toString().trim().toLowerCase();
+  const name = document.getElementById('name')?.value || '';
+  const normName = norm(name);
   
   try {
     // First check: for block bookings, check the bookedUsers array in the slot itself
     if (slot.bookedUsers && Array.isArray(slot.bookedUsers)) {
       const userAlreadyInBlock = slot.bookedUsers.some(user => {
-        return user && user.email && norm(user.email) === norm(email);
+        return user && user.email && user.name && norm(user.email) === norm(email) && norm(user.name) === normName;
       });
       if (userAlreadyInBlock) {
-        console.log('Found duplicate in block bookedUsers array');
+        console.log('Found duplicate in block bookedUsers array (email+name match)');
         return true;
       }
     }
@@ -778,14 +784,18 @@ async function isPlayerAlreadyBooked(email, date, slot) {
       
       const alreadyBooked = bookingsOnDate.some(booking => {
         if (!booking || typeof booking !== 'string') return false;
-        const match = booking.match(/^(.+?)\s*-\s*(.+?)\s*\(/);
+        // Try to extract name and email from booking string
+        // Format: "HH:MM - Title (Name) (Email)"
+        const match = booking.match(/^(.+?)\s*-\s*(.+?)\s*\((.+?)\)\s*\((.+?)\)$/);
         if (!match) return false;
         const bookingTime = norm(match[1]);
         const bookingTitle = norm(match[2]);
+        const bookingName = norm(match[3]);
         const bookingEmail = norm(match[4]);
         const matchesSlot = bookingTime === norm(slot.time) && bookingTitle === norm(slot.title);
         const matchesEmail = bookingEmail === norm(email);
-        return matchesSlot && matchesEmail;
+        const matchesName = bookingName === normName;
+        return matchesSlot && matchesEmail && matchesName;
       });
       
       if (alreadyBooked) {
@@ -1505,20 +1515,23 @@ async function handleDateClick(div, dateStr){
     const spots = slot.capacity || 1;
     let booked = 0;
     let full = false;
+    let debugBookingIds = [];
     // --- Unified booked count using bookingMappings ---
     if (isBlock) {
-      // For block sessions: aggregate unique emails across ALL blockDates from bookingMappings
-      const uniqueEmails = new Set();
+      // For block sessions: count ALL matching bookings by exact session title and time (not blockId)
       for (const [bookingId, mapping] of Object.entries(bookingMappings)) {
         if (!mapping || mapping.status === 'Cancelled') continue;
-        // Must match blockId and at least one blockDate
-        if (mapping.blockId === slot.blockId && Array.isArray(mapping.blockDates)) {
-          if (mapping.blockDates.some(d => slot.blockDates.includes(d))) {
-            if (mapping.email) uniqueEmails.add(mapping.email.toLowerCase());
-          }
+        // Match by title and time, and at least one blockDate overlap
+        if (
+          mapping.title === slot.title &&
+          mapping.slot === slot.time &&
+          Array.isArray(mapping.blockDates) &&
+          mapping.blockDates.some(d => slot.blockDates.includes(d))
+        ) {
+          booked++;
+          debugBookingIds.push(bookingId + ' (' + (mapping.name || '') + ' / ' + (mapping.email || '') + ')');
         }
       }
-      booked = uniqueEmails.size;
       // Fallback: if no mappings, use bookedUsers
       if (booked === 0 && slot.bookedUsers && Array.isArray(slot.bookedUsers)) {
         booked = slot.bookedUsers.length;
@@ -1606,7 +1619,7 @@ async function handleDateClick(div, dateStr){
         colorClass = 'block-color-red';
         full = true;
       }
-      console.log(`🌉 Block slot ${slot.title}: bridgeState=${inBridgeState} full=${blockIsFull}`);
+      console.log(`🌉 Block slot ${slot.title}: bridgeState=${inBridgeState} full=${blockIsFull} | Booked: ${booked} | Booking IDs:`, debugBookingIds);
 
       let priceVal = slot.price;
       if (typeof priceVal === 'string') priceVal = parseFloat(priceVal);
@@ -1703,6 +1716,9 @@ async function handleDateClick(div, dateStr){
 // Toggle selection when clicking a block card; indicator reflects selected state
     el.onclick = () => {
       console.log('%c[STEP 2: SLOT SELECT]%c Clicked. inBridgeState=' + inBridgeState, 'color:#3b82f6;font-weight:bold;', 'color:inherit;');
+      if (isBlock) {
+        console.log(`[DEBUG] Block booking count for '${slot.title}' (${slot.time}): ${booked} bookings. Booking IDs:`, debugBookingIds);
+      }
       // Remove all scroll logic from here; only scroll after UI is ready in showBlockConfirmation
       document.querySelectorAll('.slot-card').forEach(s => { s.classList.remove('selected'); s.querySelector('.select-indicator')?.setAttribute('aria-pressed','false'); });
       el.classList.add('selected');
@@ -2244,7 +2260,8 @@ function generatePaymentReference() {
   return null; // Will be set dynamically
 }
 
-function showPaymentInstructions(slot, name, email, date, bookingId) {
+let reservationEmailSent = false;
+async function showPaymentInstructions(slot, name, email, date, bookingId) {
   console.log('%c[STEP 6: PAYMENT INSTRUCTIONS]%c', 'color:#10b981;font-weight:bold;', 'color:inherit;', { slot, name, email, date, bookingId });
   console.log('🔵 BookingId received:', bookingId);
   const modal = document.getElementById('paymentModal');
@@ -2358,6 +2375,19 @@ function showPaymentInstructions(slot, name, email, date, bookingId) {
   // Hide the booking form
   const bookingForm = document.getElementById('bookingForm');
   if (bookingForm) bookingForm.style.display = 'none';
+
+  // Send reservation email when modal opens (only once)
+  if (!reservationEmailSent) {
+    reservationEmailSent = true;
+    try {
+      const emailSent = await sendReservationEmail();
+      if (!emailSent) {
+        console.error('Reservation email failed to send.');
+      }
+    } catch (err) {
+      console.error('Error sending reservation email:', err);
+    }
+  }
 }
 
 function hidePaymentInstructions() {
@@ -3669,31 +3699,25 @@ document.getElementById('copyRefBtn').onclick = (e) => {
 
 /* ================= MODAL CONTROLS ================= */
 document.getElementById('closePaymentModal').onclick = async () => {
-  console.log('X button clicked - sending reservation email and closing');
-  const emailSent = await sendReservationEmail();
-  if (emailSent) {
-    currentBookingData = null;
-    currentBookingId = null;
-    hidePaymentInstructions();
-    setTimeout(() => {
-      console.log('Auto-refreshing page to show pending reservation state');
-      location.reload();
-    }, 1000);
-  }
+  console.log('X button clicked - closing payment modal');
+  currentBookingData = null;
+  currentBookingId = null;
+  hidePaymentInstructions();
+  setTimeout(() => {
+    console.log('Auto-refreshing page to show pending reservation state');
+    location.reload();
+  }, 1000);
 };
 
 document.getElementById('closePaymentBtn').onclick = async () => {
-  console.log('Close button clicked - sending reservation email and closing');
-  const emailSent = await sendReservationEmail();
-  if (emailSent) {
-    currentBookingData = null;
-    currentBookingId = null;
-    hidePaymentInstructions();
-    setTimeout(() => {
-      console.log('Auto-refreshing page to show pending reservation state');
-      location.reload();
-    }, 1000);
-  }
+  console.log('Close button clicked - closing payment modal');
+  currentBookingData = null;
+  currentBookingId = null;
+  hidePaymentInstructions();
+  setTimeout(() => {
+    console.log('Auto-refreshing page to show pending reservation state');
+    location.reload();
+  }, 1000);
 };
 
 // Disable overlay click to close (only allow explicit close via button)

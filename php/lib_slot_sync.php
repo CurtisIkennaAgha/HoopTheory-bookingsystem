@@ -23,49 +23,65 @@ function sync_slots_from_bookings(string $bookingsFile, string $slotsFile, bool 
 
     foreach ($updated as $date => $daySlots) {
         foreach ($daySlots as $i => $slot) {
-            $expectedEmails = [];
+            $expectedUsers = [];
             if (!empty($bookings[$date]) && is_array($bookings[$date])) {
                 foreach ($bookings[$date] as $bstr) {
                     if (!is_string($bstr)) continue;
                     // match booking strings that reference this slot's time and title
                     if (strpos($bstr, $slot['time']) !== false && strpos($bstr, $slot['title']) !== false) {
-                        if (preg_match('/\(([^")]+@[^")]+)\)$/', $bstr, $m)) {
-                            $expectedEmails[] = strtolower(trim($m[1]));
+                        // Format: "HH:MM - Title (Name) (Email)"
+                        if (preg_match('/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/', $bstr, $m)) {
+                            $expectedUsers[] = [
+                                'email' => strtolower(trim($m[4])),
+                                'name' => trim($m[3])
+                            ];
                         }
                     }
                 }
             }
-
-            $expectedEmails = array_values(array_unique($expectedEmails));
+            // Remove duplicates by email+name
+            $expectedUsers = array_values(array_unique($expectedUsers, SORT_REGULAR));
 
             $slotBooked = $slot['bookedUsers'] ?? [];
-            $slotEmails = array_map(function($b) {
-                if (is_array($b) && !empty($b['email'])) return strtolower(trim($b['email']));
-                if (is_string($b) && preg_match('/\(([^")]+@[^")]+)\)$/', $b, $m)) return strtolower(trim($m[1]));
+            $slotUsers = array_map(function($b) {
+                if (is_array($b) && isset($b['email']) && isset($b['name'])) {
+                    return [
+                        'email' => strtolower(trim($b['email'])),
+                        'name' => trim($b['name'])
+                    ];
+                }
+                if (is_string($b) && preg_match('/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/', $b, $m)) {
+                    return [
+                        'email' => strtolower(trim($m[4])),
+                        'name' => trim($m[3])
+                    ];
+                }
                 return null;
             }, $slotBooked);
-            $slotEmails = array_values(array_filter(array_unique($slotEmails)));
+            $slotUsers = array_values(array_filter($slotUsers));
 
-            sort($expectedEmails); sort($slotEmails);
+            // Sort for comparison
+            usort($expectedUsers, function($a, $b) {
+                return strcmp($a['email'] . $a['name'], $b['email'] . $b['name']);
+            });
+            usort($slotUsers, function($a, $b) {
+                return strcmp($a['email'] . $a['name'], $b['email'] . $b['name']);
+            });
 
-            if ($expectedEmails !== $slotEmails) {
+            if ($expectedUsers !== $slotUsers) {
                 $res['changes'][] = [
                     'date' => $date,
                     'slotIndex' => $i,
                     'time' => $slot['time'] ?? null,
                     'title' => $slot['title'] ?? null,
-                    'expected' => $expectedEmails,
-                    'current' => $slotEmails
+                    'expected' => $expectedUsers,
+                    'current' => $slotUsers
                 ];
 
                 $res['changed'] = true;
 
                 if ($apply) {
-                    $newBooked = [];
-                    foreach ($expectedEmails as $em) {
-                        $newBooked[] = ['email' => $em, 'name' => null];
-                    }
-                    $updated[$date][$i]['bookedUsers'] = $newBooked;
+                    $updated[$date][$i]['bookedUsers'] = $expectedUsers;
                 }
             }
         }

@@ -6,7 +6,7 @@
       <h3 id="activityCentreModalTitle" style="margin: 0; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.2px; color: #222;">Activity</h3>
       <button class="pt-modal-close" id="activityCentreModalClose" aria-label="Close dialog" style="background: none; border: none; color: #222; font-size: 1.5rem; font-family: 'Inter', Arial, sans-serif; cursor: pointer; padding: 0 0 0 16px;">&#215;</button>
     </div>
-    <div id="activityCentreBody" class="pt-modal-body" style="padding: 18px 0 8px 0; max-height: 320px; overflow-y: auto; background: #fff;">
+    <div id="activityCentreBody" class="pt-modal-body" style="padding: 18px 0 8px 0; max-height: 530px; overflow-y: auto; background: #fff;">
       <div style="color:#888; font-size:0.98em; text-align:center; padding: 18px 0 0 0;" id="activityCentreEmpty">Loading notifications...</div>
     </div>
   </div>
@@ -141,12 +141,21 @@ document.addEventListener('DOMContentLoaded', function() {
             if (payload.type === 'waitlist_offer') {
               endpoint = 'php/sendOfferEmail.php';
             }
+            console.log('[ADMIN SEND EMAIL] Sending payload:', payload);
             const res = await fetch(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
-            const result = await res.json();
+            let result;
+            try {
+              result = await res.json();
+            } catch (jsonErr) {
+              const text = await res.text();
+              console.error('[ADMIN SEND EMAIL] Backend did not return valid JSON. Raw response:', text);
+              failCount++;
+              continue;
+            }
             if (result.success) {
               successCount++;
             } else {
@@ -385,12 +394,13 @@ function attachBlockSessionPreviewLogic() {
           console.log(`[BLOCK PREVIEW] Autofilling row ${i}:`, {
             sessionDate, sessionTime
           });
-          if (!rowFields[i].date.value) rowFields[i].date.value = formatDate(sessionDate);
-          if (!rowFields[i].time.value) rowFields[i].time.value = formatTime(sessionTime);
+          // Always update non-custom rows, even if already filled
+          rowFields[i].date.value = formatDate(sessionDate);
+          rowFields[i].time.value = formatTime(sessionTime);
         } else {
           console.log(`[BLOCK PREVIEW] Clearing row ${i}`);
-          if (!rowFields[i].date.value || !customRows.has(i)) rowFields[i].date.value = '';
-          if (!rowFields[i].time.value || !customRows.has(i)) rowFields[i].time.value = '';
+          rowFields[i].date.value = '';
+          rowFields[i].time.value = '';
         }
       } else {
         console.log(`[BLOCK PREVIEW] Row ${i} is custom, skipping autofill`);
@@ -2086,13 +2096,13 @@ async function updateSummaryBar() {
     sunday.setHours(23, 59, 59, 999);
     
     // Fetch data
-    const [slotsData, bookingsData, waitlistData] = await Promise.all([
+    const [slotsData, bookingMappingsData, waitlistData] = await Promise.all([
       getAvailableSlots(),
-      getBookings(),
+      getBookingMappings(),
       getWaitlist()
     ]);
-    
-    // 1. Count sessions this week
+
+    // 1. Count sessions this week (unchanged)
     let weeklySessions = 0;
     Object.entries(slotsData).forEach(([dateStr, slots]) => {
       const sessionDate = new Date(dateStr + 'T00:00:00');
@@ -2100,64 +2110,51 @@ async function updateSummaryBar() {
         weeklySessions += slots.length;
       }
     });
-    
-    // 2. Count total bookings and payment statuses
-    // For block bookings, count as 1 even though they appear on multiple dates
+
+    // 2. Count total bookings and payment statuses using bookingMappings
     let totalBookings = 0;
     let pendingPayments = 0;
     let confirmedPayments = 0;
-    const seenBlockBookings = new Set(); // Track block bookings (name+email+title) to avoid counting multiple times
-    
-    Object.entries(bookingsData).forEach(([date, dateBookings]) => {
-      if (Array.isArray(dateBookings)) {
-        dateBookings.forEach(booking => {
-          // Extract booking details: "time - title (name) (email)"
-          const parts = booking.match(/^(.+?)\s*-\s*(.+?)\s*\(([^)]+)\)\s*\(([^)]+)\)$/);
-          if (parts) {
-            const time = parts[1];
-            const title = parts[2];
-            const name = parts[3];
-            const email = parts[4];
-            
-            // Check if this is a block session
-            let isBlockSession = false;
-            let blockId = null;
-            if (slotsData[date]) {
-              const slot = slotsData[date].find(s => s.time === time && s.title === title);
-              isBlockSession = slot && slot.blockId !== null && slot.blockId !== undefined;
-              blockId = slot ? slot.blockId : null;
-            }
-            
-            // For block bookings, create a unique key and only count once
-            if (isBlockSession && blockId) {
-              const blockKey = `${name}|${email}|${title}|${blockId}`;
-              if (seenBlockBookings.has(blockKey)) {
-                return; // Skip this - already counted
-              }
-              seenBlockBookings.add(blockKey);
-            }
-            
-            totalBookings++;
-            
-            // Use the same getBookingStatus function that the rest of the app uses
-            const status = getBookingStatus(email, date, time, title);
-            if (status === 'Confirmed') confirmedPayments++;
-            else if (status === 'Pending') pendingPayments++;
-          }
-        });
+    const seenBlockBookings = new Set();
+    Object.entries(bookingMappingsData).forEach(([bookingId, mapping]) => {
+      if (!mapping || typeof mapping !== 'object') return;
+      const {
+        email = '',
+        name = '',
+        date = '',
+        slot = '',
+        title = '',
+        isBlock = false,
+        blockId = null,
+        status = '',
+        blockDates = []
+      } = mapping;
+      // For block bookings, count only once per blockId+user+title
+      if (isBlock && blockId) {
+        const blockKey = `${name}|${email}|${title}|${blockId}`;
+        if (seenBlockBookings.has(blockKey)) return;
+        seenBlockBookings.add(blockKey);
       }
+      totalBookings++;
+      // Use status field if present, else fallback to getBookingStatus
+      let bookingStatus = status;
+      if (!bookingStatus) {
+        bookingStatus = getBookingStatus(email, date, slot, title, name);
+      }
+      if (bookingStatus === 'Confirmed') confirmedPayments++;
+      else if (bookingStatus === 'Pending') pendingPayments++;
     });
-    
-    // 3. Count total waitlist entries
+
+    // 3. Count total waitlist entries (unchanged)
     let waitlistTotal = 0;
     Object.values(waitlistData).forEach(sessionWaitlist => {
       if (Array.isArray(sessionWaitlist)) {
         waitlistTotal += sessionWaitlist.length;
       }
     });
-    
+
     console.log('Summary bar update:', {totalBookings, pendingPayments, confirmedPayments, weeklySessions, waitlistTotal});
-    
+
     // Update DOM
     document.getElementById('summaryWeeklySessions').textContent = weeklySessions;
     document.getElementById('summaryTotalBookings').textContent = totalBookings;
@@ -2346,6 +2343,9 @@ async function renderPlayerProfiles() {
       const deleteBtn = card.querySelector('.delete-profile-btn');
       deleteBtn.addEventListener('click', async (ev) => {
         ev.stopPropagation();
+        if (!confirm('Are you sure you want to delete this profile? This action cannot be undone.')) {
+          return;
+        }
         deleteBtn.disabled = true;
         deleteBtn.textContent = '...';
         try {
@@ -2649,8 +2649,7 @@ function ensurePlayerProfilesSection() {
               <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">Location</label>
               <input type="text" id="modalBlockLocation" placeholder="e.g., Main Studio, Room 101" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; background: #fff;">
             </div>
-            <div id="modalBlockPreviewText" style="margin-top:18px; text-align:center; color:#6366f1; font-weight:600; font-size:1.05rem; display:block;">preview</div>
-
+            
             <!-- Block Session Preview Section: Always visible, static -->
             <div id="blockSessionPreviewSection" style="margin-top:28px; background:#f8fafc; border-radius:8px; border:1px solid #e5e7eb; padding:18px 14px 14px 14px;">
               <div style="font-weight:700; color:#22223b; font-size:1.08rem; margin-bottom:12px; letter-spacing:0.01em;">Generated Sessions</div>
@@ -3253,7 +3252,7 @@ async function getAvailableSlots() {
 async function getBookings(){ return await (await fetch(PHP_PATH+'getBookings.php?t='+Date.now())).json(); }
 async function getWaitlist(){ return await (await fetch(PHP_PATH+'getWaitlist.php?t='+Date.now())).json(); }
 async function getBookingMappings(){ 
-  const res = await fetch(PHP_PATH + '../data/bookingMappings.json?t=' + Date.now());
+  const res = await fetch(PHP_PATH + 'getBookingMappings.php?t=' + Date.now());
   return res.ok ? await res.json() : {};
 }
 
@@ -3272,11 +3271,12 @@ async function refreshBookingMappings(){
   return bookingMappingsCache;
 }
 
-function findBookingMapping(email, date, time, title){
+function findBookingMapping(email, date, time, title, name){
   const mappings = bookingMappingsCache || {};
   let best = null;
   let bestTs = -1;
   const key = _normKey(email, date, time, title);
+  const normName = (name || '').trim().toLowerCase();
 
   const toTs = (m) => {
     if (typeof m.timestamp === 'number') return m.timestamp * 1000;
@@ -3293,8 +3293,9 @@ function findBookingMapping(email, date, time, title){
     const mappingEmail = _normEmail(mapping.email);
     const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [];
     const mappingDate = _norm(mapping.date);
+    const mappingName = (mapping.name || '').trim().toLowerCase();
     const dateMatch = mappingDate === key.date || mappingDates.includes(key.date);
-    if (mappingEmail === key.email && mappingTime === key.time && mappingTitle === key.title && dateMatch) {
+    if (mappingEmail === key.email && mappingTime === key.time && mappingTitle === key.title && dateMatch && mappingName === normName) {
       const ts = toTs(mapping);
       if (ts >= bestTs) {
         bestTs = ts;
@@ -3305,8 +3306,8 @@ function findBookingMapping(email, date, time, title){
   return best;
 }
 
-function getBookingStatus(email, date, time, title) {
-  const found = findBookingMapping(email, date, time, title);
+function getBookingStatus(email, date, time, title, name) {
+  const found = findBookingMapping(email, date, time, title, name);
   if (!found || !found.mapping) {
     console.log('🟡 STATUS: No mapping found -> Pending', { email, date, time, title });
     return 'Pending';
@@ -3316,12 +3317,12 @@ function getBookingStatus(email, date, time, title) {
   return status === 'Confirmed' ? 'Confirmed' : 'Pending';
 }
 
-function getStatusBadgeClass(email, date, time, title) {
-  return getBookingStatus(email, date, time, title) === 'Confirmed' ? 'confirmed' : 'pending';
+function getStatusBadgeClass(email, date, time, title, name) {
+  return getBookingStatus(email, date, time, title, name) === 'Confirmed' ? 'confirmed' : 'pending';
 }
 
-async function markBookingConfirmed(email, date, time, title, blockDatesArray = []){
-  console.log('🔵 CONFIRM: markBookingConfirmed called', { email, date, time, title, blockDatesArray });
+async function markBookingConfirmed(email, date, time, title, name, blockDatesArray = []){
+  console.log('🔵 CONFIRM: markBookingConfirmed called', { email, date, time, title, name, blockDatesArray });
   const mappings = bookingMappingsCache && Object.keys(bookingMappingsCache).length
     ? bookingMappingsCache
     : await getBookingMappings();
@@ -3329,6 +3330,7 @@ async function markBookingConfirmed(email, date, time, title, blockDatesArray = 
   let targetMapping = null;
   const key = _normKey(email, date, time, title);
   const normBlockDates = (blockDatesArray || []).map(_norm);
+  const normName = (name || '').trim().toLowerCase();
 
   for (const [bookingId, mapping] of Object.entries(mappings)) {
     const mappingTime = _norm(mapping.slot || mapping.time);
@@ -3336,8 +3338,9 @@ async function markBookingConfirmed(email, date, time, title, blockDatesArray = 
     const mappingEmail = _normEmail(mapping.email);
     const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [];
     const mappingDate = _norm(mapping.date);
+    const mappingName = (mapping.name || '').trim().toLowerCase();
     const dateMatch = mappingDate === key.date || mappingDates.includes(key.date) || normBlockDates.some(d => mappingDates.includes(d) || mappingDate === d);
-    if (mappingEmail === key.email && mappingTime === key.time && mappingTitle === key.title && dateMatch) {
+    if (mappingEmail === key.email && mappingTime === key.time && mappingTitle === key.title && dateMatch && mappingName === normName) {
       targetId = bookingId;
       targetMapping = mapping;
       break;
@@ -3354,8 +3357,9 @@ async function markBookingConfirmed(email, date, time, title, blockDatesArray = 
       const mappingEmail = _normEmail(mapping.email);
       const mappingDates = Array.isArray(mapping.blockDates) ? mapping.blockDates : [];
       const mappingDate = _norm(mapping.date);
+      const mappingName = (mapping.name || '').trim().toLowerCase();
       const dateMatch = mappingDate === key.date || mappingDates.includes(key.date) || normBlockDates.some(d => mappingDates.includes(d) || mappingDate === d);
-      if (mappingEmail === key.email && mappingTime === key.time && mappingTitle === key.title && dateMatch) {
+      if (mappingEmail === key.email && mappingTime === key.time && mappingTitle === key.title && dateMatch && mappingName === normName) {
         targetId = bookingId;
         targetMapping = mapping;
         break;
@@ -3364,7 +3368,7 @@ async function markBookingConfirmed(email, date, time, title, blockDatesArray = 
   }
 
   if (!targetId || !targetMapping) {
-    console.log('❌ CONFIRM: Mapping not found after refresh', { email, date, time, title, blockDatesArray });
+    console.log('❌ CONFIRM: Mapping not found after refresh', { email, date, time, title, name, blockDatesArray });
     return false;
   }
 
@@ -5327,7 +5331,7 @@ async function renderAllBookings(){
               dates: blockDates.join(', '),
               blockDates: blockDates,
               price: formatPrice(slot.price),
-              status: getBookingStatus(email, blockDates[0] || date, time, title),
+              status: getBookingStatus(email, blockDates[0] || date, time, title, name),
               blockId,
               remove: async () => {
                 // Remove all bookings for this user/block
@@ -5359,7 +5363,7 @@ async function renderAllBookings(){
               dates: date,
               dateRaw: date,
               price: formatPrice(slot.price),
-              status: getBookingStatus(email, date, time, title),
+              status: getBookingStatus(email, date, time, title, name),
               idx,
               remove: async () => {
                 console.log('🗑️ Deleting non-block booking:', { date, time, title, name, email, idx });
@@ -5560,7 +5564,7 @@ async function renderAllBookings(){
         const dateHtml = g.dates.map(d => formatDateDDMMYY(d)).join('<br>');
         const price = formatPrice(g.slotInfo?.price);
         const type = g.slotInfo?.sessionType || '';
-        const status = getBookingStatus(g.email, g.dates[0], g.time, g.title);
+        const status = getBookingStatus(g.email, g.dates[0], g.time, g.title, g.name);
         const showConfirm = status !== 'Confirmed';
         const blockBadge = `<span class="block-session-badge">Block Session</span>`;
         const actionsHtml = `${showConfirm ? `<button class="confirm" data-email="${escapeHtml(g.email)}" data-date="${escapeHtml(g.dates[0])}" data-time="${escapeHtml(g.time)}" data-title="${escapeHtml(g.title)}" data-name="${escapeHtml(g.name)}" data-block-dates="${escapeHtml(g.dates.join(','))}" style="margin-right:8px;">Confirm</button>` : ''}<button class='delete' data-is-block='true' data-block-dates='${escapeHtml(g.dates.join(','))}' data-title='${escapeHtml(g.title)}' data-time='${escapeHtml(g.time)}' data-email='${escapeHtml(g.email)}'>Delete</button>`;
@@ -5576,7 +5580,7 @@ async function renderAllBookings(){
         const date = g.date;
         const price = formatPrice(g.slotInfo?.price);
         const type = g.slotInfo?.sessionType || '';
-        const status = getBookingStatus(g.email, date, g.time, g.title);
+        const status = getBookingStatus(g.email, date, g.time, g.title, g.name);
         const showConfirm = status !== 'Confirmed';
         const actionsHtml = `${showConfirm ? `<button class="confirm" data-email="${escapeHtml(g.email)}" data-date="${escapeHtml(date)}" data-time="${escapeHtml(g.time)}" data-title="${escapeHtml(g.title)}" data-name="${escapeHtml(g.name)}" style="margin-right:8px;">Confirm</button>` : ''}<button class='delete' data-date='${escapeHtml(date)}' data-index='${g.idx}' data-slot-time='${escapeHtml(g.time)}' data-slot-title='${escapeHtml(g.title)}' data-name='${escapeHtml(g.name)}' data-email='${escapeHtml(g.email)}'>Delete</button>`;
         tr.innerHTML = `<td class="col-date">${escapeHtml(date)}</td>` +
@@ -6038,7 +6042,7 @@ async function renderAllBookings(){
     // Add individual booking cards inside
     bookings.forEach(bookingGroup => {
       const {name, email} = bookingGroup;
-      const status = getBookingStatus(email, isBlockSession ? blockDates[0] : date, time, title);
+      const status = getBookingStatus(email, isBlockSession ? blockDates[0] : date, time, title, name);
       const isConfirmed = status === 'Confirmed';
 
       // Get expiryTimestamp from booking mapping
@@ -6048,7 +6052,7 @@ async function renderAllBookings(){
         const expiryDate = new Date(mapping.expiryTimestamp * 1000);
         // Format as YYYY-MM-DD HH:mm
         const pad = n => n.toString().padStart(2, '0');
-        const formatted = `${expiryDate.getFullYear()}-${pad(expiryDate.getMonth()+1)}-${pad(expiryDate.getDate())} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
+        const formatted = `${pad(expiryDate.getDate())}-${pad(expiryDate.getMonth()+1)}-${expiryDate.getFullYear()} ${pad(expiryDate.getHours())}:${pad(expiryDate.getMinutes())}`;
         expiryDisplay = `<div style=\"font-size:0.75rem;color:#E65100;white-space:nowrap;display:block;margin-top:2px;\"><i class=\"fas fa-hourglass-end\"></i> Expires: ${formatted}</div>`;
       }
 
@@ -6081,7 +6085,7 @@ async function renderAllBookings(){
           <div style="display: flex; flex-direction: column; gap: 2px; align-items: stretch; flex-shrink: 0;">
             <button class="confirm-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #4CAF50; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Confirm</button>
             <button class="edit-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #2196F3; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Edit</button>
-            <button class="delete-booking-btn" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #f44336; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Delete</button>
+            <button class="delete-booking-btn" data-name="${name}" data-email="${email}" data-date="${isBlockSession ? blockDates[0] : date}" data-time="${time}" data-title="${title}" data-is-block="${isBlockSession}" data-block-dates="${isBlockSession ? blockDates.join(',') : ''}" style="padding: 2px 8px; margin: 0; border: none; border-radius: 4px; background: #f44336; color: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">Delete</button>
           </div>
           </div>
           </div>
@@ -6180,8 +6184,13 @@ async function renderAllBookings(){
       });
       try {
         await refreshBookingMappings();
-        const mappingFound = findBookingMapping(email, date, time, title);
+        const mappingFound = findBookingMapping(email, date, time, title, name);
         const bookingId = mappingFound ? mappingFound.bookingId : '';
+        if (!bookingId) {
+          showToast('Error: Could not find unique booking ID for this booking. Please refresh the page or contact support.', {error: true});
+          console.error('[CANCEL BOOKING] No bookingId found for deletion:', {name, email, date, time, title, isBlock, blockDates});
+          return;
+        }
         console.log('[CANCEL BOOKING] Booking mapping found:', mappingFound);
         console.log('[CANCEL BOOKING] BookingId:', bookingId);
 
@@ -6729,7 +6738,20 @@ async function renderWaitlist(){
                   o.status === 'pending'
                 );
                 if (offer && offer.expiresAt) {
-                  offerExpiryHtml = `<div style="color:#b45309;font-size:0.85em;margin-top:2px;">Offer expires: <b>${escapeHtml(offer.expiresAt)}</b></div>`;
+                  // Format to DD-MM-YY + HH:mm:ss
+                  function formatExpiryDate(dateStr) {
+                    // Try to parse as ISO or fallback
+                    let d = new Date(dateStr.replace(' ', 'T'));
+                    if (isNaN(d.getTime())) return escapeHtml(dateStr);
+                    let dd = String(d.getDate()).padStart(2, '0');
+                    let mm = String(d.getMonth() + 1).padStart(2, '0');
+                    let yy = String(d.getFullYear()).slice(-2);
+                    let hh = String(d.getHours()).padStart(2, '0');
+                    let min = String(d.getMinutes()).padStart(2, '0');
+                    let ss = String(d.getSeconds()).padStart(2, '0');
+                    return `${dd}-${mm}-${yy} ${hh}:${min}:${ss}`;
+                  }
+                  offerExpiryHtml = `<div style="color:#b45309;font-size:0.85em;margin-top:2px;">Offer expires: <b>${formatExpiryDate(offer.expiresAt)}</b></div>`;
                 }
               }
 
@@ -6766,14 +6788,37 @@ async function renderWaitlist(){
                   }
                   let price = slotObj && slotObj.price !== undefined ? slotObj.price : '';
                   let location = slotObj && slotObj.location !== undefined ? slotObj.location : '';
+
+                  // Convert date and blockDates to YYYY-MM-DD if needed
+                  function toIsoDate(str) {
+                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+                      const [dd, mm, yyyy] = str.split('/');
+                      return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+                    }
+                    return str;
+                  }
+                  let isoDate = toIsoDate(date);
+                  let isoBlockDates = Array.isArray(blockDates) ? blockDates.map(toIsoDate) : [];
+
+                  const offerPayload = { email: person.email, name: person.name, date: isoDate, time: time, title: title, sessionKey: sessionKey, blockDates: isoBlockDates, price: price, location: location };
+                  console.log('[OFFER SPOT] Sending payload:', offerPayload);
                   const response = await fetch(PHP_PATH + 'sendOfferEmail.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email: person.email, name: person.name, date: date, time: time, title: title, sessionKey: sessionKey, blockDates: blockDates, price: price, location: location })
+                    body: JSON.stringify(offerPayload)
                   });
                   if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to send offer');
+                    let errorMsg = 'Failed to send offer';
+                    try {
+                      const errorData = await response.json();
+                      errorMsg = errorData.error || errorMsg;
+                    } catch (jsonErr) {
+                      try {
+                        const text = await response.text();
+                        errorMsg = text || errorMsg;
+                      } catch (e) {}
+                    }
+                    throw new Error(errorMsg);
                   }
                   showToast(`Offer sent to ${person.name}! They have 24 hours to confirm or decline.`);
                   offerBtn.innerHTML = '<i class="fas fa-check"></i> Offer Spot';

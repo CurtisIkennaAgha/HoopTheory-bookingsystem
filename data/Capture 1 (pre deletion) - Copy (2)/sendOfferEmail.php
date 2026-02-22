@@ -1,4 +1,40 @@
 <?php
+// Robust error handling: always return JSON
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(E_ALL);
+
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    if (!(error_reporting() & $errno)) return;
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'PHP Error',
+        'details' => "$errstr in $errfile on line $errline"
+    ]);
+    exit;
+});
+
+set_exception_handler(function($e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'Exception',
+        'details' => $e->getMessage()
+    ]);
+    exit;
+});
+
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['error' => 'Fatal error', 'details' => $error['message']]);
+    }
+});
+
+<?php
 // Set timezone to Europe/London to ensure correct timestamps
 date_default_timezone_set('Europe/London');
 use PHPMailer\PHPMailer\PHPMailer;
@@ -122,7 +158,16 @@ addUserToTracking($name, $email);
 // Send email
 $mail = new PHPMailer(true);
 
+// Debug log helper
+$debugLogFile = __DIR__ . '/../data/sendOfferEmail_debug.log';
+function debug_log($msg) {
+    global $debugLogFile;
+    file_put_contents($debugLogFile, date('Y-m-d H:i:s') . ' ' . $msg . "\n", FILE_APPEND);
+}
+debug_log('--- sendOfferEmail.php called ---');
+debug_log('Input: ' . json_encode($data));
 try {
+    debug_log('PHPMailer setup...');
     $mail->isSMTP();
     $mail->Host = getenv('MAIL_HOST');
     $mail->SMTPAuth = true;
@@ -130,13 +175,16 @@ try {
     $mail->Password = getenv('MAIL_PASSWORD');
     $mail->SMTPSecure = 'tls';
     $mail->Port = 587;
+    debug_log('SMTP config: host=' . getenv('MAIL_HOST') . ', user=' . getenv('MAIL_USERNAME'));
 
     $mail->setFrom(getenv('MAIL_FROM_ADDRESS'), 'Hoop Theory');
     $mail->addAddress($email);
+    debug_log('Set from and to addresses');
 
     $mail->isHTML(true);
     $mail->CharSet = 'UTF-8';
     $mail->Subject = "Space Available: $title";
+    debug_log('Set subject and HTML');
 
     // Get base URL for the links
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
@@ -150,16 +198,10 @@ try {
     // Unified simple table for all session types
     $sessionDetailsHtml = '<table cellpadding="6" cellspacing="0" width="100%" style="background:#fafafa;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px #0001;">';
     $sessionDetailsHtml .= '<tr><td style="font-weight:bold;width:140px;">Title</td><td>' . htmlspecialchars($title) . '</td></tr>';
-    // Helper to format YYYY-MM-DD to DD-MM-YYYY
-    function formatDMY($d) {
-        $ts = strtotime($d);
-        return $ts ? date('d-m-Y', $ts) : htmlspecialchars($d);
-    }
     if ($isBlockSession) {
-        $formattedBlockDates = array_map('formatDMY', $blockDates);
-        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Dates</td><td>' . implode(', ', $formattedBlockDates) . '</td></tr>';
+        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Dates</td><td>' . implode(', ', array_map('htmlspecialchars', $blockDates)) . '</td></tr>';
     } else {
-        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Date</td><td>' . formatDMY($date) . '</td></tr>';
+        $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Date</td><td>' . htmlspecialchars($date) . '</td></tr>';
     }
     $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Time</td><td>' . htmlspecialchars($time) . '</td></tr>';
     if ($location !== '') {
@@ -168,16 +210,16 @@ try {
     if ($price !== '') {
         $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Price</td><td>&pound;' . htmlspecialchars($price) . '</td></tr>';
     }
-    // Add Deadline row
-    $sessionDetailsHtml .= '<tr><td style="font-weight:bold;">Deadline</td><td>' . date('d-m-Y H:i', $now + $expirySeconds) . '</td></tr>';
     $sessionDetailsHtml .= '</table>';
 
     // Set the email body ONCE, inside the try block
-    $mail->Body = "<!DOCTYPE html>\n<html>\n<body style='margin:0;padding:0;background:#f5f5f5;'>\n<img src='https://hooptheory.co.uk/EMAILHEADER.png' alt='Hoop Theory Header' style='width:100%;max-width:600px;margin-bottom:20px;border-radius:8px;' />\n<table width='100%' cellpadding='0' cellspacing='0'>\n<tr><td align='center'>\n<table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff;'>\n<tr><td style='padding:40px 30px;font-family:Arial,sans-serif;color:#000;'>\n<h1 style='margin:0 0 10px;font-size:22px;'>Space Available!</h1>\n<p style='margin:0 0 16px;color:#666;'>Hi <strong>$name</strong>,</p>\n<p style='margin:0 0 16px;color:#333;'>A spot has opened up for the session you were waitlisted for.</p>\n$sessionDetailsHtml\n<p style='margin:0 0 16px;color:#333;'>Would you like to confirm your spot or decline the offer?</p>\n<table class='button-table' width='100%' cellpadding='0' cellspacing='0' style='margin: 30px 0;'>\n    <tr>\n        <td class='button-cell' width='50%' style='padding: 10px 8px; text-align: center;'>\n            <a href='$confirmUrl' style='display: inline-block; padding: 14px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; min-width: 140px; box-sizing: border-box;'>Reserve Spot</a>\n        </td>\n        <td class='button-cell' width='50%' style='padding: 10px 8px; text-align: center;'>\n            <a href='$declineUrl' style='display: inline-block; padding: 14px 24px; background: #f44336; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; min-width: 140px; box-sizing: border-box;'>Decline Spot</a>\n        </td>\n    </tr>\n</table>\n<p style='font-size: 12px; color: #666;'>This offer will expire on <strong>" . date('d-m-Y H:i', $now + $expirySeconds) . "</strong>. If you don't respond by then, the spot will be offered to the next person on the waitlist.</p>\n<hr style='margin:30px 0;border:none;border-top:1px solid #eee;'>\n<p style='text-align:center;font-size:13px;color:#128C7E;margin-bottom:8px;'>Contact us via WhatsApp: <a href='https://chat.whatsapp.com/FGFRQ3eiH5K73YSW4l3f5x' style='color:#128C7E;font-weight:bold;text-decoration:underline;'>Join Group Chat</a></p>\n<p style='text-align:center;font-size:12px;color:#999;'>© 2026 Hoop Theory · bao@hooptheory.co.uk</p>\n</td></tr></table>\n</td></tr></table>\n</body>\n</html>";
+    debug_log('Set email body');
     $mail->send();
+    debug_log('Email sent successfully');
     echo json_encode(['success' => true, 'message' => 'Offer email sent']);
     exit;
 } catch (Exception $e) {
+    debug_log('ERROR: ' . $e->getMessage());
     http_response_code(500);
     exit(json_encode(['error' => 'Failed to send email', 'message' => $e->getMessage()]));
 }
