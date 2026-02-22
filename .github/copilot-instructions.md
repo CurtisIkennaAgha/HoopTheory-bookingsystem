@@ -64,7 +64,7 @@ HoopTheory is a vanilla JS + PHP booking system for basketball sessions. It mana
 - **Debouncing**: `handleNameEmailChange()` uses 600ms debounce for live profile validation
 
 ### Registration Form Logic
-- Registration form only appears if player NOT found in database
+-  egistration form only appears if player NOT found in database
 - Form is shown/hidden based on `checkPlayerRegistered()` response
 - **Fields**: name, email, age, experience, medical, emergency contact, media consent, waiver
 - Banner alerts for email/name conflicts
