@@ -1,0 +1,390 @@
+[
+    {
+        "id": "4",
+        "type": "booking",
+        "action": "booking_cancelled",
+        "title": "Booking Cancelled",
+        "message": "A booking was cancelled by the player.",
+        "timestamp": "2026-02-18T12:30:00Z",
+        "player": {
+            "name": "John Smith",
+            "email": "john.smith@example.com",
+            "phones": [],
+            "address": "",
+            "profileId": ""
+        },
+        "session": {
+            "date": "2026-02-22",
+            "time": "19:00",
+            "title": "Open Gym Night",
+            "sessionType": "group",
+            "blockId": null,
+            "location": "Court 2",
+            "price": 10,
+            "capacity": 20,
+            "sessionId": "session-999"
+        },
+        "meta": [],
+        "seen": true
+    },
+    {
+        "id": "1",
+        "type": "info",
+        "action": "system_welcome",
+        "title": "Welcome to the Activity Centre",
+        "message": "Notifications about bookings, payments, and system events will appear here.",
+        "timestamp": "2026-02-18T09:00:00Z",
+        "player": null,
+        "session": null,
+        "meta": [],
+        "seen": true
+    },
+    {
+        "id": "2",
+        "type": "booking",
+        "action": "booking_created",
+        "title": "Booking Created",
+        "message": "A new booking was made.",
+        "timestamp": "2026-02-18T10:15:00Z",
+        "player": {
+            "name": "Jane Doe",
+            "email": "jane@example.com",
+            "phones": [],
+            "address": "",
+            "profileId": ""
+        },
+        "session": {
+            "date": "2026-02-20",
+            "time": "18:00",
+            "title": "Basketball Training",
+            "sessionType": "group",
+            "blockId": null,
+            "location": "Main Studio",
+            "price": 15,
+            "capacity": 12,
+            "sessionId": "session-456"
+        },
+        "meta": [],
+        "seen": true
+    },
+    {
+        "id": "3",
+        "type": "analytics",
+        "action": "login_success",
+        "title": "Admin Login",
+        "message": "Admin user logged in successfully.",
+        "timestamp": "2026-02-18T08:00:00Z",
+        "player": null,
+        "session": null,
+        "meta": [],
+        "seen": true
+    },
+    {
+        "id": "6999c254cc49e",
+        "type": "booking",
+        "action": "create",
+        "title": "Booking Created",
+        "message": "Booking for Bao Tran (baojellybean@gmail.com) on 2026-02-25, Ages 11-15 Skills Block (Portsmouth), 16:30.",
+        "timestamp": "2026-02-21T14:33:56+00:00",
+        "player": {
+            "name": "Bao Tran",
+            "email": "baojellybean@gmail.com"
+        },
+        "session": {
+            "date": "2026-02-25",
+            "title": "Ages 11-15 Skills Block (Portsmouth)",
+            "time": "16:30"
+        },
+        "meta": {
+            "bookingId": "BK-1771684436-74EB17E6",
+            "blockId": "block_1771428514112_cjbr8jbo0",
+            "blockDates": [
+                "2026-02-25",
+                "2026-03-04",
+                "2026-03-11",
+                "2026-03-18"
+            ]
+        },
+        "seen": true
+    },
+    {
+        "id": "6999c6e80dbad",
+        "type": "booking",
+        "action": "create",
+        "title": "Booking Created",
+        "message": "Booking for Ethan Ashworth (roxy.ashworth@live.co.uk) on 2026-03-01, Ages 11-15 Skills Block (Southampton), 15:30.",
+        "timestamp": "2026-02-21T14:53:28+00:00",
+        "player": {
+            "name": "Ethan Ashworth",
+            "email": "roxy.ashworth@live.co.uk"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "bookingId": "BK-1771685608-1CFB46A1",
+            "blockId": "block_1771599851110_9suv8hxol",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ]
+        },
+        "seen": true
+    },
+    {
+        "id": "6999c7403d338",
+        "type": "booking",
+        "action": "create",
+        "title": "Booking Created",
+        "message": "Booking for Jacob Ashworth (roxy.ashworth@live.co.uk) on 2026-03-01, Ages 11-15 Skills Block (Southampton), 15:30.",
+        "timestamp": "2026-02-21T14:54:56+00:00",
+        "player": {
+            "name": "Jacob Ashworth",
+            "email": "roxy.ashworth@live.co.uk"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "bookingId": "BK-1771685696-A200DE1B",
+            "blockId": "block_1771599851110_9suv8hxol",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ]
+        },
+        "seen": true
+    },
+    {
+        "id": "6999c8e7f3e1b",
+        "type": "email",
+        "action": "send",
+        "title": "Email Sent",
+        "message": "Email of type confirmation sent to Jacob Ashworth (roxy.ashworth@live.co.uk) for Ages 11-15 Skills Block (Southampton) on 2026-03-01.",
+        "timestamp": "2026-02-21T15:01:59+00:00",
+        "player": {
+            "name": "Jacob Ashworth",
+            "email": "roxy.ashworth@live.co.uk"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "emailType": "confirmation",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ],
+            "bookingId": "BK-1771685696-A200DE1B"
+        },
+        "seen": true
+    },
+    {
+        "id": "6999c8ec04c4d",
+        "type": "email",
+        "action": "send",
+        "title": "Email Sent",
+        "message": "Email of type confirmation sent to Ethan Ashworth (roxy.ashworth@live.co.uk) for Ages 11-15 Skills Block (Southampton) on 2026-03-01.",
+        "timestamp": "2026-02-21T15:02:04+00:00",
+        "player": {
+            "name": "Ethan Ashworth",
+            "email": "roxy.ashworth@live.co.uk"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "emailType": "confirmation",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ],
+            "bookingId": "BK-1771685696-A200DE1B"
+        },
+        "seen": true
+    },
+    {
+        "id": "6999f0d102977",
+        "type": "email",
+        "action": "send",
+        "title": "Email Sent",
+        "message": "Email of type confirmation sent to Oscar Hornigold (ehornigold@gmail.com) for Ages 11-15 Skills Block (Southampton) on 2026-03-01.",
+        "timestamp": "2026-02-21T17:52:17+00:00",
+        "player": {
+            "name": "Oscar Hornigold",
+            "email": "ehornigold@gmail.com"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "emailType": "confirmation",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ],
+            "bookingId": "BK-1771693960-39DC2917"
+        },
+        "seen": true
+    },
+    {
+        "id": "699b13a7524c7",
+        "type": "booking",
+        "action": "create",
+        "title": "Booking Created",
+        "message": "Booking for Domas Kemeklis (rnorkaityte@hotmail.com) on 2026-03-01, Ages 11-15 Skills Block (Southampton), 15:30.",
+        "timestamp": "2026-02-22T14:33:11+00:00",
+        "player": {
+            "name": "Domas Kemeklis",
+            "email": "rnorkaityte@hotmail.com"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "bookingId": "BK-1771770791-AB877F2E",
+            "blockId": "block_1771599851110_9suv8hxol",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ]
+        },
+        "seen": true
+    },
+    {
+        "id": "699b13a796d40",
+        "type": "email",
+        "action": "send",
+        "title": "Email Sent",
+        "message": "Email of type temporary_reservation sent to Domas Kemeklis (rnorkaityte@hotmail.com) for Ages 11-15 Skills Block (Southampton) on 2026-03-01.",
+        "timestamp": "2026-02-22T14:33:11+00:00",
+        "player": {
+            "name": "Domas Kemeklis",
+            "email": "rnorkaityte@hotmail.com"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "emailType": "temporary_reservation",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ],
+            "bookingId": "BK-1771770791-AB877F2E"
+        },
+        "seen": true
+    },
+    {
+        "id": "699b156ec75c6",
+        "type": "email",
+        "action": "send",
+        "title": "Email Sent",
+        "message": "Email of type confirmation sent to Domas Kemeklis (rnorkaityte@hotmail.com) for Ages 11-15 Skills Block (Southampton) on 2026-03-01.",
+        "timestamp": "2026-02-22T14:40:46+00:00",
+        "player": {
+            "name": "Domas Kemeklis",
+            "email": "rnorkaityte@hotmail.com"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "emailType": "confirmation",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ],
+            "bookingId": "admin-1771771246261-3ddgyt9y0"
+        },
+        "seen": true
+    },
+    {
+        "id": "699b5d3cb7a74",
+        "type": "booking",
+        "action": "create",
+        "title": "Booking Created",
+        "message": "Booking for Shayan Mitchell (denzelmitchell@live.co.uk) on 2026-03-01, Ages 11-15 Skills Block (Southampton), 15:30.",
+        "timestamp": "2026-02-22T19:47:08+00:00",
+        "player": {
+            "name": "Shayan Mitchell",
+            "email": "denzelmitchell@live.co.uk"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "bookingId": "BK-1771789628-E71346CF",
+            "blockId": "block_1771599851110_9suv8hxol",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ]
+        },
+        "seen": true
+    },
+    {
+        "id": "699b5d3dd8602",
+        "type": "email",
+        "action": "send",
+        "title": "Email Sent",
+        "message": "Email of type temporary_reservation sent to Shayan Mitchell (denzelmitchell@live.co.uk) for Ages 11-15 Skills Block (Southampton) on 2026-03-01.",
+        "timestamp": "2026-02-22T19:47:09+00:00",
+        "player": {
+            "name": "Shayan Mitchell",
+            "email": "denzelmitchell@live.co.uk"
+        },
+        "session": {
+            "date": "2026-03-01",
+            "title": "Ages 11-15 Skills Block (Southampton)",
+            "time": "15:30"
+        },
+        "meta": {
+            "emailType": "temporary_reservation",
+            "blockDates": [
+                "2026-03-01",
+                "2026-03-08",
+                "2026-03-15",
+                "2026-03-22"
+            ],
+            "bookingId": "BK-1771789628-E71346CF"
+        },
+        "seen": true
+    }
+]

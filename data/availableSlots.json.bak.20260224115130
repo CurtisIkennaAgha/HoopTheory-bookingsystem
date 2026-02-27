@@ -33,7 +33,20 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
@@ -78,7 +91,20 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
@@ -123,7 +149,20 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
@@ -168,7 +207,20 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
@@ -235,12 +287,24 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
                 },
                 {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",
@@ -309,12 +373,24 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
                 },
                 {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",
@@ -383,12 +459,24 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
                 },
                 {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",
@@ -457,12 +545,24 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
                 },
                 {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",

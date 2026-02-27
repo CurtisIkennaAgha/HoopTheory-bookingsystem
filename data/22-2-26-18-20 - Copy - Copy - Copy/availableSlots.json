@@ -40,8 +40,7 @@
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ],
-            "bridgeState": false
+            ]
         }
     ],
     "2026-03-04": [
@@ -85,8 +84,7 @@
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ],
-            "bridgeState": false
+            ]
         }
     ],
     "2026-03-11": [
@@ -130,8 +128,7 @@
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ],
-            "bridgeState": false
+            ]
         }
     ],
     "2026-03-18": [
@@ -175,8 +172,7 @@
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ],
-            "bridgeState": false
+            ]
         }
     ],
     "2026-03-01": [
@@ -209,10 +205,6 @@
                 {
                     "name": "Domas Kemeklis",
                     "email": "rnorkaityte@hotmail.com"
-                },
-                {
-                    "name": "Brayden Brown",
-                    "email": "dianne.pearl.montero@gmail.com"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -233,16 +225,7 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [
-                {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
-                },
-                {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
-                }
-            ],
+            "bookedUsers": [],
             "blockId": "block_1771663570579_rtfxir9ps",
             "blockDates": [
                 "2026-03-01",
@@ -283,10 +266,6 @@
                 {
                     "name": "Domas Kemeklis",
                     "email": "rnorkaityte@hotmail.com"
-                },
-                {
-                    "name": "Brayden Brown",
-                    "email": "dianne.pearl.montero@gmail.com"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -307,16 +286,7 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [
-                {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
-                },
-                {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
-                }
-            ],
+            "bookedUsers": [],
             "blockId": "block_1771663570579_rtfxir9ps",
             "blockDates": [
                 "2026-03-01",
@@ -357,10 +327,6 @@
                 {
                     "name": "Domas Kemeklis",
                     "email": "rnorkaityte@hotmail.com"
-                },
-                {
-                    "name": "Brayden Brown",
-                    "email": "dianne.pearl.montero@gmail.com"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -381,16 +347,7 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [
-                {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
-                },
-                {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
-                }
-            ],
+            "bookedUsers": [],
             "blockId": "block_1771663570579_rtfxir9ps",
             "blockDates": [
                 "2026-03-01",
@@ -431,10 +388,6 @@
                 {
                     "name": "Domas Kemeklis",
                     "email": "rnorkaityte@hotmail.com"
-                },
-                {
-                    "name": "Brayden Brown",
-                    "email": "dianne.pearl.montero@gmail.com"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -455,16 +408,7 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [
-                {
-                    "email": "anh2474245@gmail.com",
-                    "name": "Anh Nguyen"
-                },
-                {
-                    "email": "laura_lilley@hotmail.co.uk",
-                    "name": "Charlie Bengree"
-                }
-            ],
+            "bookedUsers": [],
             "blockId": "block_1771663570579_rtfxir9ps",
             "blockDates": [
                 "2026-03-01",

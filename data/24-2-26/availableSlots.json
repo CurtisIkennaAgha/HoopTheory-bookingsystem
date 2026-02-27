@@ -9,7 +9,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -28,14 +33,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ]
+            ],
+            "bridgeState": false
         }
     ],
     "2026-03-04": [
@@ -48,7 +71,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -67,14 +95,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ]
+            ],
+            "bridgeState": false
         }
     ],
     "2026-03-11": [
@@ -87,7 +133,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -106,14 +157,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ]
+            ],
+            "bridgeState": false
         }
     ],
     "2026-03-18": [
@@ -126,7 +195,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -145,14 +219,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "name": "Fake Spot",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot2",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot3",
+                    "email": "baojellybean@gmail.com"
+                },
+                {
+                    "name": "Fake Spot4",
+                    "email": "baojellybean@gmail.com"
+                }
+            ],
             "blockId": "block_1771663956641_tf6p4xstc",
             "blockDates": [
                 "2026-02-25",
                 "2026-03-04",
                 "2026-03-11",
                 "2026-03-18"
-            ]
+            ],
+            "bridgeState": false
         }
     ],
     "2026-03-01": [
@@ -165,7 +257,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
+                },
+                {
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Brayden Brown",
+                    "email": "dianne.pearl.montero@gmail.com"
+                }
+            ],
             "blockId": "block_1771599851110_9suv8hxol",
             "blockDates": [
                 "2026-03-01",
@@ -186,8 +303,20 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "2nd kid",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot2"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot3"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot4"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",
@@ -210,7 +339,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
+                },
+                {
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Brayden Brown",
+                    "email": "dianne.pearl.montero@gmail.com"
+                }
+            ],
             "blockId": "block_1771599851110_9suv8hxol",
             "blockDates": [
                 "2026-03-01",
@@ -231,8 +385,20 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "2nd kid",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot2"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot3"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot4"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",
@@ -255,7 +421,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
+                },
+                {
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Brayden Brown",
+                    "email": "dianne.pearl.montero@gmail.com"
+                }
+            ],
             "blockId": "block_1771599851110_9suv8hxol",
             "blockDates": [
                 "2026-03-01",
@@ -276,8 +467,20 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "2nd kid",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot2"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot3"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot4"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",
@@ -300,7 +503,32 @@
             "sessionType": "group",
             "price": 40,
             "location": "Redbridge Community School, SO16 9RJ",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
+                },
+                {
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
+                },
+                {
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Brayden Brown",
+                    "email": "dianne.pearl.montero@gmail.com"
+                }
+            ],
             "blockId": "block_1771599851110_9suv8hxol",
             "blockDates": [
                 "2026-03-01",
@@ -321,8 +549,20 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "2nd kid",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot2"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot3"
+                },
+                {
+                    "email": "baojellybean@gmail.com",
+                    "name": "Fake Spot4"
                 }
             ],
             "blockId": "block_1771663570579_rtfxir9ps",

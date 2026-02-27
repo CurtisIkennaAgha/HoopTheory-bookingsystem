@@ -49,7 +49,7 @@
     },
     "baojellybean@gmail.com": {
         "email": "baojellybean@gmail.com",
-        "name": "Fake Spot4",
+        "name": "Bao Tran",
         "bookings": [],
         "waitlist": [],
         "offers": [],
@@ -182,53 +182,5 @@
         "waitlist": [],
         "offers": [],
         "addedAt": "2026-02-22 15:33:11"
-    },
-    "denzelmitchell@live.co.uk": {
-        "email": "denzelmitchell@live.co.uk",
-        "name": "Shayan Mitchell",
-        "bookings": [],
-        "waitlist": [],
-        "offers": [],
-        "addedAt": "2026-02-22 20:47:08"
-    },
-    "dianne.pearl.montero@gmail.com": {
-        "email": "dianne.pearl.montero@gmail.com",
-        "name": "Brayden Brown",
-        "bookings": [],
-        "waitlist": [],
-        "offers": [],
-        "addedAt": "2026-02-23 18:43:39"
-    },
-    "markapaya@yahoo.com": {
-        "email": "markapaya@yahoo.com",
-        "name": "Bastii Apaya",
-        "bookings": [],
-        "waitlist": [],
-        "offers": [],
-        "addedAt": "2026-02-24 18:03:39"
-    },
-    "mihutoana@yahoo.com": {
-        "email": "mihutoana@yahoo.com",
-        "name": "Edward Focsan",
-        "bookings": [],
-        "waitlist": [],
-        "offers": [],
-        "addedAt": "2026-02-24 23:11:07"
-    },
-    "anh2474245@gmail.com": {
-        "email": "anh2474245@gmail.com",
-        "name": "Anh Nguyen",
-        "bookings": [],
-        "waitlist": [],
-        "offers": [],
-        "addedAt": "2026-02-27 09:02:03"
-    },
-    "laura_lilley@hotmail.co.uk": {
-        "email": "laura_lilley@hotmail.co.uk",
-        "name": "Charlie Bengree",
-        "bookings": [],
-        "waitlist": [],
-        "offers": [],
-        "addedAt": "2026-02-27 14:20:12"
     }
 }

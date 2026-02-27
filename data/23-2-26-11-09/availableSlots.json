@@ -9,7 +9,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -48,7 +53,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -87,7 +97,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -126,7 +141,12 @@
             "sessionType": "group",
             "price": 40,
             "location": "Charles Dickens Centre, PO1 4HH",
-            "bookedUsers": [],
+            "bookedUsers": [
+                {
+                    "email": "horace.cyrus@gmail.com",
+                    "name": "Kane Cyrus"
+                }
+            ],
             "blockId": "block_1771428514112_cjbr8jbo0",
             "blockDates": [
                 "2026-02-25",
@@ -167,20 +187,28 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "Skylar Alldridge",
-                    "email": "ninacross2002@yahoo.co.uk"
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
                 },
                 {
-                    "name": "Ethan Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
                 },
                 {
-                    "name": "Jacob Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
                 },
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Shayan Mitchell",
+                    "email": "denzelmitchell@live.co.uk"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -224,20 +252,28 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "Skylar Alldridge",
-                    "email": "ninacross2002@yahoo.co.uk"
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
                 },
                 {
-                    "name": "Ethan Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
                 },
                 {
-                    "name": "Jacob Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
                 },
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Shayan Mitchell",
+                    "email": "denzelmitchell@live.co.uk"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -281,20 +317,28 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "Skylar Alldridge",
-                    "email": "ninacross2002@yahoo.co.uk"
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
                 },
                 {
-                    "name": "Ethan Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
                 },
                 {
-                    "name": "Jacob Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
                 },
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Shayan Mitchell",
+                    "email": "denzelmitchell@live.co.uk"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",
@@ -338,20 +382,28 @@
             "location": "Redbridge Community School, SO16 9RJ",
             "bookedUsers": [
                 {
-                    "name": "Skylar Alldridge",
-                    "email": "ninacross2002@yahoo.co.uk"
+                    "email": "ehornigold@gmail.com",
+                    "name": "Oscar Hornigold"
                 },
                 {
-                    "name": "Ethan Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "ninacross2002@yahoo.co.uk",
+                    "name": "Skylar Alldridge"
                 },
                 {
-                    "name": "Jacob Ashworth",
-                    "email": "roxy.ashworth@live.co.uk"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Ethan Ashworth"
                 },
                 {
-                    "name": "Curtis Agha",
-                    "email": "aghacurtis@gmail.com"
+                    "email": "roxy.ashworth@live.co.uk",
+                    "name": "Jacob Ashworth"
+                },
+                {
+                    "name": "Domas Kemeklis",
+                    "email": "rnorkaityte@hotmail.com"
+                },
+                {
+                    "name": "Shayan Mitchell",
+                    "email": "denzelmitchell@live.co.uk"
                 }
             ],
             "blockId": "block_1771599851110_9suv8hxol",

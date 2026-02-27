@@ -2096,11 +2096,13 @@ async function updateSummaryBar() {
     sunday.setHours(23, 59, 59, 999);
     
     // Fetch data
-    const [slotsData, bookingMappingsData, waitlistData] = await Promise.all([
+    const [slotsData, bookingMappingsData, waitlistRaw] = await Promise.all([
       getAvailableSlots(),
       getBookingMappings(),
       getWaitlist()
     ]);
+    // Defensive: waitlistData should be an object, not array
+    let waitlistData = (waitlistRaw && typeof waitlistRaw === 'object' && !Array.isArray(waitlistRaw)) ? waitlistRaw : {};
 
     // 1. Count sessions this week (unchanged)
     let weeklySessions = 0;

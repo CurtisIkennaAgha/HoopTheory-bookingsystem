@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Book a Session</title>
+<title>Hoop Theory | Book a Session</title>
+<link rel="icon" type="image/png" href="SMALLLOGO.png">
+<meta name="description" content="Book basketball sessions with HoopTheory. Reserve your spot,  and join block sessions for all ages. Simple, secure, and fast.">
+<meta name="keywords" content="basketball, booking, sessions, sports, HoopTheory, block sessions, youth basketball, Southampton, Portsmouth, skills, training">
+<meta name="author" content="HoopTheory">
+<meta property="og:title" content="Hoop Theory | Book a Session ">
+<meta property="og:description" content="Reserve your basketball session with HoopTheory. Easy booking for single and block sessions.">
+<meta property="og:image" content="NewLogo.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yourdomain.com/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Book a Session | HoopTheory">
+<meta name="twitter:description" content="Reserve your basketball session with HoopTheory. Easy booking for single and block sessions.">
+<meta name="twitter:image" content="NewLogo.png">
 
 
 <!-- Inter font from Google Fonts -->
@@ -1101,17 +1114,17 @@ function buildCalendarSkeleton(isRefresh = false){
                       const spots = matchSlot.capacity || 1;
                       let booked = 0;
                       if (matchSlot.blockId && matchSlot.blockDates) {
-                        // Block session: count unique emails across all blockDates
-                        const uniqueEmails = new Set();
+                        // Block session: count all bookedUsers across all blockDates (no deduplication)
+                        let totalBooked = 0;
                         for (const blockDate of matchSlot.blockDates) {
                           const blockSlots = slotsData[blockDate] || [];
                           for (const bs of blockSlots) {
                             if (bs.blockId === matchSlot.blockId && bs.bookedUsers) {
-                              bs.bookedUsers.forEach(u => u.email && uniqueEmails.add(u.email.toLowerCase()));
+                              totalBooked += bs.bookedUsers.length;
                             }
                           }
                         }
-                        booked = uniqueEmails.size;
+                        booked = totalBooked;
                       } else if (Array.isArray(matchSlot.bookedUsers)) {
                         booked = matchSlot.bookedUsers.length;
                       }
@@ -1203,7 +1216,7 @@ async function dateHasAvailableSlots(dateStr){
     
     if (isBlock) {
       // For block sessions: check capacity across ALL dates in the block
-      const uniqueEmails = new Set();
+      let bookedCount = 0;
       for (const blockDate of s.blockDates) {
         if (bookingsData && bookingsData[blockDate]) {
           bookingsData[blockDate].forEach(b => {
@@ -1211,14 +1224,12 @@ async function dateHasAvailableSlots(dateStr){
             const bTime = parts ? parts[1] : null;
             const titleMatch = b.match(/-\s*(.+?)\s*\(/);
             const bTitle = titleMatch ? titleMatch[1].trim() : null;
-            const emailMatch = b.match(/\(([^)]+@[^)]+)\)$/);
-            if (bTime === s.time && bTitle === s.title && emailMatch) {
-              uniqueEmails.add(emailMatch[1].toLowerCase());
+            if (bTime === s.time && bTitle === s.title) {
+              bookedCount++;
             }
           });
         }
       }
-      const bookedCount = uniqueEmails.size;
       return bookedCount < (s.capacity||1);
     } else {
       // Single session: derive booked count from bookings.json for this date only
@@ -1286,16 +1297,16 @@ async function refreshDateAvailability(initial=false){
       const isBlock = slot.blockId && slot.blockDates;
       if (isBlock) {
         // For block sessions: aggregate unique emails across ALL blockDates from bookingMappings
-        const uniqueEmails = new Set();
+        let bookedCount = 0;
         for (const [bookingId, mapping] of Object.entries(bookingMappings)) {
           if (!mapping || mapping.status === 'Cancelled') continue;
           if (mapping.blockId === slot.blockId && Array.isArray(mapping.blockDates)) {
             if (mapping.blockDates.some(d => slot.blockDates.includes(d))) {
-              if (mapping.email) uniqueEmails.add(mapping.email.toLowerCase());
+              if (mapping.email) bookedCount++;
             }
           }
         }
-        booked = uniqueEmails.size;
+        booked = bookedCount;
         // Fallback: if no mappings, use bookedUsers
         if (booked === 0 && slot.bookedUsers && Array.isArray(slot.bookedUsers)) {
           booked = slot.bookedUsers.length;
@@ -1507,18 +1518,22 @@ async function handleDateClick(div, dateStr){
     let full = false;
     // --- Unified booked count using bookingMappings ---
     if (isBlock) {
-      // For block sessions: aggregate unique emails across ALL blockDates from bookingMappings
-      const uniqueEmails = new Set();
+      // For block sessions: count all matching mappings (no deduplication by email)
+      let bookedCount = 0;
+      const countedUsers = [];
       for (const [bookingId, mapping] of Object.entries(bookingMappings)) {
         if (!mapping || mapping.status === 'Cancelled') continue;
-        // Must match blockId and at least one blockDate
         if (mapping.blockId === slot.blockId && Array.isArray(mapping.blockDates)) {
           if (mapping.blockDates.some(d => slot.blockDates.includes(d))) {
-            if (mapping.email) uniqueEmails.add(mapping.email.toLowerCase());
+            if (mapping.email) {
+              bookedCount++;
+              countedUsers.push(mapping.email + (mapping.name ? ` (${mapping.name})` : ''));
+            }
           }
         }
       }
-      booked = uniqueEmails.size;
+      console.log(`[Block Booking Count] ${slot.title} (${slot.blockId}):`, countedUsers);
+      booked = bookedCount;
       // Fallback: if no mappings, use bookedUsers
       if (booked === 0 && slot.bookedUsers && Array.isArray(slot.bookedUsers)) {
         booked = slot.bookedUsers.length;
@@ -1563,16 +1578,16 @@ async function handleDateClick(div, dateStr){
             // Use unified booked count logic
             let bookedCount = 0;
             if (window.bookingMappings) {
-              const uniqueEmails = new Set();
+              let bookedCountRaw = 0;
               for (const [bookingId, mapping] of Object.entries(window.bookingMappings)) {
                 if (!mapping || mapping.status === 'Cancelled') continue;
                 if (mapping.blockId === slot.blockId && Array.isArray(mapping.blockDates)) {
                   if (mapping.blockDates.some(d => slot.blockDates.includes(d))) {
-                    if (mapping.email) uniqueEmails.add(mapping.email.toLowerCase());
+                    if (mapping.email) bookedCountRaw++;
                   }
                 }
               }
-              bookedCount = uniqueEmails.size;
+              bookedCount = bookedCountRaw;
             } else if (bs.bookedUsers && Array.isArray(bs.bookedUsers)) {
               bookedCount = bs.bookedUsers.length;
             }
@@ -1792,7 +1807,7 @@ async function handleDateClick(div, dateStr){
             <div class="slot-header">
               <div class="slot-title-row">
                 <span class="slot-title-container"><span class="slot-title">${slot.title}</span></span>
-                <span class="pill spots-pill block-first${full ? ' spots-pill--red' : ''}">${spots - booked}/${spots} Spots Left</span>
+                <span class="pill spots-pill block-first${full ? ' spots-pill--red' : ''}">${full ? `0/${spots}` : `${spots - booked}/${spots}`} Spots Left</span>
                 ${full ? `<span class="waitlist-pill">Waitlist Queue</span>` : ''}
               </div>
               <div class="slot-actions"></div>
